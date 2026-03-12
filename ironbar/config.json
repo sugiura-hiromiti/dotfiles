@@ -1,0 +1,33 @@
+{
+	"$schema": "https://f.jstanger.dev/github/ironbar/schema.json",
+	"height": 20,
+	"margin": {
+		"top": 0,
+		"bottom": 0,
+		"right": 0,
+		"left": 0
+	},
+	"position": "top",
+	"layer": "bottom",
+	"monitors": {
+		"Virtual-1": {
+			"start": [
+				{
+					"type": "workspaces",
+					"icon_size": 16
+				}
+			],
+			"center": [
+				{
+					"type": "focused",
+					"icon_size": 16
+				}
+			],
+			"end": [
+				{
+					"type": "tray"
+				}
+			]
+		}
+	}
+}

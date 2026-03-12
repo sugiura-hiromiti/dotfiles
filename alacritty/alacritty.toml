@@ -1,0 +1,35 @@
+[general]
+import = [
+	"~/.config/alacritty/catppuccin-macchiato.toml",
+	# "~/.config/alacritty/newt-dark-normal.toml",
+	# "~/.config/alacritty/newt-light-normal.toml",
+]
+
+[window]
+decorations = "None"
+option_as_alt = "OnlyLeft"
+
+[scrolling]
+history = 0
+
+[font]
+normal = { family = "PlemolJP Console NF" }
+italic = { style = "Italic", family = "PlemolJP Console NF" }
+bold = { family = "PlemolJP Console NF" }
+bold_italic = { style = "Bold Italic", family = "PlemolJP Console NF" }
+
+size = 16
+offset = { x = -1, y = -3 }
+glyph_offset = { x = -1, y = -1 }
+builtin_box_drawing = false
+
+[keyboard]
+bindings = [
+	# applenotes://showNote?identifier=19C0DA4D-7B19-4179-A189-3724532D0CC4
+	{ key = "Enter", mods = "Shift", chars = "\u001b[13;2u" },
+	# { key = "h", mods = "Control", chars = "\u001b[104;5u" },
+	# { key = "v", mods = "Control", action = "Paste" },
+	# { key = "t", mods = "Super", action = "ReceiveChar" },
+	# { key = "f", mods = "Super", action = "ReceiveChar" },
+	# { key = "w", mods = "Super", action = "ReceiveChar" },
+]

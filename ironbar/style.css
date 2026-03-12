@@ -1,0 +1,10 @@
+* {
+	font-family: monospace;
+	font-size: 15px;
+	color: rgb(198, 208, 245);
+	border-radius: 15px;
+	border: 1px solid rgba(98, 104, 128, 0.42);
+	background: rgba(35, 38, 52, 0.23);
+	margin: 0px;
+	padding: 0px;
+}

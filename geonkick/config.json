@@ -1,0 +1,18 @@
+{
+    "scaleFactor": 1.5,
+    "midiChannel": -1,
+    "midiChannelForced": false,
+    "showSidebar": true,
+    "bookmarkedPaths": [
+        {
+            "name": "Presets Folders",
+            "paths": [
+                "/home/a/.local/share/geonkick/presets"
+            ]
+        }
+    ],
+    "presetCurrentPath": "/home/a/.local/share/geonkick/presets",
+    "sampleCurrentPath": "/home/a/.local/share/geonkick/presets",
+    "exportFormat": "flac24",
+    "exportNumberOfChannels": 1
+}

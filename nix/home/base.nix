@@ -61,10 +61,6 @@ in
         target = ".config/.stylua.toml";
         source = ../../.stylua.toml;
       };
-      "nix.conf" = {
-        target = ".config/nix/nix.conf";
-        source = ../nix.conf;
-      };
     };
   };
   xdg = {

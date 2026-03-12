@@ -3,7 +3,31 @@ return {
 		'nvim-treesitter/nvim-treesitter',
 		build = ':TSUpdate',
 		lazy = false,
-		config = true,
+		config = function()
+			require('nvim-treesitter').install {
+				'rust',
+				'typescript',
+				'haskell',
+				'json',
+				'toml',
+				'nu',
+				'csv',
+				'diff',
+				'gitcommit',
+				'gitignore',
+				'json',
+				'jsonc',
+				'kdl',
+				'lua',
+				'markdown',
+				'markdown_inline',
+				'nix',
+				'sql',
+				'yaml',
+				'tsx',
+				'vimdoc',
+			}
+		end,
 		-- config = function()
 		-- 	vim.treesitter.language.register('markdown', 'octo')
 		-- 	require('nvim-treesitter.configs').setup {

@@ -12,21 +12,21 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/a7ff84da-d652-4b15-94d2-9bb932d37ed8";
+    { device = "/dev/disk/by-uuid/5473ac36-a335-4b08-9805-0d10a3652136";
       fsType = "ext4";
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/E203-39EA";
+    { device = "/dev/disk/by-uuid/B417-AD02";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/70e39fd1-25dc-4d7f-913e-dc3690d1e47a"; }
+    [ { device = "/dev/disk/by-uuid/cd892c38-cfb6-419a-b1da-7c2482b7ce25"; }
     ];
 
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
-  # hardware.parallels.enable = true;
+  hardware.parallels.enable = true;
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "prl-tools" ];
 }

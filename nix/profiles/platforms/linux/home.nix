@@ -90,7 +90,7 @@
     style = ''
       * {
         border: none;
-        font-family: "JetBrainsMono Nerd Font";
+        font-family: "Maple Mono NF CN";
         font-size: 15px;
         min-height: 0;
       }

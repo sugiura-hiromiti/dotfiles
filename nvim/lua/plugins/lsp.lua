@@ -315,9 +315,7 @@ return {
 	{
 		'mrcjkb/haskell-tools.nvim',
 		lazy = false, -- This plugin is already lazy
-		config = function()
-			require('telescope').load_extension 'ht'
-		end,
+		config = function() require('telescope').load_extension 'ht' end,
 	},
 	'b0o/schemastore.nvim',
 	-- { 'nanotee/sqls.nvim' },

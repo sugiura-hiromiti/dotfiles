@@ -141,7 +141,7 @@
 
   fonts = {
     packages = with pkgs; [
-      plemoljp-nf
+      maple-mono.NF-CN
       noto-fonts-color-emoji
     ];
     fontDir = {
@@ -149,9 +149,9 @@
     };
     fontconfig = {
       defaultFonts = {
-        serif = [ "PlemolJP Console NF" ];
-        sansSerif = [ "PlemolJP Console NF" ];
-        monospace = [ "PlemolJP Console NF" ];
+        serif = [ "Maple Mono NF CN" ];
+        sansSerif = [ "Maple Mono NF CN" ];
+        monospace = [ "Maple Mono NF CN" ];
         emoji = [ "Noto Color Emoji" ];
       };
     };

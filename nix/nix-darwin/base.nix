@@ -19,7 +19,7 @@
   };
   fonts = {
     packages = [
-      pkgs.plemoljp-nf
+      pkgs.maple-mono.NF-CN
     ];
   };
   homebrew = {

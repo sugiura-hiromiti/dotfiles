@@ -2,9 +2,7 @@ local wz = require 'wezterm' ---@type Wezterm
 local act = wz.action
 
 local function get_appearance()
-	if wz.gui then
-		return wz.gui.get_appearance()
-	end
+	if wz.gui then return wz.gui.get_appearance() end
 end
 
 local function scheme_for_appearance(appearance)
@@ -71,7 +69,7 @@ conf.check_for_updates = false
 conf.cell_width = 0.9
 conf.color_scheme = scheme_for_appearance(get_appearance())
 conf.disable_default_key_bindings = true
-conf.font = wz.font { family = 'PlemolJP Console NF' }
+conf.font = wz.font { family = 'Maple Mono NF CN' }
 conf.font_size = conf_per_os { aarch64_linux = 12, aarch64_darwin = 16 }
 conf.foreground_text_hsb = { saturation = 1.1, brightness = 1.1 }
 conf.freetype_load_target = 'Light'

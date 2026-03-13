@@ -1,4 +1,3 @@
-local augend = require 'dial.augend'
 local elements = {}
 local mod = {}
 
@@ -8,9 +7,7 @@ local mod = {}
 mod.inline_constant_find = function(line, cursor)
 	local pattern = 'case: (.+)$'
 	local match = line:match(pattern)
-	if not match then
-		return
-	end
+	if not match then return end
 
 	elements = {}
 	for option in match:gmatch '^%s*(.-)%s*$' do
@@ -21,14 +18,16 @@ mod.inline_constant_find = function(line, cursor)
 	return require('dial.augend.common').find_pattern_regex(regex_ptn, false)(line, cursor)
 end
 
+---@param txt string
+---@param addend number
+---@param cursor number
+---@return table
 mod.inline_constant_add = function(txt, addend, cursor)
 	local n_patterns = #elements
 	local n = 1
 
 	for i, elem in ipairs(elements) do
-		if txt == elem then
-			n = i
-		end
+		if txt == elem then n = i end
 	end
 	n = (n + addend - 1) % n_patterns + 1
 	txt = elements[n]

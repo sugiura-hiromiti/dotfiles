@@ -129,8 +129,8 @@ return {
 					enable = false,
 				},
 				scroll_preview = {
-					scroll_down = '<c-j>',
-					scroll_up = '<c-k>',
+					scroll_down = '<a-j>',
+					scroll_up = '<a-k>',
 				},
 				callhierarchy = {
 					keys = {

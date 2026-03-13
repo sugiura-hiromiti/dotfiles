@@ -1,12 +1,8 @@
 local yank_path_selected = function()
 	local entry = require('telescope.actions.state').get_selected_entry()
 	local cb_opts = vim.opt.clipboard:get()
-	if vim.tbl_contains(cb_opts, 'unnamed') then
-		vim.fn.setreg('*', entry.path)
-	end
-	if vim.tbl_contains(cb_opts, 'unnamedplus') then
-		vim.fn.setreg('+', entry.path)
-	end
+	if vim.tbl_contains(cb_opts, 'unnamed') then vim.fn.setreg('*', entry.path) end
+	if vim.tbl_contains(cb_opts, 'unnamedplus') then vim.fn.setreg('+', entry.path) end
 	vim.fn.setreg('', entry.path)
 end
 
@@ -58,21 +54,6 @@ return {
 					},
 				},
 				extensions = {
-					file_browser = {
-						grouped = true,
-						select_buffer = true,
-						hidden = true,
-						respect_gitignore = false,
-						follow_symlinks = true,
-						collapse_dirs = true,
-						mappings = {
-							['i'] = {
-								-- C have to be upper case to work
-								['<C-t>'] = a.select_tab,
-								['<C-y>'] = yank_path_selected,
-							},
-						},
-					},
 					smart_open = {
 						show_scores = true,
 						mappings = {

@@ -35,9 +35,7 @@ return {
 						local cmt_map = my_lua_api.comment_indicators(vim.bo.comments)
 						local all = { cmt_map.doc.block.outer }
 
-						if all[1].pre ~= cmt_map.doc.block.inner.pre then
-							all[2] = cmt_map.doc.block.inner
-						end
+						if all[1].pre ~= cmt_map.doc.block.inner.pre then all[2] = cmt_map.doc.block.inner end
 						if all[1].pre ~= cmt_map.normal.block.pre and all[2].pre ~= cmt_map.normal.block.pre then
 							all[3] = cmt_map.normal.block
 						end
@@ -52,18 +50,12 @@ return {
 						local pbpaste_hndlr = io.popen('pbpaste', 'r')
 						---@type string
 						local pbpaste = ''
-						if pbpaste_hndlr ~= nil then
-							pbpaste = pbpaste_hndlr:read '*a'
-						end
+						if pbpaste_hndlr ~= nil then pbpaste = pbpaste_hndlr:read '*a' end
 
 						if pbpaste:find '\n' then
 							expand_at_new_line = true
-							if pbpaste:sub(1, 1) == '\n' then
-								pbpaste = pbpaste:sub(2)
-							end
-							if pbpaste:sub(#pbpaste) ~= '\n' then
-								pbpaste = pbpaste .. '\n'
-							end
+							if pbpaste:sub(1, 1) == '\n' then pbpaste = pbpaste:sub(2) end
+							if pbpaste:sub(#pbpaste) ~= '\n' then pbpaste = pbpaste .. '\n' end
 						end
 
 						local lines = {}

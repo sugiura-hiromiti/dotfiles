@@ -1,6 +1,6 @@
+local logger = require 'my_lua_api.nvim_logger'
 local tb = require 'telescope.builtin'
 local ui = require 'my_lua_api.ui'
-local logger = require 'my_lua_api.nvim_logger'
 
 local m = {}
 
@@ -14,11 +14,13 @@ m.text_search = function()
 		'select',
 		'select by search',
 	}, { prompt = 'search by' }, function(choice)
+		if choice == nil then
+			logger.info('text_search', 'markdown', 'no candidate selected')
+			return
+		end
 		if choice:find 'live grep' then
 			local opt = {}
-			if choice:find 'only open files' then
-				opt.grep_open_files = true
-			end
+			if choice:find 'only open files' then opt.grep_open_files = true end
 			tb.live_grep(opt)
 		elseif choice == 'current buffer' then
 			tb.current_buffer_fuzzy_find()
@@ -63,20 +65,14 @@ m.terminal = function()
 			conf = { split = 'above', win = 0 }
 			bufnr = vim.api.nvim_create_buf(true, true)
 
-			if choice == 'vertical' then
-				conf = { split = 'right', win = 0 }
-			end
+			if choice == 'vertical' then conf = { split = 'right', win = 0 } end
 		end
 
-		if choice ~= 'in place' then
-			vim.api.nvim_open_win(bufnr, true, conf)
-		end
+		if choice ~= 'in place' then vim.api.nvim_open_win(bufnr, true, conf) end
 
 		vim.cmd 'term'
 
-		if choice == 'tab' then
-			ui.split_win_to_tab()
-		end
+		if choice == 'tab' then ui.split_win_to_tab() end
 	end)
 end
 

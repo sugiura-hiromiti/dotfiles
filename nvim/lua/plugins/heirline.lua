@@ -23,25 +23,13 @@ return {
 			{
 				provider = vim.fn.mode(),
 				update = 'ModeChanged',
-				condition = function()
-					return not require('hydra.statusline').is_active()
-				end,
+				condition = function() return not require('hydra.statusline').is_active() end,
 			},
 			{
-				provider = function()
-					return require('hydra.statusline').get_name()
-				end,
-				condition = function()
-					return require('hydra.statusline').is_active()
-				end,
+				provider = function() return require('hydra.statusline').get_name() end,
+				condition = function() return require('hydra.statusline').is_active() end,
 			},
 			space,
-		}
-
-		local symbol_bar_or_ft = {
-			{
-				provider = lsp_symbol,
-			},
 		}
 
 		local diag = {
@@ -67,21 +55,15 @@ return {
 				hl = hl '@comment.error',
 			},
 			{
-				provider = function(self)
-					return self.warnings > 0 and (self.warn_icon .. ' ' .. self.warnings .. ' ')
-				end,
+				provider = function(self) return self.warnings > 0 and (self.warn_icon .. ' ' .. self.warnings .. ' ') end,
 				hl = hl '@comment.warning',
 			},
 			{
-				provider = function(self)
-					return self.info > 0 and (self.info_icon .. ' ' .. self.info .. ' ')
-				end,
+				provider = function(self) return self.info > 0 and (self.info_icon .. ' ' .. self.info .. ' ') end,
 				hl = hl '@comment.note',
 			},
 			{
-				provider = function(self)
-					return self.hints > 0 and (self.hint_icon .. ' ' .. self.hints .. ' ')
-				end,
+				provider = function(self) return self.hints > 0 and (self.hint_icon .. ' ' .. self.hints .. ' ') end,
 				hl = hl '@comment.hint',
 			},
 		}
@@ -97,15 +79,11 @@ return {
 			end,
 			hl = { bg = light_bg },
 			{
-				provider = function(self)
-					return ' ' .. self.status_dict.head
-				end,
+				provider = function(self) return ' ' .. self.status_dict.head end,
 				hl = { bold = true },
 			},
 			{
-				condition = function(self)
-					return self.has_changes
-				end,
+				condition = function(self) return self.has_changes end,
 				provider = ' ',
 			},
 			{
@@ -130,15 +108,9 @@ return {
 				hl = { fg = hl('GitSignsDelete').fg },
 			},
 			{
-				condition = function(self)
-					return self.has_changes
-				end,
+				condition = function(self) return self.has_changes end,
 				provider = ' ',
 			},
-		}
-
-		local location = {
-			provider = ' %c',
 		}
 
 		local tab_page = {
@@ -176,7 +148,7 @@ return {
 				local i = math.floor((curr_line - 1) / lines * #self.sbar) + 1
 				return string.rep(self.sbar[i], 2)
 			end,
-			hl = { fg = 'blue', bg = '#1f1e33' },
+			hl = { fg = 'blue' },
 		}
 		-- We're getting minimalist here!
 		local ruler = {

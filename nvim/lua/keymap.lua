@@ -2,47 +2,27 @@ vim.cmd 'smapclear'
 
 local m = vim.keymap.set
 -- local tsb = require 'telescope.builtin'
-local select = require 'my_lua_api.select'
 local log = require 'my_lua_api.nvim_logger'
+local select = require 'my_lua_api.select'
 
 local function table_contains(table, elem)
 	for _, v in pairs(table) do
-		if v == elem then
-			return true
-		end
+		if v == elem then return true end
 	end
 	return false
 end
 
-local function is_url(path)
-	return path:match '^https?://'
-end
+local function is_url(path) return path:match '^https?://' end
 
 -- NOTE: better defaults
-vim.keymap.set('n', '<c-a>', function()
-	require('dial.map').manipulate('increment', 'normal')
-end)
-vim.keymap.set('n', '<c-x>', function()
-	require('dial.map').manipulate('decrement', 'normal')
-end)
-vim.keymap.set('n', 'g<c-a>', function()
-	require('dial.map').manipulate('increment', 'gnormal')
-end)
-vim.keymap.set('n', 'g<c-x>', function()
-	require('dial.map').manipulate('decrement', 'gnormal')
-end)
-vim.keymap.set('x', '<c-a>', function()
-	require('dial.map').manipulate('increment', 'visual')
-end)
-vim.keymap.set('x', '<c-x>', function()
-	require('dial.map').manipulate('decrement', 'visual')
-end)
-vim.keymap.set('x', 'g<c-a>', function()
-	require('dial.map').manipulate('increment', 'gvisual')
-end)
-vim.keymap.set('x', 'g<c-x>', function()
-	require('dial.map').manipulate('decrement', 'gvisual')
-end)
+vim.keymap.set('n', '<c-a>', function() require('dial.map').manipulate('increment', 'normal') end)
+vim.keymap.set('n', '<c-x>', function() require('dial.map').manipulate('decrement', 'normal') end)
+vim.keymap.set('n', 'g<c-a>', function() require('dial.map').manipulate('increment', 'gnormal') end)
+vim.keymap.set('n', 'g<c-x>', function() require('dial.map').manipulate('decrement', 'gnormal') end)
+vim.keymap.set('x', '<c-a>', function() require('dial.map').manipulate('increment', 'visual') end)
+vim.keymap.set('x', '<c-x>', function() require('dial.map').manipulate('decrement', 'visual') end)
+vim.keymap.set('x', 'g<c-a>', function() require('dial.map').manipulate('increment', 'gvisual') end)
+vim.keymap.set('x', 'g<c-x>', function() require('dial.map').manipulate('decrement', 'gvisual') end)
 
 m('i', '<esc>', function()
 	vim.cmd 'stopinsert'
@@ -58,11 +38,10 @@ m('i', '<esc>', function()
 		end
 	end
 
-	if has_format_ability then
-		vim.lsp.buf.format { async = false }
-	end
+	if has_format_ability then vim.lsp.buf.format { async = false } end
 
-	if vim.api.nvim_buf_get_option(0, 'modifiable') then
+	-- if vim.api.nvim_buf_get_option(0, 'modifiable') then
+	if vim.api.nvim_get_option_value('modifiable', { buf = 0 }) then
 		vim.cmd 'wa'
 	else
 		log.info('change did not saved', 'markdown', 'unmodifiable buffer')
@@ -104,15 +83,9 @@ m('n', 'gf', function()
 end)
 m({ 'n', 'v' }, '{', '<c-b>')
 m({ 'n', 'v' }, '}', '<c-f>')
-m({ 'n', 'o', 'x' }, 'w', function()
-	require('spider').motion 'w'
-end)
-m({ 'n', 'o', 'x' }, 'e', function()
-	require('spider').motion 'e'
-end)
-m({ 'n', 'o', 'x' }, 'b', function()
-	require('spider').motion 'b'
-end)
+m({ 'n', 'o', 'x' }, 'w', function() require('spider').motion 'w' end)
+m({ 'n', 'o', 'x' }, 'e', function() require('spider').motion 'e' end)
+m({ 'n', 'o', 'x' }, 'b', function() require('spider').motion 'b' end)
 m({ 'n', 'x' }, '<end>', '<c-e>')
 m({ 'n', 'x' }, '<home>', '<c-a>')
 
@@ -137,8 +110,8 @@ m({ 'n', 'v' }, '<c-n>', '<cmd>Treewalker SwapDown<cr>')
 m({ 'n', 'v' }, '<c-f>', '<cmd>Treewalker SwapRight<cr>')
 m({ 'n', 'v' }, '<c-b>', '<cmd>Treewalker SwapLeft<cr>')
 
-m({ 'n', 'x' }, '<c-j>', vim.diagnostic.goto_next)
-m({ 'n', 'x' }, '<c-k>', vim.diagnostic.goto_prev)
+m({ 'n', 'x' }, '<c-j>', function() vim.diagnostic.jump { count = 1 } end)
+m({ 'n', 'x' }, '<c-k>', function() vim.diagnostic.jump { count = -1 } end)
 m({ 'n', 'x' }, 'J', '<cmd>Gitsigns next_hunk<cr>')
 m({ 'n', 'x' }, 'K', '<cmd>Gitsigns prev_hunk<cr>')
 

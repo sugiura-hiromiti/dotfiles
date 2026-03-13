@@ -1,11 +1,8 @@
 return {
 	{
 		'lewis6991/gitsigns.nvim',
-		config = function()
-			require('gitsigns').setup {}
-		end,
+		config = function() require('gitsigns').setup {} end,
 	},
-	{ 'sindrets/diffview.nvim', opts = {} },
 	{
 		'shellRaining/hlchunk.nvim',
 		event = { 'BufReadPre', 'BufNewFile' },
@@ -16,7 +13,7 @@ return {
 		},
 	},
 	{
-		'swaits/lazyjj.nvim',
-		dependencies = 'nvim-lua/plenary.nvim',
+		'nicolasgb/jj.nvim',
+		opts = {},
 	},
 }

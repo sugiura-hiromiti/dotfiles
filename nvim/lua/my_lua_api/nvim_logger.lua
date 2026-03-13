@@ -10,7 +10,7 @@ local function notify_with_level(level, title, filetype, body)
 		title = title,
 		on_open = function(win)
 			local buf = vim.api.nvim_win_get_buf(win)
-			vim.api.nvim_buf_set_option(buf, 'filetype', filetype)
+			vim.api.nvim_set_option_value('filetype', filetype, { buf = buf })
 		end,
 	})
 end
@@ -19,24 +19,18 @@ end
 ---@param title string
 ---@param filetype string
 ---@param body string
-m.info = function(title, filetype, body)
-	notify_with_level(vim.log.levels.INFO, title, filetype, body)
-end
+m.info = function(title, filetype, body) notify_with_level(vim.log.levels.INFO, title, filetype, body) end
 
 ---comment
 ---@param title string
 ---@param filetype string
 ---@param body string
-m.warn = function(title, filetype, body)
-	notify_with_level(vim.log.levels.WARN, title, filetype, body)
-end
+m.warn = function(title, filetype, body) notify_with_level(vim.log.levels.WARN, title, filetype, body) end
 
 ---comment
 ---@param title string
 ---@param filetype string
 ---@param body string
-m.error = function(title, filetype, body)
-	notify_with_level(vim.log.levels.ERROR, title, filetype, body)
-end
+m.error = function(title, filetype, body) notify_with_level(vim.log.levels.ERROR, title, filetype, body) end
 
 return m

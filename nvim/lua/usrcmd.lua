@@ -93,50 +93,43 @@ c('Make', function(opts)
 	vim.cmd(cmd .. args .. extra)
 	--vim.uv.spawn(cmd .. args .. extra)
 end, { nargs = '*' })
-c('RmSwap', function()
-	vim.cmd '!rip ~/.local/state/nvim/swap/'
-end, {})
+c('RmSwap', function() vim.cmd '!rip ~/.local/state/nvim/swap/' end, {})
 
 -- NOTE: autocmd
 local au_id = vim.api.nvim_create_augroup('my_au', { clear = true })
 local a = vim.api.nvim_create_autocmd
 
-a({ 'filetype', 'bufreadpost' }, {
+a({ 'FileType', 'BufReadPost' }, {
 	group = au_id,
 	callback = function()
 		local ft = vim.bo.ft
 		if ft == 'notify' then
-			vim.bo.modifiable = true
-			-- elseif ft == 'noice' then
+			vim.bo.modifiable = true -- elseif ft == 'noice' then
 			-- 	vim.bo.ft = 'markdown'
 		end
 	end,
 })
 
-a({ 'winenter', 'ModeChanged' }, {
+a({ 'WinEnter', 'ModeChanged' }, {
 	group = au_id,
 	callback = function()
 		local path = vim.fn.expand '%:p'
 		local home_dir = os.getenv 'HOME'
-		path = path:gsub(home_dir, '~')
+		if home_dir then path = path:gsub(home_dir, '~') end
 		vim.o.titlestring = vim.fn.mode() .. ' ' .. vim.bo.ft .. ' ' .. path
 	end,
 })
 
-a('bufreadpost', {
+a('BufReadPost', {
 	group = au_id,
-	callback = function()
-		require('colorizer').attach_to_buffer(0)
-	end,
+	callback = function() require('colorizer').attach_to_buffer(0) end,
 })
 
 local function marker_comment()
 	local all_bufs = vim.api.nvim_list_bufs()
 	local bufs = {}
 	for _, buf in pairs(all_bufs) do
-		if vim.api.nvim_buf_is_loaded(buf) then
-			table.insert(bufs, buf)
-		end
+		if vim.api.nvim_buf_is_loaded(buf) then table.insert(bufs, buf) end
 	end
 
 	local marks = {
@@ -146,16 +139,14 @@ local function marker_comment()
 		[' PERF: '] = vim.diagnostic.severity.INFO,
 		[' NOTE: '] = vim.diagnostic.severity.HINT,
 		[' TEST: '] = vim.diagnostic.severity.INFO,
-		[' FIXME: '] = vim.diagnostic.severity.ERROR,
+		[' FIX: '] = vim.diagnostic.severity.ERROR,
 	}
 
 	local ns = vim.api.nvim_create_namespace 'marker_comment'
 	for _, buf in pairs(bufs) do
 		local comments_pos = require('my_lua_api.ts').get_comment_positions(buf)
 
-		if #comments_pos == 0 then
-			goto continue
-		end
+		if #comments_pos == 0 then goto continue end
 
 		local diags = {}
 		for _, comment_pos in ipairs(comments_pos) do
@@ -168,7 +159,7 @@ local function marker_comment()
 						local diag = {
 							lnum = comment_pos.start_row,
 							col = column_end,
-							message = line:sub(column_start, -1),
+							message = line:sub(column_start and column_start or 0, -1),
 							severity = severity,
 							source = 'marker comment',
 						}
@@ -183,7 +174,7 @@ local function marker_comment()
 	end
 end
 
-a({ 'bufwritepost' }, {
+a({ 'BufWritePost' }, {
 	group = au_id,
 	callback = marker_comment,
 })
@@ -203,14 +194,12 @@ a({ 'bufwritepost' }, {
 -- 	end,
 -- })
 
-a('filetype', {
+a('FileType', {
 	group = vim.api.nvim_create_augroup('vim-treesitter-start', {}),
-	callback = function(_ctx)
-		pcall(vim.treesitter.start)
-	end,
+	callback = function(_) pcall(vim.treesitter.start) end,
 })
 
-a('termopen', {
+a('TermOpen', {
 	group = au_id,
 	callback = function()
 		vim.o.number = true
@@ -218,11 +207,9 @@ a('termopen', {
 	end,
 })
 
-a({ 'bufenter' }, {
+a({ 'BufEnter' }, {
 	group = au_id,
-	callback = function()
-		vim.opt.listchars = { tab = '│ ' }
-	end,
+	callback = function() vim.opt.listchars = { tab = '│ ' } end,
 })
 
 -- a({ 'vimenter' }, {

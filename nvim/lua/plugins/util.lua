@@ -10,12 +10,6 @@ return {
 
 	-- NOTE: appearance
 	{ 'nvim-zh/colorful-winsep.nvim', config = true, event = { 'WinLeave' } },
-	{
-		'vyfor/cord.nvim',
-		build = ':Cord update',
-		event = 'VeryLazy',
-		opts = {},
-	},
 	{ 'OXY2DEV/helpview.nvim', lazy = false },
 	'Hiphish/rainbow-delimiters.nvim',
 	'chrisgrieser/nvim-spider',
@@ -59,14 +53,14 @@ return {
 			vim.cmd 'colo catppuccin'
 		end,
 	},
-	{
-		'f-person/auto-dark-mode.nvim',
-		opts = {
-			-- your configuration comes here
-			-- or leave it empty to use the default settings
-			-- refer to the configuration section below
-		},
-	},
+	-- {
+	-- 	'f-person/auto-dark-mode.nvim',
+	-- 	opts = {
+	-- 		-- your configuration comes here
+	-- 		-- or leave it empty to use the default settings
+	-- 		-- refer to the configuration section below
+	-- 	},
+	-- },
 	-- NOTE: LSP
 	{
 		'onsails/lspkind.nvim',
@@ -147,16 +141,12 @@ return {
 	},
 	{
 		'norcalli/nvim-colorizer.lua',
-		config = function()
-			require('colorizer').setup()
-		end,
+		config = function() require('colorizer').setup() end,
 	},
 	'stevearc/dressing.nvim',
 	{
 		'RaafatTurki/hex.nvim',
-		config = function()
-			require('hex').setup()
-		end,
+		config = function() require('hex').setup() end,
 	},
 	{
 		'aaronik/treewalker.nvim',
@@ -192,11 +182,8 @@ return {
 	},
 	{
 		'windwp/nvim-ts-autotag',
-		config = function()
-			require('nvim-ts-autotag').setup {}
-		end,
+		config = function() require('nvim-ts-autotag').setup {} end,
 	},
-	--'subnut/nvim-ghost.nvim',
 	{
 		'windwp/nvim-autopairs',
 		config = function()

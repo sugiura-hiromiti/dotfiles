@@ -67,23 +67,25 @@
       enable = true;
     };
     settings = {
-      spacing = 10;
-      height = 15;
-      modules-left = [
-        "clock"
-        "niri/workspaces"
-      ];
-      modules-center = [
-        "niri/window"
-      ];
-      modules-right = [
-        "wireplumber"
-        "memory"
-        "cpu"
-        "battery"
-      ];
-      "niri/window" = {
-        format = "{app_id} {title}";
+      main = {
+        spacing = 10;
+        height = 15;
+        modules-left = [
+          "clock"
+          "niri/workspaces"
+        ];
+        modules-center = [
+          "niri/window"
+        ];
+        modules-right = [
+          "wireplumber"
+          "memory"
+          "cpu"
+          "battery"
+        ];
+        "niri/window" = {
+          format = "{app_id} {title}";
+        };
       };
     };
 

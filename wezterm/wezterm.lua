@@ -28,6 +28,9 @@ if wz.gui then
 	end
 end
 
+---@generic T
+---@param value table
+---@return T
 local function conf_per_os(value)
 	local target_tuple = wz.target_triple
 	local is_aarch64 = target_tuple:find 'aarch64' ~= nil
@@ -60,7 +63,55 @@ end
 -- 	window:set_config_overrides(overrides)
 -- end)
 
--- local palette = wz.color.get_builtin_schemes()[scheme_for_appearance(get_appearance())]
+---@class RGB
+---@field r integer
+---@field g integer
+---@field b integer
+
+---@param color_code string
+---@return RGB
+local function extract_rgb(color_code)
+	local r = color_code:sub(2, 3)
+	local g = color_code:sub(4, 5)
+	local b = color_code:sub(6, 7)
+	return { r = tonumber(r, 16), g = tonumber(g, 16), b = tonumber(b, 16) }
+end
+
+---@param a RGB
+---@param b RGB
+---@param ratio decimal
+---@return RGB
+local function mix_rgb_class(a, b, ratio)
+	return {
+		r = math.floor(a.r * (1 - ratio) + b.r * ratio),
+		g = math.floor(a.g * (1 - ratio) + b.g * ratio),
+		b = math.floor(a.b * (1 - ratio) + b.b * ratio),
+	}
+end
+
+---@param rgb RGB
+local function stringify_rgb(rgb)
+	return '#' .. string.format('%02x', rgb.r) .. string.format('%02x', rgb.g) .. string.format('%02x', rgb.b)
+end
+
+---@param base string
+---@param texture string
+---@param ratio decimal
+---@return string
+local function mix_color_code(base, texture, ratio)
+	local base_head = base:sub(1, 1)
+	local texture_head = texture:sub(1, 1)
+	if base_head ~= '#' and texture_head ~= '#' and ratio > 0 and ratio < 1 then return base end
+
+	local base_rgb = extract_rgb(base)
+	local texture_rgb = extract_rgb(texture)
+	local mixed = mix_rgb_class(base_rgb, texture_rgb, ratio)
+	local rslt = stringify_rgb(mixed)
+	return rslt
+end
+
+local nullable_background = wz.color.get_builtin_schemes()[scheme_for_appearance(get_appearance())].background
+local background_color = nullable_background and nullable_background or '#ffffff'
 
 local conf = wz.config_builder()
 conf.animation_fps = 60
@@ -110,7 +161,10 @@ conf.send_composed_key_when_right_alt_is_pressed = true
 conf.scrollback_lines = 400
 conf.use_ime = true
 conf.tab_bar_at_bottom = true
--- conf.window_background_gradient = { orientation = 'Horizontal', colors = { '#66aaff88', '#ff553388' } }
+conf.window_background_gradient = {
+	orientation = 'Horizontal',
+	colors = { mix_color_code(background_color, '#66aaff', 0.17), mix_color_code(background_color, '#ff6a43', 0.15) },
+}
 conf.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 conf.window_decorations = conf_per_os { aarch64_linux = 'NONE', aarch64_darwin = 'RESIZE' }
 conf.window_close_confirmation = 'NeverPrompt'

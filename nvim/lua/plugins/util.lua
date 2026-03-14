@@ -11,7 +11,6 @@ return {
 	-- NOTE: appearance
 	{ 'nvim-zh/colorful-winsep.nvim', config = true, event = { 'WinLeave' } },
 	{ 'OXY2DEV/helpview.nvim', lazy = false },
-	'Hiphish/rainbow-delimiters.nvim',
 	'chrisgrieser/nvim-spider',
 	{
 		'catppuccin/nvim',

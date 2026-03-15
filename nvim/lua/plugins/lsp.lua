@@ -6,6 +6,101 @@ local on_attach = function(client, bufnr)
 	-- 	vim.notify 'inlay_hint not'
 	-- end
 end
+vim.g.rustaceanvim = {
+	tools = { float_win_config = { auto_focus = true } },
+	server = {
+		default_settings = {
+			['rust-analyzer'] = {
+				assist = {
+					preferSelf = true,
+				},
+
+				cargo = {
+					targetDir = vim.fn.expand '~/.cache/rust-analyzer/target/',
+					buildScripts = {
+						enable = true,
+					},
+				},
+
+				check = {
+					command = 'clippy',
+				},
+
+				checkOnSave = {
+					enable = true,
+				},
+
+				completion = {
+					fullFunctionSignatures = { enable = true },
+					termSearch = { enable = true },
+				},
+
+				diagnostics = {
+					experimental = { enable = true },
+					styleLints = { enable = true },
+				},
+
+				hover = {
+					actions = {
+						enable = true,
+						reference = { enable = true },
+					},
+					maxSubstitutionLength = 40,
+					memoryLayout = {
+						niches = true,
+					},
+					show = {
+						traitAssocItems = 5,
+					},
+				},
+
+				inlayHints = {
+					enable = true,
+					bindingModeHints = { enable = true },
+					closureCaptureHints = { enable = true },
+					closureReturnTypeHints = { enable = 'always' },
+					discriminantHints = { enable = 'always' },
+					expressionAdjustmentHints = { enable = 'always' },
+					implicitDrops = { enable = true },
+					lifetimeElisionHints = {
+						enable = 'always',
+						useParameterNames = true,
+					},
+				},
+
+				interpret = {
+					tests = true,
+				},
+
+				lens = {
+					enable = true,
+					references = {
+						adt = { enable = true },
+						enumVariant = { enable = true },
+						method = { enable = true },
+						trait = { enable = true },
+					},
+					updateTest = { enable = true },
+				},
+
+				procMacro = {
+					enable = true,
+					attributes = { enable = true },
+				},
+
+				rustfmt = {
+					rangeFormatting = { enable = true },
+				},
+
+				workspace = {
+					symbol = {
+						search = { kind = 'all_symbols' },
+					},
+				},
+			},
+		},
+	},
+}
 
 return {
 	{
@@ -171,121 +266,10 @@ return {
 			}
 		end,
 	},
-	-- {
-	-- 	'luckasRanarison/tailwind-tools.nvim',
-	-- 	name = 'tailwind-tools',
-	-- 	build = 'UpdateRemotePlugins',
-	-- 	opts = {
-	-- 		server = { settings = { includeLanguages = { rust = 'html' } }, on_attach = on_attach },
-	-- 		extension = {
-	-- 			patterns = {
-	-- 				rust = { 'class:%s*["\']([^"\']+)["\']' },
-	-- 			},
-	-- 		},
-	-- 	},
-	-- },
 	{
 		'mrcjkb/rustaceanvim',
 		dependencies = { 'nvim-neotest/neotest', 'nvim-neotest/nvim-nio' },
-		lazy = false,
-		init = function()
-			vim.g.rustaceanvim = {
-				tools = { float_win_config = { auto_focus = true } },
-				server = {
-					default_settings = {
-						['rust-analyzer'] = {
-							assist = {
-								preferSelf = true,
-							},
-
-							buildScripts = {
-								enable = true,
-							},
-
-							cargo = {
-								targetDir = vim.fn.expand '~/.cache/rust-analyzer/target/',
-							},
-
-							check = {
-								command = 'clippy',
-							},
-
-							checkOnSave = {
-								enable = true,
-							},
-
-							completion = {
-								fullFunctionSignatures = { enable = true },
-								termSearch = { enable = true },
-							},
-
-							diagnostics = {
-								experimental = { enable = true },
-								styleLints = { enable = true },
-							},
-
-							hover = {
-								actions = {
-									enable = true,
-									reference = { enable = true },
-								},
-								maxSubstitutionLength = 40,
-								memoryLayout = {
-									niches = true,
-								},
-								show = {
-									traitAssocItems = 5,
-								},
-							},
-
-							inlayHints = {
-								enable = true,
-								bindingModeHints = { enable = true },
-								closureCaptureHints = { enable = true },
-								closureReturnTypeHints = { enable = 'always' },
-								discriminantHints = { enable = 'always' },
-								expressionAdjustmentHints = { enable = 'always' },
-								implicitDrops = { enable = true },
-								lifetimeElisionHints = {
-									enable = 'always',
-									useParameterNames = true,
-								},
-							},
-
-							interpret = {
-								tests = true,
-							},
-
-							lens = {
-								enable = true,
-								references = {
-									adt = { enable = true },
-									enumVariant = { enable = true },
-									method = { enable = true },
-									trait = { enable = true },
-								},
-								updateTest = { enable = true },
-							},
-
-							procMacro = {
-								enable = true,
-								attributes = { enable = true },
-							},
-
-							rustfmt = {
-								rangeFormatting = { enable = true },
-							},
-
-							workspace = {
-								symbol = {
-									search = { kind = 'all_symbols' },
-								},
-							},
-						},
-					},
-				},
-			}
-		end,
+		lazy = true,
 	},
 	{
 		'folke/lazydev.nvim',

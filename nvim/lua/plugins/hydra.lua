@@ -1,5 +1,5 @@
-local ui = require 'my_lua_api.ui'
 local select = require 'my_lua_api.select'
+local ui = require 'my_lua_api.ui'
 
 return {
 	'nvimtools/hydra.nvim',
@@ -43,6 +43,8 @@ _g_ dropbar
 					function()
 						if vim.bo.ft == 'rust' then
 							vim.cmd.RustLsp { 'hover', 'actions' }
+						elseif vim.bo.ft == 'haskell' then
+							vim.cmd.Haskell 'hover'
 						else
 							l.hover()
 						end
@@ -58,9 +60,7 @@ _g_ dropbar
 				{ 'x', select.terminal },
 				{
 					'c',
-					function()
-						vim.lsp.codelens.run()
-					end,
+					function() vim.lsp.codelens.run() end,
 				},
 				{ 'g', dropbar.pick },
 				{ '<esc>', nil, { exit = true } },
@@ -100,16 +100,12 @@ _t_ split new tab _c_ close _x_ exit
 				--{ 't', '<cmd>tab split<cr>' },
 				{
 					't',
-					function()
-						ui.split_win_to_tab()
-					end,
+					function() ui.split_win_to_tab() end,
 				},
 				{ 'c', 'ZZ' },
 				{
 					'x',
-					function()
-						vim.cmd 'wqa'
-					end,
+					function() vim.cmd 'wqa' end,
 				},
 			},
 		}

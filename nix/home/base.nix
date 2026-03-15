@@ -239,7 +239,9 @@ in
       includes = [ { path = "~/.github_auth"; } ];
       ignores = [
         ".direnv/"
-        ".serena"
+        ".serena/"
+        ".DS_Store"
+        "dist-newstyle/"
       ];
     };
     nushell = {

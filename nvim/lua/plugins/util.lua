@@ -163,9 +163,16 @@ return {
 			'nvim-lua/plenary.nvim',
 			'antoinemadec/FixCursorHold.nvim',
 			'nvim-treesitter/nvim-treesitter',
+			'mrcjkb/neotest-haskell',
 		},
 		opts = {
-			adapters = { require 'rustaceanvim.neotest' },
+			adapters = {
+				require 'rustaceanvim.neotest',
+				require 'neotest-haskell' {
+					build_tools = { 'cabal' },
+					frameworks = { 'hspec' },
+				},
+			},
 			status = { virtual_text = true },
 			output = { open_on_run = true },
 		},

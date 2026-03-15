@@ -59,6 +59,8 @@ m({ 'n', 'x' }, '<cr>', function()
 		return '<cr>'
 	elseif vim.bo.ft == 'rust' then
 		return ':RustLsp '
+	elseif vim.bo.ft == 'haskell' then
+		return ':Haskell '
 	else
 		return ':Make '
 	end

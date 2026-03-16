@@ -138,7 +138,7 @@ in
         use serena if possible.
       '';
       settings = {
-        model = "gpt-5.2-codex";
+        model = "gpt-5.4";
         model_reasoning_effort = "xhigh";
         hide_agent_reasoning = true;
         network_access = true;

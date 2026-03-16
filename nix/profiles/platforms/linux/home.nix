@@ -45,7 +45,7 @@
     };
     settings = {
       launcher_window = {
-        opacity = 0.9;
+        opacity = 0.85;
         layer_shell = {
           layer = "overlay";
         };

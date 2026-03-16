@@ -258,27 +258,27 @@
     };
   };
   virtualisation = {
-    docker = {
-      enable = true;
-      daemon = {
-        settings = {
-          features = {
-            buildkit = true;
-          };
-        };
-      };
-      rootless = {
-        enable = true;
-        daemon = {
-          settings = {
-            features = {
-              buildkit = true;
-            };
-          };
-        };
-        setSocketVariable = true;
-      };
-    };
+    # docker = {
+    #   enable = true;
+    #   daemon = {
+    #     settings = {
+    #       features = {
+    #         buildkit = true;
+    #       };
+    #     };
+    #   };
+    #   rootless = {
+    #     enable = true;
+    #     daemon = {
+    #       settings = {
+    #         features = {
+    #           buildkit = true;
+    #         };
+    #       };
+    #     };
+    #     setSocketVariable = true;
+    #   };
+    # };
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.

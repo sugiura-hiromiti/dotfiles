@@ -19,11 +19,11 @@ with pkgs;
   sqlite
   jq
   tree-sitter
-  reaper
+  # reaper
   gnumake
   # kitty
   nufmt
   bat
   wezterm
-  gws
+  lazyjj
 ]

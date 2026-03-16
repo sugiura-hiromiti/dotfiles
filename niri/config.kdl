@@ -464,7 +464,7 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
-    Mod+T hotkey-overlay-title="Open a Terminal" { spawn "wezterm" "start" "--class" "custom.term"; }
+    Mod+T hotkey-overlay-title="Open a Terminal" { spawn "wezterm" "start" "--class" "custom.term" "--always-new-process"; }
     Mod+B hotkey-overlay-title="Open a Browser: firefox" { spawn "firefox"; }
     Mod+Space repeat=false { spawn "vicinae" "toggle"; }
     Mod+C repeat=false { spawn "vicinae" "vicinae://extensions/vicinae/clipboard/history"; }

@@ -41,7 +41,7 @@ m('i', '<esc>', function()
 	if has_format_ability then vim.lsp.buf.format { async = false } end
 
 	-- if vim.api.nvim_buf_get_option(0, 'modifiable') then
-	if vim.api.nvim_get_option_value('modifiable', { buf = 0 }) then
+	if vim.api.nvim_get_option_value('modifiable', {}) then
 		vim.cmd 'wa'
 	else
 		log.info('change did not saved', 'markdown', 'unmodifiable buffer')

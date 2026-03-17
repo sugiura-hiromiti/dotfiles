@@ -22,6 +22,7 @@
     # tart
     # raycast
     betterdisplay
+    reaper
     # paneru.packages.${pkgs.system}.paneru
   ];
   services = {

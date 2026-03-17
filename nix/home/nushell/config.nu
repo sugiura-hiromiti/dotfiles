@@ -11,7 +11,6 @@ if (sys host | get name) == "Darwin" {
 
 $env.config.buffer_editor = 'nvim'
 $env.EDITOR = 'nvim'
-$env.RIPGREP_CONFIG_PATH = $'($env.HOME)/.config/rg/config'
 $env.WALLPAPER_DIR = $'($env.HOME)/Downloads/media/wallpapers'
 $env.XDG_CONFIG_HOME = $'($env.HOME)/.config'
 $env.GITHUB_PAT_TOKEN = (

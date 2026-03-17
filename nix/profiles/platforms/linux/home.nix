@@ -71,11 +71,11 @@
         spacing = 10;
         height = 15;
         modules-left = [
-          "clock"
+          "custom-logo"
           "niri/workspaces"
         ];
         modules-center = [
-          "niri/window"
+          "clock"
         ];
         modules-right = [
           "wireplumber"
@@ -85,6 +85,11 @@
         ];
         "niri/window" = {
           format = "{app_id} {title}";
+        };
+        custom-logo = {
+          format = "󱄅 ";
+          tooltip = false;
+          on-click = "vicinae toggle";
         };
       };
     };

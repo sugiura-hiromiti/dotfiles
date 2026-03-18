@@ -21,6 +21,12 @@ vim.opt.splitright = true
 vim.g.editorconfig = true
 vim.env.XDG_STATE_HOME = '/tmp'
 
+vim.g.clipboard = {
+	name = 'osc52',
+	copy = { ['*'] = require('vim.ui.clipboard.osc52').copy '*', ['+'] = require('vim.ui.clipboard.osc52').copy '+' },
+	paste = { ['*'] = require('vim.ui.clipboard.osc52').paste '*', ['+'] = require('vim.ui.clipboard.osc52').paste '+' },
+}
+
 vim.diagnostic.config { virtual_text = true }
 vim.lsp.inlay_hint.enable()
 
@@ -41,6 +47,4 @@ require('lazy').setup 'plugins'
 require 'usrcmd'
 require 'keymap'
 
-if vim.g.neovide then
-	require 'gui'
-end
+if vim.g.neovide then require 'gui' end

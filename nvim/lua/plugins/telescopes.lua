@@ -71,11 +71,26 @@ return {
 						override_file_sorter = true,
 						case_mode = 'smart_case',
 					},
+					hoogle = {
+						render = 'treesitter',
+						renders = { treesitter = { remove_wrap = false } },
+					},
 				},
 			}
 			t.load_extension 'smart_open'
 			t.load_extension 'ui-select'
 			t.load_extension 'fzf'
+			t.load_extension 'hoogle'
 		end,
 	},
+	{
+		'danielfalk/smart-open.nvim',
+		branch = '0.3.x',
+	},
+	'nvim-telescope/telescope-ui-select.nvim',
+	{
+		'nvim-telescope/telescope-fzf-native.nvim',
+		build = 'make',
+	},
+	'psiska/telescope-hoogle.nvim',
 }

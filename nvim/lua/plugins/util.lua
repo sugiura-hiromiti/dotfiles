@@ -221,14 +221,4 @@ return {
 		dependencies = { 'nvim-telescope/telescope-fzf-native.nvim' },
 	},
 
-	-- NOTE: telescope
-	{
-		'danielfalk/smart-open.nvim',
-		branch = '0.3.x',
-	},
-	'nvim-telescope/telescope-ui-select.nvim',
-	{
-		'nvim-telescope/telescope-fzf-native.nvim',
-		build = 'make',
-	},
 }

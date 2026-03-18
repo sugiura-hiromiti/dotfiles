@@ -25,6 +25,8 @@ return {
 				'yaml',
 				'tsx',
 				'vimdoc',
+				'html',
+				'html_tags',
 			}
 		end,
 	},

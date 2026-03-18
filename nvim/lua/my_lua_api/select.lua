@@ -82,6 +82,7 @@ m.symbols = function()
 		'ws',
 		'dyn ws',
 		'ts',
+		'hoogle (Haskell)',
 	}, { prompt = 'symbol search' }, function(choice)
 		local opt = { show_line = true }
 		if choice == 'doc' then
@@ -92,6 +93,8 @@ m.symbols = function()
 			tb.lsp_dynamic_workspace_symbols(opt)
 		elseif choice == 'ts' then
 			tb.treesitter(opt)
+		elseif choice == 'hoogle (Haskell)' then
+			vim.cmd.Telescope { 'hoogle', 'list' }
 		end
 	end)
 end

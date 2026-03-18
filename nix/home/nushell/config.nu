@@ -21,6 +21,13 @@ $env.config.hooks.env_change.PWD = ( $env.config.hooks.env_change.PWD? | default
 	let rslt = s
 	print $rslt
 }} )
+$env.config.hooks.pre_prompt = ($env.config.hooks.pre_prompt? | default [] | append {|| print -n "\u{1b}]133;A\u{7}"})
+$env.config.hooks.pre_execution = ($env.config.hooks.pre_execution? | default [] | append {|| print -n "\u{1b}]133;C\u{7}"})
+# $env.config.hooks.post_execution = (
+# 	$env.config.hooks.post_execution?
+# 	| default []
+# 	| append {|| print -n $"\u{1b}]133;D;($env.LAST_EXIT_CODE)\u{7}"}
+# )
 $env.config.completions = {
 	case_sensitive: false,
 	quick: true,

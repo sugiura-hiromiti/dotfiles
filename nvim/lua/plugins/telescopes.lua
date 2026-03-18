@@ -8,6 +8,16 @@ end
 
 return {
 	{
+		'danielfalk/smart-open.nvim',
+		branch = '0.3.x',
+	},
+	'nvim-telescope/telescope-ui-select.nvim',
+	{
+		'nvim-telescope/telescope-fzf-native.nvim',
+		build = 'make',
+	},
+	'psiska/telescope-hoogle.nvim',
+	{
 		'nvim-telescope/telescope.nvim',
 		config = function()
 			local t = require 'telescope'
@@ -83,14 +93,4 @@ return {
 			t.load_extension 'hoogle'
 		end,
 	},
-	{
-		'danielfalk/smart-open.nvim',
-		branch = '0.3.x',
-	},
-	'nvim-telescope/telescope-ui-select.nvim',
-	{
-		'nvim-telescope/telescope-fzf-native.nvim',
-		build = 'make',
-	},
-	'psiska/telescope-hoogle.nvim',
 }

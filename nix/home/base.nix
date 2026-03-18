@@ -42,6 +42,7 @@ in
       XDG_DATA_HOME = "${config.home.homeDirectory}/.local/share";
       XDG_STATE_HOME = "${config.home.homeDirectory}/.local/state";
       XDG_CACHE_HOME = "${config.home.homeDirectory}/.cache";
+      SHELL = "${pkgs.nushell}/bin/nu";
     };
     packages = mypkgs;
     file = {

@@ -16,7 +16,6 @@ return {
 		'nvim-telescope/telescope-fzf-native.nvim',
 		build = 'make',
 	},
-	'psiska/telescope-hoogle.nvim',
 	{
 		'nvim-telescope/telescope.nvim',
 		config = function()
@@ -90,7 +89,6 @@ return {
 			t.load_extension 'smart_open'
 			t.load_extension 'ui-select'
 			t.load_extension 'fzf'
-			t.load_extension 'hoogle'
 		end,
 	},
 }

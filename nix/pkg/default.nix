@@ -24,5 +24,4 @@ with pkgs;
   bat
   wezterm
   lazyjj
-  haskellPackages.hoogle
 ]

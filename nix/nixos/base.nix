@@ -319,6 +319,7 @@
     # };
     niri = {
       enable = true;
+      useNautilus = false;
     };
     nix-ld = {
       enable = true;

@@ -45,9 +45,6 @@
     neovim-nightly-overlay = {
       url = "github:nix-community/neovim-nightly-overlay";
     };
-    awww = {
-      url = "git+https://codeberg.org/LGFae/awww?ref=main";
-    };
     catppuccin = {
       url = "github:catppuccin/nix";
     };
@@ -69,6 +66,39 @@
       url = "github:karinushka/paneru";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # niri-flake = {
+    #   url = "github:sodiboo/niri-flake";
+    # };
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+        noctalia-qs = {
+          follows = "noctalia-qs";
+        };
+      };
+    };
+    noctalia-qs = {
+      url = "github:noctalia-dev/noctalia-qs";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
+    };
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+        home-manager = {
+          follows = "home-manager";
+        };
+      };
+    };
   };
   outputs =
     inputs@{
@@ -77,12 +107,15 @@
       home-manager,
       nix-darwin,
       neovim-nightly-overlay,
-      awww,
       catppuccin,
       nur,
       flake-parts,
       systems,
       paneru,
+      # niri-flake,
+      noctalia,
+      noctalia-qs,
+      zen-browser,
     }:
     let
       lib = nixpkgs.lib;
@@ -157,6 +190,7 @@
             overlays = [
               neovim-nightly-overlay.overlays.default
               nur.overlays.default
+              # niri-flake.overlays.niri
             ];
             inherit system;
           };
@@ -165,7 +199,6 @@
             inherit user;
             inherit has_gui;
             inherit system;
-            inherit awww;
             inherit host;
             inherit hostName;
             inherit roles;
@@ -176,6 +209,8 @@
             ./home
             catppuccin.homeModules.catppuccin
             paneru.homeModules.paneru
+            noctalia.homeModules.default
+            zen-browser.homeModules.twilight
           ];
         };
       nixos-conf =

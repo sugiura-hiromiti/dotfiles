@@ -66,14 +66,14 @@
     # };
   };
   hardware = {
-    # bluetooth = {
-    #   enable = true;
-    # settings = {
-    #   General = {
-    #     ControllerMode = "bredr";
-    #   };
-    # };
-    # };
+    bluetooth = {
+      enable = true;
+      # settings = {
+      #   General = {
+      #     ControllerMode = "bredr";
+      #   };
+      # };
+    };
   };
   powerManagement = {
     cpuFreqGovernor = "performance";
@@ -158,6 +158,17 @@
   };
 
   services = {
+    upower = {
+      enable = true;
+    };
+    power-profiles-daemon = {
+      enable = true;
+    };
+    gnome = {
+      evolution-data-server = {
+        enable = true;
+      };
+    };
     greetd = {
       enable = true;
       useTextGreeter = true;
@@ -306,6 +317,11 @@
   #   };
   # };
 
+  # niri-flake = {
+  #   cache = {
+  #     enable = false;
+  #   };
+  # };
   programs = {
     # nh = {
     #   enable = true;
@@ -319,6 +335,7 @@
     # };
     niri = {
       enable = true;
+      # package = pkgs.niri-unstable;
       useNautilus = false;
     };
     nix-ld = {

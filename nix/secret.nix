@@ -1,1 +1,1 @@
-{}:{ user = "a"; theme = "dark"; has_gui = false;}
+{}:{ user = "a"; theme = "light"; has_gui = true;}

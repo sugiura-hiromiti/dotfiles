@@ -24,4 +24,6 @@ with pkgs;
   bat
   wezterm
   lazyjj
+  imagemagick
+  python3
 ]

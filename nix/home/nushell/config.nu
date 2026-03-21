@@ -69,17 +69,17 @@ def auto_theme [] {
 }
 def "set_theme dark" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-dark"' }
 def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-light"' }
-def rw [] {
-	let files = (ls $env.WALLPAPER_DIR | where type == file | get name)
-	let idx = random int ..(($files | length) - 1)
-	let file = ($files | get $idx)
-	awww img $file
-}
+# def rw [] {
+# 	let files = (ls $env.WALLPAPER_DIR | where type == file | get name)
+# 	let idx = random int ..(($files | length) - 1)
+# 	let file = ($files | get $idx)
+# 	awww img $file
+# }
 def u [] {
 	use std/dirs
 	dirs add $'($env.HOME)/dotfiles/nix'
 	let who = whoami
-	let theme = (hour | if 13 < $in and $in < 15 { 'light' } else { 'dark' })
+	let theme = (hour | if 5 < $in and $in < 17 { 'light' } else { 'dark' })
 	let has_gui = if (wh dconf | is-empty) { false } else { true }
 	echo $'{}:{ user = "($who)"; theme = "($theme)"; has_gui = ($has_gui);}' | save -f secret.nix
 	sudo -v

@@ -593,9 +593,9 @@ in
       defaultApplications = {
         "inode/directory" = "yazi.desktop";
         "text/uri-list" = "yazi.desktop";
-        "video/*" = "firefox.desktop";
-        "image/*" = "firefox.desktop";
-        "audio/*" = "firefox.desktop";
+        "video/*" = "zen-twilight.desktop";
+        "image/*" = "zen-twilight.desktop";
+        "audio/*" = "zen-twilight.desktop";
       };
     };
     portal = {
@@ -674,14 +674,14 @@ in
       enable = true;
       accent = "sky";
     };
-    firefox = {
-      accent = "mauve";
-      profiles = {
-        dflt = {
-          force = true;
-        };
-      };
-    };
+    # firefox = {
+    #   accent = "mauve";
+    #   profiles = {
+    #     dflt = {
+    #       force = true;
+    #     };
+    #   };
+    # };
     gtk = {
       icon = {
         accent = "sapphire";

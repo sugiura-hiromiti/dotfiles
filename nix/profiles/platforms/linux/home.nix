@@ -318,7 +318,7 @@ in
           }
         ];
         states = {
-          keybind-cheetsheet = {
+          keybind-cheatsheet = {
             enabled = true;
             sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
           };
@@ -330,10 +330,12 @@ in
         bar = {
           barType = "floating";
           position = "right";
-          density = "compact";
-          backgroundOpacity = 0.1;
+          density = "spacious";
           fontScale = 2;
           floating = true;
+          useSeparateOpacity = true;
+          backgroundOpacity = 0.0;
+          capsureOpacity = 0.85;
           marginVertical = 10;
           marginHorizontal = 10;
           displayMode = "auto_hide";
@@ -342,10 +344,19 @@ in
           widgets = {
             left = [
               { id = "Launcher"; }
-              { id = "Workspace"; }
+              {
+                id = "Workspace";
+                showApplications = true;
+              }
               { id = "SystemMonitor"; }
-              { id = "ActiveWindow"; }
-              { id = "MediaMini"; }
+              {
+                id = "ActiveWindow";
+                colorizeIcons = true;
+              }
+              {
+                id = "MediaMini";
+                showVisualizer = true;
+              }
             ];
             center = [
               {
@@ -381,13 +392,14 @@ in
           directory = (homeDir.content + "/Downloads/media/wallpapers/");
           overviewEnabled = true;
           automationEnabled = true;
+          overviewTing = 0.22;
         };
         appLauncher = {
           enableClipboardHistory = true;
           autoPasteClipboard = true;
           terminalCommand = "wezterm start";
           showIconBackground = true;
-          density = "compact";
+          density = "comfortable";
         };
         network = {
           bluetoothRssiPollingEnabled = true;
@@ -410,6 +422,7 @@ in
         };
         colorSchemes = {
           predefinedScheme = "Catppuccin";
+          schedulingMode = "location";
           darkMode = theme == "dark";
         };
       };

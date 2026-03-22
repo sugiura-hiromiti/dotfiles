@@ -11,6 +11,7 @@ let
   };
   dotfilesRoot = "${config.home.homeDirectory}/dotfiles";
   configDirs = [
+    "emacs"
     "alacritty"
     "fcitx5"
     "fish"
@@ -71,6 +72,10 @@ in
     });
   };
   programs = {
+    emacs = {
+      enable = true;
+      package = pkgs.emacs-pgtk;
+    };
     zen-browser = {
       enable = true;
       setAsDefaultBrowser = true;
@@ -391,7 +396,16 @@ in
     #     };
     #   };
     # };
-
   };
-
+  services = {
+    emacs = {
+      enable = true;
+      startWithUserSession = "graphical";
+      package = pkgs.emacs-pgtk;
+      client = {
+        enable = true;
+      };
+      # defaultEditor = true;
+    };
+  };
 }

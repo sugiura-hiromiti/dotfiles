@@ -1,0 +1,264 @@
+{
+  "appearanceMode" : "automatic",
+  "borderWidth" : 4,
+  "focusFollowsMouse" : true,
+  "focusFollowsWindowToMonitor" : true,
+  "gapSize" : 0,
+  "hotkeyBindings" : [
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.0"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.0"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.1"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.1"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.2"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.2"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.3"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.3"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.4"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.4"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.5"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.5"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.6"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.6"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.7"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.7"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "switchWorkspace.8"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveToWorkspace.8"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "workspaceBackAndForth"
+    },
+    {
+      "binding" : "Command+H",
+      "id" : "focus.left"
+    },
+    {
+      "binding" : "Command+J",
+      "id" : "focus.down"
+    },
+    {
+      "binding" : "Command+K",
+      "id" : "focus.up"
+    },
+    {
+      "binding" : "Command+L",
+      "id" : "focus.right"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusPrevious"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveWindowToWorkspaceUp"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveWindowToWorkspaceDown"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveColumnToWorkspaceUp"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "moveColumnToWorkspaceDown"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "move.left"
+    },
+    {
+      "binding" : "Control+Command+J",
+      "id" : "move.down"
+    },
+    {
+      "binding" : "Control+Command+K",
+      "id" : "move.up"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "move.right"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusMonitorNext"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusMonitorLast"
+    },
+    {
+      "binding" : "Shift+Command+F",
+      "id" : "toggleFullscreen"
+    },
+    {
+      "binding" : "Control+Command+H",
+      "id" : "moveColumn.left"
+    },
+    {
+      "binding" : "Control+Command+L",
+      "id" : "moveColumn.right"
+    },
+    {
+      "binding" : "Command+W",
+      "id" : "toggleColumnTabbed"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumnFirst"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumnLast"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.0"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.1"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.2"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.3"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.4"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.5"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.6"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.7"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "focusColumn.8"
+    },
+    {
+      "binding" : "Command+R",
+      "id" : "cycleColumnWidthForward"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "cycleColumnWidthBackward"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "toggleColumnFullWidth"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "balanceSizes"
+    },
+    {
+      "binding" : "Option+Space",
+      "id" : "openCommandPalette"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "raiseAllFloatingWindows"
+    },
+    {
+      "binding" : "Shift+Command+A",
+      "id" : "toggleFocusedWindowFloating"
+    },
+    {
+      "binding" : "Command+A",
+      "id" : "assignFocusedWindowToScratchpad"
+    },
+    {
+      "binding" : "Command+S",
+      "id" : "toggleScratchpadWindow"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "openMenuAnywhere"
+    },
+    {
+      "binding" : "Unassigned",
+      "id" : "toggleWorkspaceLayout"
+    },
+    {
+      "binding" : "Command+O",
+      "id" : "toggleOverview"
+    }
+  ],
+  "mouseWarpAxis" : "vertical",
+  "moveMouseToFocusedWindow" : true,
+  "outerGapBottom" : 0,
+  "outerGapLeft" : 0,
+  "outerGapRight" : 0,
+  "outerGapTop" : 0,
+  "quakeTerminalHeightPercent" : 80,
+  "quakeTerminalOpacity" : 0.5,
+  "quakeTerminalWidthPercent" : 80,
+  "version" : 4,
+  "workspaceBarDeduplicateAppIcons" : true
+}

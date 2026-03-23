@@ -62,10 +62,10 @@
     systems = {
       url = "github:nix-systems/default";
     };
-    paneru = {
-      url = "github:karinushka/paneru";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # paneru = {
+    #   url = "github:karinushka/paneru";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
     # niri-flake = {
     #   url = "github:sodiboo/niri-flake";
     # };
@@ -111,7 +111,7 @@
       nur,
       flake-parts,
       systems,
-      paneru,
+      # paneru,
       # niri-flake,
       noctalia,
       noctalia-qs,
@@ -203,12 +203,12 @@
             inherit hostName;
             inherit roles;
             inherit variants;
-            inherit paneru;
+            # inherit paneru;
           };
           modules = [
             ./home
             catppuccin.homeModules.catppuccin
-            paneru.homeModules.paneru
+            # paneru.homeModules.paneru
             noctalia.homeModules.default
             zen-browser.homeModules.twilight
           ];
@@ -262,7 +262,7 @@
             inherit hostName;
             inherit roles;
             inherit variants;
-            inherit paneru;
+            # inherit paneru;
           };
           modules = [
             ./nix-darwin

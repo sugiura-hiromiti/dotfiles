@@ -1,12 +1,14 @@
-(setq package-install-upgrade-built-in t
+(setopt package-install-upgrade-built-in t
 	initial-scratch-message nil
 	use-dialog-box nil
 	ring-bell-function #'ignore
 	read-process-output-max (* 1024 1024)
 	completion-cycle-threshold 3
-	tab-always-indent 'complete)
-
-(setq make-backup-files nil)
+	tab-always-indent 'complete
+	select-enable-clipboard t
+	make-backup-files nil
+	global-auto-revert-non-file-buffers t
+	which-key-idle-delay 0.1)
 
 ;; 履歴
 (savehist-mode 1)
@@ -23,7 +25,6 @@
 	'(("gnu" . "https://elpa.gnu.org/packages/")
 		("nongnu" . "https://elpa.nongnu.org/nongnu/")
 		("melpa" . "https://melpa.org/packages/")))
-(package-initialize)
 
 (unless (package-installed-p 'use-package)
 	(package-refresh-contents)
@@ -59,13 +60,28 @@
 (use-package magit)
 
 ;; 見た目
-(setq inhibit-startup-screen t)
-(setq inhibit-startup-message t)
-(setq inhibit-scratch-message nil)
+(setopt inhibit-startup-screen t
+	inhibit-startup-message t
+	inhibit-scratch-message nil
+	display-line-numbers-type 'relative)
 
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
+(global-display-line-numbers-mode 1)
+
+(set-face-attribute 'default nil
+		    :family "Maple Mono NF CN"
+		    :height 130
+		    :weight 'extra-light)
+(set-face-attribute 'bold nil
+		    :weight 'light)
+(set-face-attribute 'italic nil
+		    :weight 'extra-light
+		    :slant 'italic)
+(set-face-attribute 'bold-italic nil
+		    :weight 'light
+		    :slant 'italic)
 
 (use-package nerd-icons
 	:if (display-graphic-p))
@@ -73,11 +89,15 @@
 	:hook (org-mode . org-modern-mode))
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
+(use-package catppuccin-theme
+  :config (load-theme 'catppuccin :no-confirm)
+  :custom
+  (setq catppuccin-flavor 'frappe)
+  (catppuccin-reload))
 
 ;; 編集/移動
 (use-package avy)
 (use-package meow
-  :ensure t
   :config
   (defun my/meow-setup ()
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
@@ -111,27 +131,63 @@
      '("8" . meow-expand-8)
      '("9" . meow-expand-9)
      '("0" . meow-expand-0)
-     ;;'("a" . meow-append)
-     '("h" . meow-left)
-     '("j" . meow-next)
-     '("k" . meow-prev)
-     '("l" . meow-right)
-     '("i" . meow-insert)
-
-     '("c" . meow-change)
-     '("d" . meow-delete)
-     '("s" . meow-kill)
-     '("y" . meow-save)
-     '("p" . meow-yank)
-     '("u" . meow-undo)
-     '("w" . meow-mark-word)
-     '("e" . meow-next-word)
-     '("b" . meow-back-word)
+     '("-" . negative-argument)
+     '("'" . repeat)
      '("," . meow-inner-of-thing)
      '("." . meow-bounds-of-thing)
-     '("o" . meow-block)
+     '("a" . meow-append)
+     '("A" . meow-open-below)
+     '("b" . meow-back-word)
+     '("B" . meow-back-symbol)
+     '("c" . meow-change)
+     '("d" . meow-delete)
+     '("e" . meow-next-word)
+     '("E" . meow-next-symbol)
+     '("f" . meow-find)
      '("g" . meow-cancel-selection)
+     '("G" . meow-grab) ;; ?
+     '("h" . meow-left)
+     '("H" . meow-left-expand)
+     '("i" . meow-insert)
+     '("I" . meow-open-above)
+     '("j" . meow-next)
+     '("J" . meow-next-expand)
+     '("k" . meow-prev)
+     '("K" . meow-prev-expand)
+     '("l" . meow-right)
+     '("L" . meow-right-expand)
+     '("m" . meow-join)
+     '("n" . meow-search)
+     '("o" . meow-block)
+     '("O" . meow-to-block)
+     '("p" . meow-yank)
+     '("q" . meow-goto-line)
+     '("r" . meow-replace)
+     '("s" . meow-kill)
+     '("t" . meow-till)
+     '("v" . meow-visit)
+     '("u" . meow-undo)
+     '("w" . meow-mark-word)
+     '("W" . meow-mark-symbol)
      '("x" . meow-line)
+     '("y" . meow-save)
+     '("z" . meow-pop-selection)
      '("<escape>" . ignore)))
   (my/meow-setup)
-  (meow-global-mode 1))
+  (meow-global-mode 1)
+  :custom
+  (setopt meow-use-clipboard t))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(avy cape catppuccin-theme corfu embark-consult magit marginalia meow
+	 nerd-icons orderless org-modern rainbow-delimiters vertico)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

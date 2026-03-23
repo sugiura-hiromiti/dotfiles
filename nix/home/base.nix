@@ -23,6 +23,7 @@ let
     "niri"
     "nvim"
     "wezterm"
+    "omniwm"
   ];
 in
 {
@@ -368,34 +369,6 @@ in
       keymap = builtins.fromTOML (builtins.readFile ./yazi/keymap.toml);
       initLua = ./yazi/init.lua;
     };
-    # firefox = {
-    #   enable = true;
-    #   profiles = {
-    #     dflt = {
-    #       isDefault = true;
-    #       id = 0;
-    #       extensions = {
-    #         force = true;
-    #       };
-    #       settings = {
-    #         "browser.startup.homepage" = "https://www.google.com";
-    #         "browser.toolbars.bookmarks.visibility" = "never";
-    #         "browser.bookmarks.restore_default_bookmarks" = false;
-    #         "browser.bookmarks.showMobileBookmarks" = false;
-    #         "browser.crashReports.unsubmittedCheck.autoSubmit2" = true;
-    #         "browser.search.region" = "US";
-    #         "browser.toolbarbuttons.introduced.sidebar-button" = false;
-    #         "sidebar.main.tools" = "syncedtabs,bookmarks,passwords";
-    #         "sidebar.verticalTabs" = false;
-    #         "sidebar.visibility" = "hide-sidebar";
-    #         "widget.use-xdg-desktop-portal.file-picker" = 1;
-    #         "widget.use-xdg-desktop-portal.mime-handler" = 1;
-    #         "widget.use-xdg-desktop-portal.settings" = 1;
-    #         "widget.use-xdg-desktop-portal.open-url" = 1;
-    #       };
-    #     };
-    #   };
-    # };
   };
   services = {
     emacs = {

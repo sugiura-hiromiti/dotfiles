@@ -1,9 +1,9 @@
 # NOTE: appearance
-font-family = PlemolJP Console NF Medium
-font-family-bold = PlemolJP Console NF
-font-family-italic = PlemolJP Console NF Italic Light
-font-family-bold-italic = PlemolJP Console NF Italic
-font-size = 16
+font-family = Maple Mono NF CN
+# font-family-bold = PlemolJP Console NF
+# font-family-italic = PlemolJP Console NF Italic Light
+# font-family-bold-italic = PlemolJP Console NF Italic
+font-size = 15
 adjust-cell-width = -1
 adjust-cell-height = -1
 
@@ -11,9 +11,9 @@ theme = dark:Catppuccin Mocha,light:Catppuccin Latte
 unfocused-split-fill = #000000
 
 # cursor-opacity = 0.2
-# background-opacity = 0.93
-# background-opacity-cells = false
-# background-blur = 30
+background-opacity = 0.50
+background-opacity-cells = false
+background-blur = 60
 
 cursor-color = cell-foreground
 cursor-text = cell-background

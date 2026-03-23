@@ -46,9 +46,11 @@
       # "betterdisplay"
       "homerow"
       "docker-desktop"
+      "BarutSRB/tap/omniwm"
       # "mouseless"
     ];
     taps = [
+      "BarutSRB/tap"
       # "koekeishiya/formulae"
       # "FelixKratz/formulae"
       # "acsandmann/tap"

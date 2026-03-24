@@ -35,7 +35,21 @@
 
 (use-package vertico
 	:init
-	(vertico-mode 1))
+	(vertico-mode 1)
+	:custom
+	(vertico-scroll-margin 0)
+	(vertico-count 20)
+	(vertico-resize t)
+	(vertico-cycle t)
+	(vertico-multiform-commands
+		'((consult-imenu buffer indexed)))
+	(vertico-multiform-categories
+	 '((file grid)
+	  (consult-grep buffer)))
+	:config
+	(require 'vertico-multiform)
+	(vertico-multiform-mode)
+)
 (use-package marginalia
 	:init
 	(marginalia-mode 1))
@@ -55,6 +69,16 @@
 	:init
 	(global-corfu-mode 1))
 (use-package cape)
+(context-menu-mode t)
+(setopt completion-styles '(basic substring partial-completion flex)
+	completion-ignore-case t
+	enable-recursive-minibuffers t
+	read-extended-command-predicate #'command-completion-default-include-p
+	minibuffer-prompt-properties '(read-only t
+						cursor-intangible t
+						face mimibuffer-prompt)
+)
+(minibuffer-depth-indicate-mode 1)
 
 (add-hook 'rust-ts-mode-hook #'eglot-ensure)
 (use-package magit)
@@ -69,6 +93,7 @@
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (global-display-line-numbers-mode 1)
+(global-hl-line-mode 1)
 
 (set-face-attribute 'default nil
 		    :family "Maple Mono NF CN"
@@ -92,11 +117,14 @@
 (use-package catppuccin-theme
   :config (load-theme 'catppuccin :no-confirm)
   :custom
-  (setq catppuccin-flavor 'frappe)
+  (catppuccin-flavor 'frappe)
   (catppuccin-reload))
 
 ;; 編集/移動
 (use-package avy)
+(use-package puni
+  :init
+  (puni-global-mode))
 (use-package meow
   :config
   (defun my/meow-setup ()
@@ -133,8 +161,10 @@
      '("0" . meow-expand-0)
      '("-" . negative-argument)
      '("'" . repeat)
-     '("," . meow-inner-of-thing)
-     '("." . meow-bounds-of-thing)
+     ;;'("," . meow-inner-of-thing)
+     ;;'("." . meow-bounds-of-thing)
+     '("," . puni-mark-list-around-point)
+     '("." . puni-mark-sexp-around-point)
      '("a" . meow-append)
      '("A" . meow-open-below)
      '("b" . meow-back-word)
@@ -144,7 +174,7 @@
      '("e" . meow-next-word)
      '("E" . meow-next-symbol)
      '("f" . meow-find)
-     '("g" . meow-cancel-selection)
+     '("g" . puni-expand-region)
      '("G" . meow-grab) ;; ?
      '("h" . meow-left)
      '("H" . meow-left-expand)
@@ -162,13 +192,14 @@
      '("O" . meow-to-block)
      '("p" . meow-yank)
      '("q" . meow-goto-line)
-     '("r" . meow-replace)
+     '("r" . meow-reverse)
      '("s" . meow-kill)
      '("t" . meow-till)
-     '("v" . meow-visit)
      '("u" . meow-undo)
-     '("w" . meow-mark-word)
-     '("W" . meow-mark-symbol)
+     '("v" . meow-visit)
+     ;;'("w" . meow-mark-word)
+     ;;'("W" . meow-mark-symbol)
+     '("w" . puni-mark-sexp-at-point)
      '("x" . meow-line)
      '("y" . meow-save)
      '("z" . meow-pop-selection)
@@ -184,7 +215,8 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    '(avy cape catppuccin-theme corfu embark-consult magit marginalia meow
-	 nerd-icons orderless org-modern rainbow-delimiters vertico)))
+	 nerd-icons orderless org-modern puni rainbow-delimiters
+	 vertico)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

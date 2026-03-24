@@ -1,6 +1,6 @@
 {
   "appearanceMode" : "automatic",
-  "borderWidth" : 4,
+  "borderWidth" : 1.5,
   "focusFollowsMouse" : true,
   "focusFollowsWindowToMonitor" : true,
   "gapSize" : 0,
@@ -82,15 +82,23 @@
       "id" : "workspaceBackAndForth"
     },
     {
+      "binding" : "Command+J",
+      "id" : "switchWorkspace.next"
+    },
+    {
+      "binding" : "Command+K",
+      "id" : "switchWorkspace.previous"
+    },
+    {
       "binding" : "Command+H",
       "id" : "focus.left"
     },
     {
-      "binding" : "Command+J",
+      "binding" : "Unassigned",
       "id" : "focus.down"
     },
     {
-      "binding" : "Command+K",
+      "binding" : "Unassigned",
       "id" : "focus.up"
     },
     {
@@ -110,11 +118,11 @@
       "id" : "moveWindowToWorkspaceDown"
     },
     {
-      "binding" : "Unassigned",
+      "binding" : "Control+Command+K",
       "id" : "moveColumnToWorkspaceUp"
     },
     {
-      "binding" : "Unassigned",
+      "binding" : "Control+Command+J",
       "id" : "moveColumnToWorkspaceDown"
     },
     {
@@ -122,11 +130,11 @@
       "id" : "move.left"
     },
     {
-      "binding" : "Control+Command+J",
+      "binding" : "Unassigned",
       "id" : "move.down"
     },
     {
-      "binding" : "Control+Command+K",
+      "binding" : "Unassigned",
       "id" : "move.up"
     },
     {
@@ -218,7 +226,7 @@
       "id" : "balanceSizes"
     },
     {
-      "binding" : "Option+Space",
+      "binding" : "Unassigned",
       "id" : "openCommandPalette"
     },
     {
@@ -226,36 +234,35 @@
       "id" : "raiseAllFloatingWindows"
     },
     {
-      "binding" : "Shift+Command+A",
-      "id" : "toggleFocusedWindowFloating"
-    },
-    {
-      "binding" : "Command+A",
-      "id" : "assignFocusedWindowToScratchpad"
-    },
-    {
-      "binding" : "Command+S",
-      "id" : "toggleScratchpadWindow"
+      "binding" : "Unassigned",
+      "id" : "openMenuAnywhere"
     },
     {
       "binding" : "Unassigned",
-      "id" : "openMenuAnywhere"
+      "id" : "toggleQuakeTerminal"
     },
     {
       "binding" : "Unassigned",
       "id" : "toggleWorkspaceLayout"
     },
     {
-      "binding" : "Command+O",
+      "binding" : "Unassigned",
       "id" : "toggleOverview"
     }
   ],
   "mouseWarpAxis" : "vertical",
   "moveMouseToFocusedWindow" : true,
+  "niriColumnWidthPresets" : [
+    0.33333333333333331,
+    0.5,
+    0.66000000000000003,
+    1
+  ],
   "outerGapBottom" : 0,
   "outerGapLeft" : 0,
   "outerGapRight" : 0,
   "outerGapTop" : 0,
+  "quakeTerminalEnabled" : false,
   "quakeTerminalHeightPercent" : 80,
   "quakeTerminalOpacity" : 0.5,
   "quakeTerminalWidthPercent" : 80,

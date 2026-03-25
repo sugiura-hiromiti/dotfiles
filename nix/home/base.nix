@@ -247,6 +247,9 @@ in
         features = {
           web_search_rrequests = true;
         };
+        sandbox_workspace_write = {
+          network_access = true;
+        };
         tui = {
           notifications = true;
         };

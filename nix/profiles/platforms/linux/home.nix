@@ -2,6 +2,7 @@
   pkgs,
   user,
   theme,
+  has_gui,
   lib,
   ...
 }:
@@ -615,13 +616,18 @@ in
     };
   };
 
-#  dconf = {
-#    settings = {
-#      "org/gnome/desktop/interface" = {
-#        color-scheme = "prefer-" + theme;
-#      };
-#    };
-#  };
+  dconf =
+    {
+      true = {
+        settings = {
+          "org/gnome/desktop/interface" = {
+            color-scheme = "prefer-" + theme;
+          };
+        };
+      };
+      false = { };
+    }
+    .${has_gui};
 
   # systemd = {
   #   user = {

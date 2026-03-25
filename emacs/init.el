@@ -8,7 +8,8 @@
 	select-enable-clipboard t
 	make-backup-files nil
 	global-auto-revert-non-file-buffers t
-	which-key-idle-delay 0.1)
+	which-key-idle-delay 0.1
+	text-mode-ispell-word-completion nil)
 
 ;; 履歴
 (savehist-mode 1)
@@ -17,8 +18,6 @@
 (pixel-scroll-precision-mode 1)
 (electric-pair-mode 1)
 (repeat-mode 1)
-
-(which-key-mode 1)
 
 (require 'package)
 (setq package-archives
@@ -32,6 +31,12 @@
 
 (require 'use-package)
 (setq use-package-always-ensure t)
+
+(which-key-mode 1)
+
+(use-package  exec-path-from-shell
+  :custom
+  (exec-path-from-shell-shell-name "/run/current-system/sw/bin/nu"))
 
 (use-package vertico
 	:init
@@ -56,28 +61,50 @@
 (use-package consult)
 (use-package orderless
   :custom
-  (completion-styles '(orderless basic))
+  (completion-styles '(orderless flex basic))
 		     (completion-category-defaults nil)
-		     (completion-category-overrides '((file (styles partial-completion basic)))))
-(use-package embark)
+		     (completion-category-overrides '((file (styles partial-completion basic))))
+		     ;(completion-pcm-leading-wildcard t)
+		     )
+(use-package embark
+  :bind
+  (("C-." . embark-act)
+   ("C-;" . embark-dwim)
+   ("C-h B" . embark-bindings))
+  :init
+  (setopt prefix-help-command #'embark-prefix-help-command))
 (use-package embark-consult
 	:after (embark consult))
 (use-package corfu
 	:custom
 	(corfu-auto t)
+	(corfu-auto-prefix 1)
+	(corfu-auto-delay 0.01)
 	(corfu-cycle t)
+	(corfu-quit-at-boundary nil)
+	;(corfu-quit-no-match nil)
+	(corfu-popupinfo-delay 0.01)
+	(corfu-popupinfo-max-height 80)
+	(corfu-count 40)
+	(corfu-max-width 100)
+	(corfu-left-margin-width 0.0)
+	(corfu-right-margin-width 0.0)
 	:init
-	(global-corfu-mode 1))
+	(global-corfu-mode 1)
+	(corfu-history-mode)
+	(corfu-popupinfo-mode))
+(use-package nerd-icons-corfu
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 (use-package cape)
 (context-menu-mode t)
-(setopt completion-styles '(basic substring partial-completion flex)
-	completion-ignore-case t
+(setopt completion-ignore-case t
 	enable-recursive-minibuffers t
 	read-extended-command-predicate #'command-completion-default-include-p
 	minibuffer-prompt-properties '(read-only t
 						cursor-intangible t
-						face mimibuffer-prompt)
-)
+						face minibuffer-prompt)
+	)
 (minibuffer-depth-indicate-mode 1)
 
 (add-hook 'rust-ts-mode-hook #'eglot-ensure)
@@ -116,9 +143,9 @@
   :hook (prog-mode . rainbow-delimiters-mode))
 (use-package catppuccin-theme
   :config (load-theme 'catppuccin :no-confirm)
+  (catppuccin-reload)
   :custom
-  (catppuccin-flavor 'frappe)
-  (catppuccin-reload))
+  (catppuccin-flavor 'frappe))
 
 ;; 編集/移動
 (use-package avy)
@@ -166,7 +193,7 @@
      '("," . puni-mark-list-around-point)
      '("." . puni-mark-sexp-around-point)
      '("a" . meow-append)
-     '("A" . meow-open-below)
+     ;'("A" . meow-open-below)
      '("b" . meow-back-word)
      '("B" . meow-back-symbol)
      '("c" . meow-change)
@@ -179,7 +206,7 @@
      '("h" . meow-left)
      '("H" . meow-left-expand)
      '("i" . meow-insert)
-     '("I" . meow-open-above)
+     ;'("I" . meow-open-above)
      '("j" . meow-next)
      '("J" . meow-next-expand)
      '("k" . meow-prev)
@@ -188,8 +215,10 @@
      '("L" . meow-right-expand)
      '("m" . meow-join)
      '("n" . meow-search)
-     '("o" . meow-block)
-     '("O" . meow-to-block)
+     ;'("o" . meow-block)
+     ;'("O" . meow-to-block)
+     '("o" . meow-open-below)
+     '("O" . meow-open-above)
      '("p" . meow-yank)
      '("q" . meow-goto-line)
      '("r" . meow-reverse)
@@ -207,13 +236,16 @@
   (my/meow-setup)
   (meow-global-mode 1)
   :custom
-  (setopt meow-use-clipboard t))
+  (meow-use-clipboard t))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages nil))
+ '(package-selected-packages
+   '(avy cape catppuccin-theme corfu embark-consult exec-path-from-shell
+	 magit marginalia meow nerd-icons nerd-icons-corfu orderless
+	 org-modern puni rainbow-delimiters vertico)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

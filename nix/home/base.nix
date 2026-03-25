@@ -75,7 +75,31 @@ in
   programs = {
     emacs = {
       enable = true;
-      package = pkgs.emacs-pgtk;
+      package = (pkgs.emacsPackagesFor pkgs.emacs-pgtk).emacsWithPackages (epkgs: [
+        epkgs.tree-sitter-langs
+        (epkgs.treesit-grammars.with-grammars (grammars: [
+          grammars.tree-sitter-rust
+          grammars.tree-sitter-typescript
+          grammars.tree-sitter-haskell
+          grammars.tree-sitter-json
+          grammars.tree-sitter-toml
+          grammars.tree-sitter-nu
+          grammars.tree-sitter-csv
+          grammars.tree-sitter-diff
+          grammars.tree-sitter-gitcommit
+          grammars.tree-sitter-gitignore
+          grammars.tree-sitter-json
+          grammars.tree-sitter-kdl
+          grammars.tree-sitter-lua
+          grammars.tree-sitter-markdown
+          grammars.tree-sitter-markdown-inline
+          grammars.tree-sitter-nix
+          grammars.tree-sitter-sql
+          grammars.tree-sitter-yaml
+          grammars.tree-sitter-tsx
+          grammars.tree-sitter-html
+        ]))
+      ]);
     };
     firefox = {
       enable = true;
@@ -424,7 +448,6 @@ in
     emacs = {
       enable = true;
       startWithUserSession = "graphical";
-      package = pkgs.emacs-pgtk;
       client = {
         enable = true;
       };

@@ -390,10 +390,14 @@ in
           lockScreenBlur = 0.5;
         };
         wallpaper = {
-          directory = (homeDir.content + "/Downloads/media/wallpapers/");
+          # directory = (homeDir.content + "/Downloads/media/wallpapers/");
           overviewEnabled = true;
           automationEnabled = true;
           overviewTing = 0.22;
+          useWallhaven = true;
+          wallhavenSorting = "hot";
+          wallhavenCategories = "010";
+          wallhavenPurity = "010";
         };
         appLauncher = {
           enableClipboardHistory = true;

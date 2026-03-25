@@ -10,3 +10,6 @@
 (require 'init-search)
 (require 'init-edit)
 (require 'init-lsp)
+(require 'init-navi)
+(require 'init-misc)
+(require 'init-ts)

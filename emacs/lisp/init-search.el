@@ -20,7 +20,10 @@
 (use-package marginalia
 	:init
 	(marginalia-mode 1))
-(use-package consult)
+(use-package consult
+  :config
+  (setq xref-show-xrefs-function #'consult-xref
+		  xref-show-definitions-function #'consult-xref))
 (use-package orderless
   :custom
   (completion-styles '(orderless flex basic))
@@ -36,7 +39,13 @@
   :init
   (setopt prefix-help-command #'embark-prefix-help-command))
 (use-package embark-consult
-	:after (embark consult))
+  :after (embark consult))
+(use-package consult-eglot
+  :after (consult eglot))
+(use-package consult-eglot-embark
+  :after (embark consult-eglot)
+  :config
+  (consult-eglot-embark-mode 1))
 (use-package corfu
 	:custom
 	(corfu-auto t)

@@ -13,6 +13,12 @@
 	which-key-idle-delay 0.1
 	text-mode-ispell-word-completion nil)
 
+(when (fboundp 'editorconfig-mode)
+	(editorconfig-mode 1))
+(setq whitespace-display-mappings
+	'((tab-mark ?\t [?\│ ?\t] [?\t ?\t])))
+(global-whitespace-mode 1)
+
 ;; 履歴
 (savehist-mode 1)
 (recentf-mode 1)

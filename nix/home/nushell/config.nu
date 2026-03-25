@@ -81,7 +81,7 @@ def u [] {
 	let who = whoami
 	let theme = (hour | if 5 < $in and $in < 17 { 'light' } else { 'dark' })
 	let has_gui = if (wh dconf | is-empty) { false } else { true }
-	echo $'{}:{ user = "($who)"; theme = "($theme)"; has_gui = ($has_gui);}' | save -f secret.nix
+	echo $'{}:{ user = "($who)"; theme = "($theme)"; has_gui = "($has_gui)";}' | save -f secret.nix
 	sudo -v
 	nix run .#update
 	dirs drop

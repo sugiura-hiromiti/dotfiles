@@ -81,7 +81,6 @@ in
           grammars.tree-sitter-rust
           grammars.tree-sitter-typescript
           grammars.tree-sitter-haskell
-          grammars.tree-sitter-json
           grammars.tree-sitter-toml
           grammars.tree-sitter-nu
           grammars.tree-sitter-csv
@@ -130,20 +129,45 @@ in
             # packages = with pkgs.nur.repos.rycee.firefox-addons; [ vimium-c ];
           };
           settings = {
-            "browser.startup.homepage" = "https://www.google.com";
-            "browser.toolbars.bookmarks.visibility" = "never";
-            "browser.bookmarks.restore_default_bookmarks" = false;
-            "browser.bookmarks.showMobileBookmarks" = false;
-            "browser.crashReports.unsubmittedCheck.autoSubmit2" = true;
-            "browser.search.region" = "US";
-            "browser.toolbarbuttons.introduced.sidebar-button" = false;
-            "sidebar.main.tools" = "syncedtabs,bookmarks,passwords";
-            "sidebar.verticalTabs" = false;
-            "sidebar.visibility" = "hide-sidebar";
-            "widget.use-xdg-desktop-portal.file-picker" = 1;
-            "widget.use-xdg-desktop-portal.mime-handler" = 1;
-            "widget.use-xdg-desktop-portal.settings" = 1;
-            "widget.use-xdg-desktop-portal.open-url" = 1;
+            browser = {
+              startup = {
+                page = 3;
+                homepage = "https://www.google.com";
+              };
+              toolbars = "never";
+              bookmarks = {
+                restore_default_bookmarks = false;
+                showMobileBookmarks = false;
+              };
+              crashReports = {
+                unsubmittedCheck = {
+                  autoSubmit2 = true;
+                };
+              };
+              search = {
+                region = "US";
+              };
+              toolbarbuttons = {
+                introduced = {
+                  sidebar-button = false;
+                };
+              };
+              sidebar = {
+                main = {
+                  tools = "syncedtabs,bookmarks,passwords";
+                };
+                verticalTabs = false;
+                visibility = "hide-sidebar";
+              };
+              widget = {
+                use-xdg-desktop-portal = {
+                  file-picker = 1;
+                  mime-handler = 1;
+                  settings = 1;
+                  open-url = 1;
+                };
+              };
+            };
           };
         };
       };

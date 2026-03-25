@@ -1,10 +1,24 @@
 ;;; -*- lexical-binding: t; -*-
 
+(set-language-environment "Utf-8")
+(prefer-coding-system 'utf-8-unix)
+
 (setopt inhibit-startup-screen t
 	inhibit-startup-message t
 	inhibit-scratch-message nil
-	display-line-numbers-type 'relative)
+	display-line-numbers-type 'relative
+	indent-tabs-mode t
+	tab-width 3
+	tab-bar-show 1
+	)
+(setq whitespace-style '(face tabs tab-mark)
+		whitespace-display-mappings
+		'((tab-mark ?\t [?\│ ?\t] [?\t ?\t])))
+(when (fboundp 'editorconfig-mode)
+  (editorconfig-mode 1))
+(global-whitespace-mode 1)
 
+(tab-bar-mode)
 (global-display-line-numbers-mode 1)
 (global-hl-line-mode 1)
 
@@ -33,7 +47,20 @@
 (use-package catppuccin-theme
   :config (load-theme 'catppuccin :no-confirm)
   (catppuccin-reload)
+  )
+(use-package auto-dark
   :custom
-  (catppuccin-flavor 'frappe))
+  (auto-dark-themes '((catppuccin) (catppuccin)))
+  :hook
+  (auto-dark-dark-mode
+	. (lambda ()
+		 (setq catppuccin-flavor 'frappe)
+		 (catppuccin-reload)))
+  (auto-dark-light-mode
+	. (lambda ()
+		 (setq catppuccin-flavor 'latte)
+		 (catppuccin-reload)))
+  :init
+  (auto-dark-mode 1))
 
 (provide 'init-ui)

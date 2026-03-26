@@ -598,9 +598,9 @@ in
       defaultApplications = {
         "inode/directory" = "yazi.desktop";
         "text/uri-list" = "yazi.desktop";
-        "video/*" = "zen-twilight.desktop";
-        "image/*" = "zen-twilight.desktop";
-        "audio/*" = "zen-twilight.desktop";
+        "video/*" = "firefox.desktop";
+        "image/*" = "firefox.desktop";
+        "audio/*" = "firefox.desktop";
       };
     };
     portal = {

@@ -88,17 +88,17 @@
         };
       };
     };
-    zen-browser = {
-      url = "github:0xc000022070/zen-browser-flake";
-      inputs = {
-        nixpkgs = {
-          follows = "nixpkgs";
-        };
-        home-manager = {
-          follows = "home-manager";
-        };
-      };
-    };
+    # zen-browser = {
+    #   url = "github:0xc000022070/zen-browser-flake";
+    #   inputs = {
+    #     nixpkgs = {
+    #       follows = "nixpkgs";
+    #     };
+    #     home-manager = {
+    #       follows = "home-manager";
+    #     };
+    #   };
+    # };
   };
   outputs =
     inputs@{
@@ -115,7 +115,7 @@
       # niri-flake,
       noctalia,
       noctalia-qs,
-      zen-browser,
+      # zen-browser,
     }:
     let
       lib = nixpkgs.lib;
@@ -210,7 +210,7 @@
             catppuccin.homeModules.catppuccin
             # paneru.homeModules.paneru
             noctalia.homeModules.default
-            zen-browser.homeModules.twilight
+            # zen-browser.homeModules.twilight
           ];
         };
       nixos-conf =

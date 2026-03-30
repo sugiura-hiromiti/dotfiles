@@ -332,7 +332,7 @@ in
           barType = "floating";
           position = "right";
           density = "spacious";
-          fontScale = 2;
+          fontScale = 1;
           floating = true;
           useSeparateOpacity = true;
           backgroundOpacity = 0.0;

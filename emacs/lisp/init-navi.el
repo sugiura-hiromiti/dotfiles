@@ -3,6 +3,7 @@
 (winner-mode 1)
 
 (use-package pretty-hydra
+	:after (consult eglot)
 	:config
 	(pretty-hydra-define meta-navigation
 							(:color amaranth :quit-key "<escape>")

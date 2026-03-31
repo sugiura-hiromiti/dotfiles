@@ -2,8 +2,9 @@
 
 (winner-mode 1)
 
-(use-package pretty-hydra)
-(pretty-hydra-define meta-navigation
+(use-package pretty-hydra
+	:config
+	(pretty-hydra-define meta-navigation
 							(:color amaranth :quit-key "<escape>")
 							("window/navi"
 							 (("h" windmove-left "left")
@@ -41,7 +42,7 @@
 							  ("m" (switch-to-buffer-other-tab) "buffer switch")
 							  )
 							  ))
-(pretty-hydra-define command-palette
+	(pretty-hydra-define command-palette
 							(:color blue)
 							("document"
 							 (("l" xref-find-references "list")
@@ -62,7 +63,7 @@
 							 (("s" save-some-buffers "save")
 							  ("e" eval-buffer "eval")
 							  ("t" mistty "terminal")
-							  ("R" my/reload-init-file "reload"))))
+							  ("R" my/reload-init-file "reload")))))
 
 (defun my/reload-init-file ()
   "init.elを再読み込みする"

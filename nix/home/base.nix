@@ -292,6 +292,8 @@ in
         model_reasoning_effort = "xhigh";
         hide_agent_reasoning = true;
         network_access = true;
+        approval_policy = "never";
+        sandbox_mode = "workspace-write";
         features = {
           web_search_rrequests = true;
         };
@@ -312,6 +314,7 @@ in
               "--context"
               "codex"
             ];
+            startup_timeout_sec = 30;
           };
           github = {
             url = "https://api.githubcopilot.com/mcp";

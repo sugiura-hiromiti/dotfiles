@@ -63,7 +63,7 @@
 							 "misc"
 							 (("s" save-some-buffers "save")
 							  ("e" eval-buffer "eval")
-							  ("t" mistty "terminal")
+							  ("t" my/toggle-eat-scratchpad "terminal")
 							  ("R" my/reload-init-file "reload")))))
 
 (defun my/reload-init-file ()

@@ -95,6 +95,6 @@
       ;; :checkThirdParty "Apply"
       )
      :format
-     (:enable :json-false)))))
+     (:enable :json-false))))
 
 (provide 'init-lsp)

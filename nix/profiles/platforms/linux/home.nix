@@ -377,10 +377,11 @@ in
                 id = "Volume";
               }
               { id = "Brightness"; }
-              {
-                id = "ControlCenter";
-                useDistroLogo = true;
-              }
+              # {
+              #   id = "ControlCenter";
+              #   useDistroLogo = true;
+              # }
+              { id = "WallpaperSelector"; }
             ];
           };
         };

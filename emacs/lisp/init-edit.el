@@ -1,6 +1,5 @@
 ;;; -*- lexical-binding: t; -*-
 
-(use-package avy)
 (use-package puni
   :init
   (puni-global-mode))

@@ -20,7 +20,7 @@ input {
             // layout "us,ru"
             // options "grp:win_space_to
 			}
-        repeat-delay            40000
+        repeat-delay 5000
         repeat-rate 250
 
         // Enable numlock on startup, omitting this setting disables it.
@@ -46,7 +46,7 @@ input {
 
     mouse {
         // off
-        natural-scroll
+        // natural-scroll
         // accel-speed 1.0
         // accel-profile "flat"
         // scroll-method "no-scroll"
@@ -681,12 +681,12 @@ binds {
     // * adjust width as a percentage of screen width: "-10%" or "+10%"
     // Pixel sizes use logical, or scaled, pixels. I.e. on an output with scale 2.0,
     // set-column-width "100" will make the column occupy 200 physical screen pixels.
-    Mod+Minus { set-column-width "-10%"; }
-    Mod+Equal { set-column-width "+10%"; }
+    Mod+Minus { set-column-width "-5%"; }
+    Mod+Equal { set-column-width "+5%"; }
 
     // Finer height adjustments when in column with other windows.
-    Mod+Shift+Minus { set-window-height "-10%"; }
-    Mod+Shift+Equal { set-window-height "+10%"; }
+    Mod+Shift+Minus { set-window-height "-5%"; }
+    Mod+Shift+Equal { set-window-height "+5%"; }
 
     // Move the focused window between the floating and the tiling layout.
     // Mod+V        { toggle-window-floating; }

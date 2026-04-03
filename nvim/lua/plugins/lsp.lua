@@ -6,6 +6,7 @@ local on_attach = function(client, bufnr)
 	-- 	vim.notify 'inlay_hint not'
 	-- end
 end
+
 vim.g.rustaceanvim = {
 	tools = { float_win_config = { auto_focus = true } },
 	server = {

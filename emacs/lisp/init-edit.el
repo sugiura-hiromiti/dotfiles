@@ -1,9 +1,13 @@
 ;;; -*- lexical-binding: t; -*-
 
+(keymap-global-set "S-<down>" #'forward-paragraph)
+(keymap-global-set "S-<up>" #'backward-paragraph)
+
 (use-package puni
   :init
   (puni-global-mode))
 (use-package meow
+  :after (pretty-hydra)
   :config
   (defun my/meow-setup ()
     (setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
@@ -38,11 +42,13 @@
      '("9" . meow-expand-9)
      '("0" . meow-expand-0)
      '("-" . negative-argument)
-     '("'" . repeat)
+     ;; '("'" . repeat)
      ;;'("," . meow-inner-of-thing)
      ;;'("." . meow-bounds-of-thing)
+		 '(":" . execute-extended-command)
+		 '(";" . eval-expression)
      '("," . puni-mark-list-around-point)
-		 '("." . puni-mark-sexp-around-point)
+	  '("." . puni-mark-sexp-around-point)
      '("RET" . command-palette/body)
 	  '("TAB" . meta-navigation/body)
 	  '("<escape>" . ignore)

@@ -3,7 +3,6 @@
 (winner-mode 1)
 
 (use-package pretty-hydra
-	:after (consult eglot)
 	:config
 	(pretty-hydra-define meta-navigation
 							(:color amaranth :quit-key "<escape>")
@@ -42,7 +41,8 @@
 							  ("<" (tab-move -1) "left")
 							  ("m" (switch-to-buffer-other-tab) "buffer switch")
 							  )
-							  ))
+								))
+
 	(pretty-hydra-define command-palette
 							(:color blue)
 							("document"
@@ -63,8 +63,9 @@
 							 "misc"
 							 (("s" save-some-buffers "save")
 							  ("e" eval-buffer "eval")
-							  ("t" my/toggle-eat-scratchpad "terminal")
-							  ("R" my/reload-init-file "reload")))))
+							  ("t" eat "terminal")
+								 ("R" my/reload-init-file "reload")
+								 ("j" majutsu "jj")))))
 
 (defun my/reload-init-file ()
   "init.elを再読み込みする"

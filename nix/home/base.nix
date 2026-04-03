@@ -471,14 +471,14 @@ in
       initLua = ./yazi/init.lua;
     };
   };
-  # services = {
-  #   emacs = {
-  #     enable = true;
-  #     startWithUserSession = "graphical";
-  #     client = {
-  #       enable = true;
-  #     };
-  #     # defaultEditor = true;
-  #   };
-  # };
+  services = {
+    emacs = {
+      enable = true;
+      startWithUserSession = "graphical";
+      client = {
+        enable = true;
+      };
+      # defaultEditor = true;
+    };
+  };
 }

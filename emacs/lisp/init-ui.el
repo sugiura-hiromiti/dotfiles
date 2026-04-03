@@ -19,12 +19,12 @@
 (global-whitespace-mode 1)
 
 (tab-bar-mode)
-(global-display-line-numbers-mode 1)
+;; (global-display-line-numbers-mode 1)
 (global-hl-line-mode 1)
 
 (set-face-attribute 'default nil
 		    :family "Maple Mono NF CN"
-		    :height 130
+		    :height 110
 		    :weight 'extra-light)
 (set-face-attribute 'bold nil
 		    :weight 'light)
@@ -63,4 +63,25 @@
   :init
   (auto-dark-mode 1))
 
+(use-package breadcrumb
+  :ensure t
+  :init
+  (breadcrumb-mode 1))
+
+(after! doom-modeline
+  (doom-modeline-def-segment breadcrumbs
+    "Project/Imenu breadcrumbs for doom-modeline."
+    (when (and (bound-and-true-p breadcrumb-mode)
+               (not doom-modeline--limited-width-p))
+      (let* ((proj  (ignore-errors (breadcrumb-project-crumbs)))
+             (imenu (ignore-errors (breadcrumb-imenu-crumbs)))
+             (items (delq nil (list proj imenu))))
+        (when items
+          (concat
+           (doom-modeline-spc)
+           (mapconcat #'identity items " › ")
+           (doom-modeline-spc))))))
+
+  ;; buffer-info の直後に breadcrumbs を差し込む
+  (doom-modeline-add-segment 'breadcrumbs 'buffer-info :after 'main))
 (provide 'init-ui)

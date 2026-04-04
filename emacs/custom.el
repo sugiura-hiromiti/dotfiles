@@ -4,7 +4,14 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(package-selected-packages nil)
+ '(package-selected-packages
+	  '(apheleia auto-dark avy breadcrumb cape catppuccin-theme
+			colorful-mode consult-eglot-embark corfu diff-hl
+			doom-modeline eat embrace envrc exec-path-from-shell
+			haskell-ts-mode hl-todo ligature majutsu marginalia
+			md-ts-mode meow nerd-icons-corfu nix-ts-mode nushell-ts-mode
+			orderless org-modern popper pretty-hydra puni
+			rainbow-delimiters tree-sitter-langs vertico))
  '(package-vc-selected-packages '((majutsu :url "https://github.com/0WD0/majutsu"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

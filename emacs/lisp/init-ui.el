@@ -125,9 +125,9 @@
   :init
   (setq popper-reference-buffers
 		  '("^\\*Messages\\*"
-			 "^\\*eat\\*.*"
 			 "\\*scratch\\*"
-			 eat-mode))
+			 help-mode
+			 compilation-mode))
   :config
   (popper-mode 1)
   (popper-echo-mode 1)
@@ -137,6 +137,6 @@
 	 (local-set-key (kbd "C-'") #'popper-cycle))
   (add-hook 'popper-open-popup-hook #'my/popper-popup-local-keys))
 
-(setq popper-display-function #'display-buffer-in-child-frame)
+(global-set-key (kbd "C-,") #'popper-toggle)
 
 (provide 'init-ui)

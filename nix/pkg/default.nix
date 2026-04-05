@@ -26,4 +26,10 @@ with pkgs;
   lazyjj
   imagemagick
   python3
+  grim
+  slurp
+  tesseract
+  zbar
+  ffmpeg
+  gifski
 ]

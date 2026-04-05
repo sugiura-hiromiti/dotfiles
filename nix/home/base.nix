@@ -73,6 +73,7 @@ in
     });
   };
   programs = {
+	 translate-shell={enable=true;};
     emacs = {
       enable = true;
       package = (pkgs.emacsPackagesFor pkgs.emacs-pgtk).emacsWithPackages (epkgs: [

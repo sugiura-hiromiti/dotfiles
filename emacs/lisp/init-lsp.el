@@ -6,8 +6,11 @@
 			(rust-ts-mode . eglot-ensure)
 			(lua-mode . eglot-ensure)
 			(lua-ts-mode . eglot-ensure)
-			)
-  )
+			(haskell-ts-mode . eglot-ensure)
+			(nix-ts-mode . eglot-ensure))
+  :config
+  (add-to-list 'eglot-server-programs
+					'(nix-ts-mode . ("nil"))))
 
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs

@@ -44,4 +44,5 @@
   (exec-path-from-shell-initialize))
 
 (which-key-mode 1)
+
 (provide 'init-core)

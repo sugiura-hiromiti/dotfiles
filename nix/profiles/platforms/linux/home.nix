@@ -323,6 +323,10 @@ in
             enabled = true;
             sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
           };
+			 screen-toolkit={
+				enabled=true;
+				sourceUrl="https://github.com/noctalia-dev/noctalia-plugins";
+			 };
         };
         version = 2;
       };

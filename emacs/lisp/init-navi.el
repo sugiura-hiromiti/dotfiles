@@ -5,7 +5,7 @@
 (use-package pretty-hydra
   :config
   (pretty-hydra-define meta-navigation
-	 (:color amaranth :quit-key "<escape>")
+	 (:color pink :quit-key "<escape>")
 	 ("window/navi"
 	  (("h" windmove-left "left")
 		("j" windmove-down "down")
@@ -65,8 +65,10 @@
 		("e" eval-buffer "eval")
 		("x" eat "terminal")
 		("R" my/reload-init-file "reload")
-		("j" majutsu "jj")
-		("t" popper-toggle "toggle")))))
+		("j" majutsu "jj"))
+	  "org"
+	  (("c" org-capture "capture")
+		("k" org-agenda "agenda")))))
 
 (defun my/reload-init-file ()
   "init.elを再読み込みする"

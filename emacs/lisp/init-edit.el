@@ -89,7 +89,7 @@
      '("r" . meow-reverse)
      '("s" . meow-kill)
      '("S" . puni-transpose)
-     '("t" . meow-till)
+     '("t" . comment-dw)
      '("u" . meow-undo)
      ;;'("w" . meow-mark-word)
      ;;'("W" . meow-mark-symbol)
@@ -105,6 +105,7 @@
 
 (with-eval-after-load 'meow
   (add-to-list 'meow-mode-state-list '(help-mode . normal))
-  (add-to-list 'meow-mode-state-list '(messages-buffer-mode . normal)))
+  (add-to-list 'meow-mode-state-list '(messages-buffer-mode . normal))
+  (add-to-list 'meow-mode-state-list '(compilation-mode . normal)))
 
 (provide 'init-edit)

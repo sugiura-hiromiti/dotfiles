@@ -12,3 +12,4 @@
 (require 'init-navi)
 (require 'init-misc)
 (require 'init-ts)
+(require 'init-org)

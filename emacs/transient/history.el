@@ -1,1 +1,4 @@
-((majutsu-dispatch nil))
+((majutsu-bookmark nil)
+ (majutsu-dispatch nil)
+ (majutsu-git-push-transient nil)
+ (majutsu-git-transient nil))

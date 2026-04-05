@@ -103,4 +103,8 @@
   :custom
   (meow-use-clipboard t))
 
+(with-eval-after-load 'meow
+  (add-to-list 'meow-mode-state-list '(help-mode . normal))
+  (add-to-list 'meow-mode-state-list '(messages-buffer-mode . normal)))
+
 (provide 'init-edit)

@@ -38,9 +38,6 @@
 (use-package nerd-icons
   :if (display-graphic-p))
 
-(use-package org-modern
-  :hook (org-mode . org-modern-mode))
-
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 

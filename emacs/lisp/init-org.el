@@ -27,4 +27,24 @@
          (file "~/Downloads/awa/org/reference.org")
          "* %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")))
 
+(setq org-refile-targets
+      '(("~/org/someday.org"  :maxlevel . 3)
+        ("~/org/reference.org" :maxlevel . 3)
+        ("~/org/journal.org"  :maxlevel . 3)))
+
+(setq org-refile-allow-creating-parent-nodes)
+(setq org-outline-path-complete-in-steps nil)
+(setq org-refile-use-outline-path 'file)
+
+(use-package org-modern
+  :hook ((org-mode . org-modern-mode)
+			(org-agenda-finalize . org-modern-agenda)))
+
+;; TODO: 設定つめる
+(use-package org-appear
+  :hook (org-mode . org-appear-mode))
+
+(with-eval-after-load 'org
+  (require 'org-tempo))
+
 (provide 'init-org)

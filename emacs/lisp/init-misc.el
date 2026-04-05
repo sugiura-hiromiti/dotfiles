@@ -25,4 +25,9 @@
   (add-hook 'flymake-diagnostic-functions #'hl-todo-flymake nil t)
   (flymake-mode 1))
 
+(use-package tinee
+  :vc (:url "https://codeberg.org/tusharhero/tinee.git")
+  :hook ((tinee-before-make-frame-hook . tinee-copy)
+			(tinee-after-make-frame-hook . (lambda () (insert (or (gui-selection-value) ""))))))
+
 (provide 'init-misc)

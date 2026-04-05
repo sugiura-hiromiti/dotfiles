@@ -11,8 +11,10 @@
 			haskell-ts-mode hl-todo ligature majutsu marginalia
 			md-ts-mode meow nerd-icons-corfu nix-ts-mode nushell-ts-mode
 			orderless org-modern popper pretty-hydra puni
-			rainbow-delimiters tree-sitter-langs vertico))
- '(package-vc-selected-packages '((majutsu :url "https://github.com/0WD0/majutsu"))))
+			rainbow-delimiters tinee tree-sitter-langs vertico))
+ '(package-vc-selected-packages
+	  '((tinee :url "https://codeberg.org/tusharhero/tinee.git")
+			(majutsu :url "https://github.com/0WD0/majutsu"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

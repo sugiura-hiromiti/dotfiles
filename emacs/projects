@@ -1,2 +1,3 @@
 ;;; -*- lisp-data -*-
-(("/home/a/.config/emacs/elpa/majutsu/"))
+(("/home/a/.config/emacs/elpa/tinee/")
+ ("/home/a/.config/emacs/elpa/majutsu/"))

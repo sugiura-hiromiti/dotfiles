@@ -469,10 +469,9 @@ binds {
     Mod+T hotkey-overlay-title="Open a Terminal" { spawn "wezterm" "start" "--class" "custom.term" "--always-new-process"; }
     Mod+Space repeat=false { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
     Mod+C repeat=false { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
-    Mod+Ctrl+Space repeat=false { spawn "noctalia-shell" "ipc" "call" "launcher" "emoji"; }
     Mod+Escape repeat=false { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
     Mod+N { spawn "noctalia-shell" "ipc" "call" "notifications" "dismissOldest"; }
-    // Mod+C repeat=false { spawn "vicinae" "vicinae://extensions/vicinae/clipboard/history"; }
+    Mod+E { spawn "emacsclient" "--eval" "'tinee'" "-a" "''"; }
     // Mod+M { spawn "kitten" "quick-access-terminal"; }
 
     // You can also use a shell. Do this if you need pipes, multiple commands, etc.

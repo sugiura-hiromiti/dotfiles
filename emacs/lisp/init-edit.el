@@ -89,7 +89,7 @@
      '("r" . meow-reverse)
      '("s" . meow-kill)
      '("S" . puni-transpose)
-     '("t" . comment-dw)
+     '("t" . comment-dwim)
      '("u" . meow-undo)
      ;;'("w" . meow-mark-word)
      ;;'("W" . meow-mark-symbol)

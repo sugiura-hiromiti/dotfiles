@@ -12,19 +12,19 @@
 
 (setq org-capture-templates
       '(("i" "Inbox" entry
-         (file "~/org/inbox.org")
+         (file "~/Downloads/awa/org/inbox.org")
          "* %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
 
         ("t" "Task" entry
-         (file "~/org/inbox.org")
+         (file "~/Downloads/awa/org/inbox.org")
          "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
 
         ("j" "Journal" entry
-         (file+olp+datetree "~/org/journal.org")
+         (file+olp+datetree "~/Downloads/awa/org/journal.org")
          "* %U %?\n")
 
         ("r" "Reference" entry
-         (file "~/org/reference.org")
+         (file "~/Downloads/awa/org/reference.org")
          "* %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")))
 
 (provide 'init-org)

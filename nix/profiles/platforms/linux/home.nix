@@ -386,6 +386,7 @@ in
               #   useDistroLogo = true;
               # }
               { id = "WallpaperSelector"; }
+				  {id="ScreenToolkit";}
             ];
           };
         };

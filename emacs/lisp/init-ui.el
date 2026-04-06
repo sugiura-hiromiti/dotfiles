@@ -6,7 +6,7 @@
 (setopt inhibit-startup-screen t
 		  inhibit-startup-message t
 		  inhibit-scratch-message nil
-		  display-line-numbers-type 'relative
+		  display-line-numbers-type t
 		  indent-tabs-mode t
 		  tab-width 3
 		  tab-bar-show 1
@@ -123,7 +123,9 @@
   (setq popper-reference-buffers
 		  '("^\\*Messages\\*"
 			 "\\*scratch\\*"
+			 "\\*eldoc\\*"
 			 help-mode
+			 eat-mode
 			 compilation-mode))
   :config
   (popper-mode 1)

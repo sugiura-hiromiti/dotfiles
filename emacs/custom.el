@@ -10,7 +10,7 @@
 			doom-modeline eat embrace envrc exec-path-from-shell
 			haskell-ts-mode hl-todo ligature majutsu marginalia
 			md-ts-mode meow nerd-icons-corfu nix-ts-mode nushell-ts-mode
-			orderless org-modern popper pretty-hydra puni
+			orderless org-appear org-modern popper pretty-hydra puni
 			rainbow-delimiters tinee tree-sitter-langs vertico))
  '(package-vc-selected-packages
 	  '((tinee :url "https://codeberg.org/tusharhero/tinee.git")

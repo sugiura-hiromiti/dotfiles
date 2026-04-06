@@ -49,7 +49,7 @@
 	  (("l" xref-find-references "list")
 		("f" xref-find-definitions "def")
 		("o" consult-eglot-symbols "outline")
-		("d" consult-flymake "diagnostic")
+		("d" my/consult-flymake-workspace "diagnostic")
 		("a" eglot-code-actions "actions")
 		("r" eglot-rename "rename")
 		("h" eldoc "hover")
@@ -69,6 +69,10 @@
 	  "org"
 	  (("c" org-capture "capture")
 		("k" org-agenda "agenda")))))
+
+(defun my/consult-flymake-workspace ()
+  (interactive)
+  (consult-flymake 1))
 
 (defun my/reload-init-file ()
   "init.elを再読み込みする"

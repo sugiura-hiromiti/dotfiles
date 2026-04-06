@@ -64,7 +64,9 @@
   :init
   (global-corfu-mode 1)
   (corfu-history-mode)
-  (corfu-popupinfo-mode))
+  (corfu-popupinfo-mode)
+  :config
+  (keymap-unset corfu-map "RET"))
 (use-package nerd-icons-corfu
   :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))

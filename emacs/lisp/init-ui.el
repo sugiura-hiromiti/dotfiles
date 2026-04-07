@@ -13,7 +13,9 @@
 		  )
 (setq whitespace-style '(face tabs tab-mark)
 		whitespace-display-mappings
-		'((tab-mark ?\t [?\│ ?\t] [?\t ?\t])))
+		'((tab-mark ?\t [?\│ ?\t] [?\t ?\t]))
+		;; flymake-show-diagnostics-at-end-of-line t
+		)
 (when (fboundp 'editorconfig-mode)
   (editorconfig-mode 1))
 (global-whitespace-mode 1)

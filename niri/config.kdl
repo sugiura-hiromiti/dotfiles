@@ -471,7 +471,6 @@ binds {
     Mod+C repeat=false { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
     Mod+Escape repeat=false { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
     Mod+N { spawn "noctalia-shell" "ipc" "call" "notifications" "dismissOldest"; }
-    Mod+E { spawn "emacsclient" "--eval" "'tinee'" "-a" "''"; }
     // Mod+M { spawn "kitten" "quick-access-terminal"; }
 
     // You can also use a shell. Do this if you need pipes, multiple commands, etc.

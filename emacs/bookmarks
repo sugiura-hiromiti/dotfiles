@@ -4,8 +4,8 @@
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
 (("org-capture-last-stored"
  (filename . "~/Downloads/awa/org/inbox.org")
- (front-context-string . "* compilation-mo")
- (rear-context-string . "un 18:29]\n:END:\n")
- (position . 636)
- (last-modified 27092 28492 203997 898000))
+ (front-context-string . "* TODO compilati")
+ (rear-context-string . "hu 17:06]\n:END:\n")
+ (position . 1245)
+ (last-modified 27095 28051 91402 220000))
 )

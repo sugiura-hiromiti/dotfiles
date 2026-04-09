@@ -58,7 +58,8 @@
 	  (("b" consult-buffer "buffer")
 		("i" consult-line "line")
 		("g" my/consult-ripgrep-current-dir "rg")
-		("p" consult-ripgrep "prj rg"))
+		("p" consult-ripgrep "prj rg")
+		("m" compile "compilation-mode"))
 	  "misc"
 	  (("s" save-some-buffers "save")
 		("e" eval-buffer "eval")

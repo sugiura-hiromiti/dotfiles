@@ -52,7 +52,7 @@
 	  '(";" . eval-expression)
      '("," . puni-mark-list-around-point)
 	  '("." . puni-mark-sexp-around-point)
-     '("RET" . command-palette/body)
+     ;; '("RET" . command-palette/body)
 	  '("TAB" . meta-navigation/body)
 	  '("<escape>" . ignore)
 	  '("a" . meow-append)
@@ -73,9 +73,9 @@
      '("i" . meow-insert)
 													 ;'("I" . meow-open-above)
      '("j" . meow-next)
-     '("J" . meow-next-expand)
+     '("J" . meow-next-expand) ;; 要らないかも
      '("k" . meow-prev)
-     '("K" . meow-prev-expand)
+     '("K" . meow-prev-expand) ;; 要らないかも
      '("l" . meow-right)
      '("L" . meow-right-expand)
      '("m" . meow-join)
@@ -102,6 +102,16 @@
   (meow-global-mode 1)
   :custom
   (meow-use-clipboard t))
+
+(defun my/meow-ret-dispatch ()
+  (interactive)
+  (cond
+	((derived-mode-p 'compilation-mode) (compile-goto-error))
+	((derived-mode-p 'grep-mode) (compile-goto-error))
+	((derived-mode-p 'occur-mode) (occur-mode-goto-occurrence))
+	(t (command-palette/body))))
+
+(define-key meow-normal-state-keymap (kbd "RET") #'my/meow-ret-dispatch)
 
 (with-eval-after-load 'meow
   (add-to-list 'meow-mode-state-list '(help-mode . normal))

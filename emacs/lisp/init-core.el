@@ -45,4 +45,13 @@
 
 (which-key-mode 1)
 
+(setq scroll-margin 0
+		scroll-conservatively 101
+		scroll-up-aggressively nil
+		scroll-down-aggressively nil
+		scroll-preserve-screen-position t)
+
+(setq compilation-scroll-output 'first-error
+		compilation-auto-jump-to-first-error t)
+
 (provide 'init-core)

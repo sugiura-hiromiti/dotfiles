@@ -133,10 +133,11 @@
   (popper-mode 1)
   (popper-echo-mode 1)
 
-  (defun my/popper-popup-local-keys ()
-	 "Popupばっふぁの中でだけ使うきーを設定"
-	 (local-set-key (kbd "C-'") #'popper-cycle))
-  (add-hook 'popper-open-popup-hook #'my/popper-popup-local-keys))
+  ;; (defun my/popper-popup-local-keys ()
+  ;; 	 "Popupばっふぁの中でだけ使うきーを設定"
+  ;; 	 (local-set-key (kbd "C-'") #'popper-cycle))
+  ;; 	(add-hook 'popper-open-popup-hook #'my/popper-popup-local-keys)
+  )
 
 (global-set-key (kbd "C-,") #'popper-toggle)
 

@@ -56,7 +56,6 @@
 		)
 	  "buf/file"
 	  (("b" consult-buffer "buffer")
-		("z" consult-fd "fd")
 		("i" consult-line "line")
 		("g" my/consult-ripgrep-current-dir "rg")
 		("p" consult-ripgrep "prj rg"))

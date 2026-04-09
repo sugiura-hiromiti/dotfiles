@@ -25,6 +25,28 @@
   (setq xref-show-xrefs-function #'consult-xref
 		  xref-show-definitions-function #'consult-xref
 		  consult-narrow-key "<"))
+
+(defvar my/consult-buffer-source-cwd-files
+  `(:name     "CWD files"
+				  :narrow   ?d
+				  :category file
+				  :face     consult-file
+				  :history  file-name-history
+				  :state    ,#'consult--file-state
+				  :items
+				  ,(lambda ()
+					  (let ((cwd (file-truename default-directory)))
+						 (mapcar (lambda (f) (expand-file-name f cwd))
+									;; dotfiles も出す / .git は除外
+									(let ((default-directory cwd))
+									  (process-lines
+										"fd" "--color=never" "--hidden" "--exclude" ".git" "--exclude" ".jj" ".")))))
+				  :action   ,#'find-file))
+
+(add-to-list 'consult-buffer-sources
+             'my/consult-buffer-source-cwd-files
+             'append)
+
 (use-package orderless
   :custom
   (completion-styles '(orderless flex basic))

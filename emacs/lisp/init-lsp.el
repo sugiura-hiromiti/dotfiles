@@ -104,4 +104,19 @@
   :config
   (apheleia-global-mode +1))
 
+(defun my/eglot-format-on-save ()
+  "eglot管理下では保存前に整形する"
+  (when (eglot-managed-p)
+	 (condition-case nil
+		  (eglot-format-buffer)
+		(error nil))))
+
+(defun my/eglot-setup-format-on-save ()
+  "eglot開始/終了にあわせてbuffer-local hookを出し入れする"
+  (if (eglot-managed-p)
+		(add-hook 'before-save-hook #'my/eglot-format-on-save nil t)
+	 (remove-hook 'before-save-hook #'my/eglot-format-on-save t)))
+
+(add-hook 'eglot-managed-mode-hook #'my/eglot-setup-format-on-save)
+
 (provide 'init-lsp)

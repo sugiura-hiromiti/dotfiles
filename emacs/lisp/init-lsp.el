@@ -100,9 +100,6 @@
      :format
      (:enable :json-false))))
 
-(use-package apheleia
-  :config
-  (apheleia-global-mode +1))
 
 (defun my/eglot-format-on-save ()
   "eglot管理下では保存前に整形する"
@@ -118,5 +115,15 @@
 	 (remove-hook 'before-save-hook #'my/eglot-format-on-save t)))
 
 (add-hook 'eglot-managed-mode-hook #'my/eglot-setup-format-on-save)
+
+(use-package apheleia
+  :config
+  (apheleia-global-mode +1))
+
+(use-package elisp-autofmt
+  :hook (emacs-lisp-mode . elisp-autofmt-mode)
+  :config
+  (setq elisp-autofmt-on-save-p 'always))
+
 
 (provide 'init-lsp)

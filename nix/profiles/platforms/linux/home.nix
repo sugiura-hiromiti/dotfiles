@@ -15,12 +15,15 @@ in
   programs.nushell.environmentVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
 
   home.packages = with pkgs; [
+    xwayland-satellite
+    geonkick
     clang
     wl-clipboard-rs
-    wf-recorder
-    unixtools.xxd
     ddcutil
     evolution-data-server
+    synthv1
+    lsp-plugins
+    calf
   ];
 
   # progerams = {

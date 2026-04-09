@@ -21,7 +21,6 @@
     # tart
     # raycast
     betterdisplay
-    reaper
     ghostty-bin
     # paneru.packages.${pkgs.system}.paneru
   ];

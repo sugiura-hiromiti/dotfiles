@@ -32,4 +32,6 @@ with pkgs;
   zbar
   ffmpeg
   gifski
+  reaper
+  dexed
 ]

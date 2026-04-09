@@ -330,9 +330,9 @@
     #     extraArgs = "--optimise";
     #   };
     # };
-    # xwayland = {
-    #   enable = true;
-    # };
+    xwayland = {
+      enable = true;
+    };
     niri = {
       enable = true;
       # package = pkgs.niri-unstable;

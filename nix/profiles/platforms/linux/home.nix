@@ -26,6 +26,9 @@ in
     calf
     helm
     cardinal
+    grim
+    slurp
+    dexed
   ];
 
   # progerams = {

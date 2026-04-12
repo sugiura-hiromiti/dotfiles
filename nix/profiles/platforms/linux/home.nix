@@ -24,6 +24,8 @@ in
     synthv1
     lsp-plugins
     calf
+    helm
+    cardinal
   ];
 
   # progerams = {

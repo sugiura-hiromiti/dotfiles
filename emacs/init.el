@@ -5,7 +5,6 @@
 (when (file-exists-p custom-file)
   (load custom-file nil 'nomessage))
 
-
 (require 'init-core)
 (require 'init-ui)
 (require 'init-search)

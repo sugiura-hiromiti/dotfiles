@@ -1,5 +1,6 @@
 ((majutsu-bookmark nil)
  (majutsu-dispatch nil)
+ (majutsu-git-clone-transient nil)
  (majutsu-git-push-transient nil)
  (majutsu-git-transient nil)
  (majutsu-log nil))

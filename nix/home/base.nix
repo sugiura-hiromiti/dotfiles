@@ -73,7 +73,9 @@ in
     });
   };
   programs = {
-	 translate-shell={enable=true;};
+    translate-shell = {
+      enable = true;
+    };
     emacs = {
       enable = true;
       package = (pkgs.emacsPackagesFor pkgs.emacs-pgtk).emacsWithPackages (epkgs: [
@@ -284,7 +286,7 @@ in
     };
     codex = {
       enable = true;
-      custom-instructions = ''
+      context = ''
         if command execution failed and repository contains flake.nix at root, retry with nix's devshell or execute via `direnv exec`.
         use serena if possible.
       '';

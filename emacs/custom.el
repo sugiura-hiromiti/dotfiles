@@ -12,9 +12,10 @@
 			marginalia md-ts-mode meow nerd-icons-corfu nix-ts-mode
 			nushell-ts-mode orderless org-appear org-modern popper
 			pretty-hydra puni rainbow-delimiters tinee tree-sitter-langs
-			vertico))
+			ts-movement vertico))
  '(package-vc-selected-packages
-	  '((tinee :url "https://codeberg.org/tusharhero/tinee.git")
+	  '((ts-movement :url "https://github.com/haritkapadia/ts-movement")
+			(tinee :url "https://codeberg.org/tusharhero/tinee.git")
 			(majutsu :url "https://github.com/0WD0/majutsu"))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.

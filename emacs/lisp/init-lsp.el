@@ -1,16 +1,16 @@
 ;;; -*- lexical-binding: t; -*-
 
 (use-package
- eglot
- :hook
- ((rust-mode . eglot-ensure)
-  (rust-ts-mode . eglot-ensure)
-  (lua-mode . eglot-ensure)
-  (lua-ts-mode . eglot-ensure)
-  (haskell-ts-mode . eglot-ensure)
-  (nix-ts-mode . eglot-ensure))
- :config
- (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil"))))
+  eglot
+  :hook
+  ((rust-mode . eglot-ensure)
+	(rust-ts-mode . eglot-ensure)
+	(lua-mode . eglot-ensure)
+	(lua-ts-mode . eglot-ensure)
+	(haskell-ts-mode . eglot-ensure)
+	(nix-ts-mode . eglot-ensure))
+  :config
+  (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil"))))
 
 (with-eval-after-load 'eglot
   (add-to-list
@@ -74,6 +74,9 @@
       )
      :format (:enable :json-false))))
 
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+					'((toml-ts-mode :language-id "toml") . ("taplo" "lsp" "stdio"))))
 
 (defun my/eglot-format-on-save ()
   "eglot管理下では保存前に整形する"

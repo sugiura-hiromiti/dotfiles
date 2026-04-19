@@ -64,7 +64,6 @@
 	  (("s" save-some-buffers "save")
 		("e" eval-buffer "eval")
 		("x" eat "terminal")
-		("R" my/reload-init-file "reload")
 		("j" majutsu "jj"))
 	  "org"
 	  (("c" org-capture "capture")
@@ -72,7 +71,7 @@
 
 (defun my/consult-flymake-workspace ()
   (interactive)
-  (consult-flymake 1))
+  (consult-flymake t))
 
 (defun my/reload-init-file ()
   "init.elを再読み込みする"

@@ -3,16 +3,18 @@
 (setq treesit-font-lock-level 4)
 
 (use-package haskell-ts-mode
-				 :mode (("\\.hs\\'" . haskell-ts-mode)
-				 		 ("\\lhs.\\'" . haskell-ts-mode)))
+  :mode (("\\.hs\\'" . haskell-ts-mode)
+			("\\lhs.\\'" . haskell-ts-mode)))
 (use-package nushell-ts-mode
-				 :mode ("\\.nu\\'" . nushell-ts-mode))
+  :mode ("\\.nu\\'" . nushell-ts-mode))
 (use-package nix-ts-mode
-				 :mode ("\\.nix\\'" . nix-ts-mode))
+  :mode ("\\.nix\\'" . nix-ts-mode))
 (use-package md-ts-mode
   :mode ("\\.md\\'" . md-ts-mode))
 (use-package lua-ts-mode
   :mode ("\\.lua\\'" . lua-ts-mode))
+
+(add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-ts-mode))
 
 (when (treesit-available-p)
   (setq major-mode-remap-alist

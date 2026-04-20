@@ -4,8 +4,8 @@
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
 (("org-capture-last-stored"
  (filename . "~/Downloads/awa/org/inbox.org")
- (front-context-string . "* TODO emacsに対して")
- (rear-context-string . "hu 18:12]\n:END:\n")
- (position . 1332)
- (last-modified 27108 53523 281217 589000))
+ (front-context-string . "* TODO 特定のgit, j")
+ (rear-context-string . "un 21:56]\n:END:\n")
+ (position . 1418)
+ (last-modified 27109 30512 603998 930000))
 )

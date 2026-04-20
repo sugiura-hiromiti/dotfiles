@@ -120,25 +120,107 @@
   :config
   (global-colorful-mode 1))
 
-(use-package popper
-  :init
-  (setq popper-reference-buffers
-		  '("^\\*Messages\\*"
-			 "\\*scratch\\*"
-			 "\\*eldoc\\*"
-			 help-mode
-			 eat-mode
-			 compilation-mode))
-  :config
-  (popper-mode 1)
-  (popper-echo-mode 1)
+;; TODO: あとで消す
+;; (use-package popper
+;;   :init
+;;   (setq popper-reference-buffers
+;; 		  '("^\\*Messages\\*"
+;; 			 "\\*scratch\\*"
+;; 			 "\\*eldoc\\*"
+;; 			 help-mode
+;; 			 eat-mode
+;; 			 compilation-mode))
+;;   :config
+;;   (popper-mode 1)
+;;   (popper-echo-mode 1)
 
-  ;; (defun my/popper-popup-local-keys ()
-  ;; 	 "Popupばっふぁの中でだけ使うきーを設定"
-  ;; 	 (local-set-key (kbd "C-'") #'popper-cycle))
-  ;; 	(add-hook 'popper-open-popup-hook #'my/popper-popup-local-keys)
-  )
+;;   ;; (defun my/popper-popup-local-keys ()
+;;   ;; 	 "Popupばっふぁの中でだけ使うきーを設定"
+;;   ;; 	 (local-set-key (kbd "C-'") #'popper-cycle))
+;;   ;; 	(add-hook 'popper-open-popup-hook #'my/popper-popup-local-keys)
+;;   )
 
-(global-set-key (kbd "C-,") #'popper-toggle)
+(require 'tab-bar)
+(require 'seq)
+
+(tab-bar-mode 1)
+
+(setopt tab-bar-show 1
+        switch-to-buffer-obey-display-actions t)
+
+(defvar my/popup-tab-name "Popper")
+(defvar my/popup-return-tab nil)
+
+(defun my/current-tab-name ()
+  (let ((tab (seq-find (lambda (tab)
+                         (memq 'current-tab tab))
+                       (tab-bar-tabs))))
+    (alist-get 'name tab)))
+
+(defun my/tab-exists-p (name)
+  (seq-some (lambda (tab)
+              (equal (alist-get 'name tab) name))
+            (tab-bar-tabs)))
+
+(defun my/ensure-popup-tab ()
+  (unless (my/tab-exists-p my/popup-tab-name)
+    (tab-new)
+    (tab-rename my/popup-tab-name)
+    (set-window-buffer (selected-window)
+                       (get-buffer-create "*Messages*"))))
+
+(defun my/popup-buffer-p (buffer-or-name &rest _args)
+  (let* ((buf (get-buffer buffer-or-name))
+         (name (if (bufferp buffer-or-name)
+                   (buffer-name buffer-or-name)
+                 buffer-or-name)))
+    (or
+     (string-match-p
+      (rx bos "*"
+          (or "Help" "helpful"
+              "Warnings"
+              "Messages"
+              "Compile-Log"
+              "Backtrace"
+              "Occur"
+              "grep"
+              "xref"
+              "Async Shell Command"
+              "eshell"
+              "shell"
+              "eat")
+          (* any)
+          "*"
+          eos)
+      name)
+     (and buf
+          (with-current-buffer buf
+            (derived-mode-p 'help-mode
+                            'compilation-mode
+                            'grep-mode
+                            'occur-mode
+                            'messages-buffer-mode))))))
+
+(add-to-list
+ 'display-buffer-alist
+ `(my/popup-buffer-p
+   (display-buffer-in-tab)
+   (tab-name . ,my/popup-tab-name)
+   (inhibit-same-window . t)))
+
+(defun my/toggle-popup-tab ()
+  (interactive)
+  (if (equal (my/current-tab-name) my/popup-tab-name)
+      (if (and my/popup-return-tab
+               (my/tab-exists-p my/popup-return-tab)
+               (not (equal my/popup-return-tab my/popup-tab-name)))
+          (tab-switch my/popup-return-tab)
+        (tab-recent))
+    (setq my/popup-return-tab (my/current-tab-name))
+    (my/ensure-popup-tab)
+    (tab-switch my/popup-tab-name)))
+
+(global-set-key (kbd "C-,") #'my/toggle-popup-tab)
+
 
 (provide 'init-ui)

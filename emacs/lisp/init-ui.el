@@ -222,5 +222,4 @@
 
 (global-set-key (kbd "C-,") #'my/toggle-popup-tab)
 
-
 (provide 'init-ui)

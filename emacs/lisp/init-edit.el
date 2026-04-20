@@ -87,7 +87,7 @@
      '("u" . meow-undo)
      ;;'("w" . meow-mark-word)
      ;;'("W" . meow-mark-symbol)
-     '("w" . puni-mark-sexp-at-point)
+     '("w" . puni-mark-sexp-at-point) ;; 要らないかも(gでことたりる)
      '("x" . meow-line)
      '("y" . meow-save)
 													 ; '("z" . meow-pop-selection)
@@ -115,6 +115,8 @@
   (keymap-set compilation-mode-map "S-<up>" #'previous-error))
 
 ;; (define-key meow-normal-state-keymap (kbd "RET") #'my/meow-ret-dispatch)
+
+;; NOTE: emacsの場合はりつけはctrl - y
 
 (with-eval-after-load 'meow
   (add-to-list 'meow-mode-state-list '(help-mode . normal))

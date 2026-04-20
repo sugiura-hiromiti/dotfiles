@@ -29,6 +29,7 @@
       systemd-boot = {
         enable = true;
       };
+      # limine={enable=true;};
       efi = {
         canTouchEfiVariables = false;
       };

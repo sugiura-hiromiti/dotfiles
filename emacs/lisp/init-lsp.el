@@ -22,30 +22,29 @@
       (:assist
        (:preferSelf t)
        :cargo
-       (:targetDir
-        ,(expand-file-name "~/.cache/rust-analyzer/target/")
-        :buildScripts (:enable t))
+       (:targetDir t
+						 :buildScripts (:enable t))
        :check (:command "clippy")
        :checkOnSave t
        :completion
-       (:fullFunctionSignatures (:enable t) :styleLints (:enable t))
+		 (:fullFunctionSignatures (:enable t))
+		 :diagnostics
+		 (:styleLints (:enable t))
        :hover
        (:actions
         (:enable t :references (:enable t))
         :maxSubstitutionLength 40
         :memoryLayout (:niches t)
         :show (:traitAssocItems 5))
-       :inlayHint
-       (:enable
-        t
-        :bindingModeHints (:enable t)
-        :closureCaptureHints (:enable t)
-        :closureReturnTypeHints (:enable "always")
-        :discriminantHints (:enable "always")
-        :expressionAdjustmentHints (:enable "always")
-        :implicitDrops (:enable t)
-        :lifetimeElisionHints
-        (:enable "always" :useParameterNames t))
+       :inlayHints
+       (:bindingModeHints (:enable t)
+								  :closureCaptureHints (:enable t)
+								  :closureReturnTypeHints (:enable "always")
+								  :discriminantHints (:enable "always")
+								  :expressionAdjustmentHints (:enable "always")
+								  :implicitDrops (:enable t)
+								  :lifetimeElisionHints
+								  (:enable "always" :useParameterNames t))
        :interpret (:tests t)
        :lens
        (:enable
@@ -61,6 +60,11 @@
        :rustfmt (:rangeFormatting (:enable t))
        :workspace
        (:symbol (:search (:kind "all_symbols"))))))))
+
+(add-hook 'rust-ts-mode-hook
+			 (lambda ()
+				(setq-local flymake-diagnostic-functions
+								(remq #'rust-ts-flymake flymake-diagnostic-functions))))
 
 (with-eval-after-load 'eglot
   (setq-default

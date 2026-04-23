@@ -222,4 +222,6 @@
 
 (global-set-key (kbd "C-,") #'my/toggle-popup-tab)
 
+(use-package agent-shell)
+
 (provide 'init-ui)

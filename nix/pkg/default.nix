@@ -34,4 +34,5 @@ with pkgs;
   gifski
   reaper
   dexed
+  codex-acp
 ]

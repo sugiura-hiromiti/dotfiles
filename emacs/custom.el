@@ -5,7 +5,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-	  '(apheleia auto-dark avy breadcrumb cape catppuccin-theme
+	  '(agent-shell apheleia auto-dark avy breadcrumb cape catppuccin-theme
 			colorful-mode consult-eglot-embark corfu diff-hl
 			doom-modeline eat elisp-autofmt embrace envrc
 			exec-path-from-shell haskell-ts-mode hl-todo ligature majutsu

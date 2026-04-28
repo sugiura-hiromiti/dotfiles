@@ -6,3 +6,7 @@
  ("/Users/hiromichisugiura/.config/emacs/elpa/majutsu/")
  ("/home/a/.config/emacs/elpa/tinee/")
  ("/home/a/.config/emacs/elpa/majutsu/"))
+(("/home/a/.config/emacs/elpa/ts-movement/")
+ ("/home/a/.config/emacs/elpa/tinee/")
+ ("/home/a/.config/emacs/elpa/majutsu/"))
+(("/home/a/.config/emacs/elpa/majutsu/"))

@@ -37,14 +37,38 @@
         :memoryLayout (:niches t)
         :show (:traitAssocItems 5))
        :inlayHints
-       (:bindingModeHints (:enable t)
+		 (:bindingModeHints (:enable t)
+								  :chainingHints (:enable t)
+								  :closingBraceHints (:enable t
+																		:minLines 0)
 								  :closureCaptureHints (:enable t)
 								  :closureReturnTypeHints (:enable "always")
 								  :discriminantHints (:enable "always")
-								  :expressionAdjustmentHints (:enable "always")
+								  ;; deref / borrow / coercionなどの調整ヒント
+								  :expressionAdjustmentHints (:enable "always"
+																				  :mode "prefix"
+																				  :hideOutsideUnsafe :json-false
+																				  :disableReborrows :json-false)
+								  :genericParameterHints (:const (:enable t)
+																			:lifetime (:enable t)
+																			:type (:enable t))
 								  :implicitDrops (:enable t)
+								  :implicitSizedBoundHints (:enable t)
+								  :impliedDynTraitHints (:enable t)
 								  :lifetimeElisionHints
-								  (:enable "always" :useParameterNames t))
+								  (:enable "always" :useParameterNames t)
+								  :maxLength nil
+								  :parameterHints (:enable t
+																	:missingArguments (:enable t))
+								  :rangeExclusiveHints (:enable t)
+								  :renderColons t
+								  :typeHints (:enable t
+															 :hideClosureInitialization :json-false
+															 :hideClosureParameter :json-false
+															 :hideInferredTypes :json-false
+															 :hideNamedConstructor :json-false
+															 :location "inline"))
+
        :interpret (:tests t)
        :lens
        (:enable
@@ -60,6 +84,10 @@
        :rustfmt (:rangeFormatting (:enable t))
        :workspace
        (:symbol (:search (:kind "all_symbols"))))))))
+
+(add-hook 'eglot-managed-mode-hook
+			 (lambda ()
+				(eglot-inlay-hints-mode 1)))
 
 (add-hook 'rust-ts-mode-hook
 			 (lambda ()

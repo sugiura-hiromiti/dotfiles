@@ -170,36 +170,33 @@
                        (get-buffer-create "*Messages*"))))
 
 (defun my/popup-buffer-p (buffer-or-name &rest _args)
-  (let* ((buf (get-buffer buffer-or-name))
-         (name (if (bufferp buffer-or-name)
-                   (buffer-name buffer-or-name)
-                 buffer-or-name)))
-    (or
-     (string-match-p
-      (rx bos "*"
-          (or "Help" "helpful"
-              "Warnings"
-              "Messages"
-              "Compile-Log"
-              "Backtrace"
-              "Occur"
-              "grep"
-              "xref"
-              "Async Shell Command"
-              "eshell"
-              "shell"
-              "eat")
-          (* any)
-          "*"
-          eos)
-      name)
-     (and buf
-          (with-current-buffer buf
-            (derived-mode-p 'help-mode
-                            'compilation-mode
-                            'grep-mode
-                            'occur-mode
-                            'messages-buffer-mode))))))
+  (and (display-graphic-p)
+       (let* ((buf (get-buffer buffer-or-name))
+              (name (if (bufferp buffer-or-name)
+                        (buffer-name buffer-or-name)
+                      buffer-or-name)))
+         (or
+          (string-match-p
+           (rx bos "*"
+               (or "Help" "helpful"
+                   "Backtrace"
+                   "Occur"
+                   "grep"
+                   "xref"
+                   "Async Shell Command"
+                   "eshell"
+                   "shell"
+                   "eat")
+               (* any)
+               "*"
+               eos)
+           name)
+          (and buf
+               (with-current-buffer buf
+                 (derived-mode-p 'help-mode
+                                 'compilation-mode
+                                 'grep-mode
+                                 'occur-mode)))))))
 
 (add-to-list
  'display-buffer-alist

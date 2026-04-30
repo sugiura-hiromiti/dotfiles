@@ -58,10 +58,6 @@
 (with-eval-after-load 'org
   (require 'org-tempo))
 
-(require 'server)
-(unless (server-running-p)
-  (server-start))
-
 (require 'org-protocol)
 
 (provide 'init-org)

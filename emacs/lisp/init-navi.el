@@ -1,6 +1,30 @@
 ;;; -*- lexical-binding: t; -*-
 
+(declare-function eglot-code-actions "eglot")
+(declare-function eglot-rename "eglot")
+(declare-function flymake-show-project-diagnostics "flymake")
+
 (winner-mode 1)
+
+(defun my/other-window-backward ()
+  "前のwindowに移動する。"
+  (interactive)
+  (other-window -1))
+
+(defun my/shrink-window-vertically ()
+  "現在のwindowの高さを1行小さくする。"
+  (interactive)
+  (enlarge-window -1))
+
+(defun my/tab-move-left ()
+  "現在のtabを左に移動する。"
+  (interactive)
+  (tab-move -1))
+
+(defun my/switch-to-buffer-other-tab ()
+  "bufferを選んで別tabで開く。"
+  (interactive)
+  (call-interactively #'switch-to-buffer-other-tab))
 
 (use-package pretty-hydra
   :config
@@ -13,7 +37,7 @@
 		("l" windmove-right "right")
 		;; cycle
 		("n" other-window "next")
-		("p" (other-window -1) "prev"))
+		("p" my/other-window-backward "prev"))
 	  "window/create,delete"
 	  (("v" split-window-right "vertical")
 		("x" split-window-below "horizontal")
@@ -27,7 +51,7 @@
 		("K" windmove-swap-states-up "swap up")
 		("L" windmove-swap-states-right "swap right"))
 	  "window/resize"
-	  (("-" (enlarge-window -1) "lower")
+	  (("-" my/shrink-window-vertically "lower")
 		("+" enlarge-window "higher")
 		(";" shrink-window-horizontally "shrink")
 		("'" enlarge-window-horizontally "enlarge"))
@@ -38,8 +62,8 @@
 		("c" tab-close "close")
 		("U" tab-undo "undo")
 		(">" tab-move "right")
-		("<" (tab-move -1) "left")
-		("m" (switch-to-buffer-other-tab) "buffer switch")
+		("<" my/tab-move-left "left")
+		("m" my/switch-to-buffer-other-tab "buffer switch")
 		)
 	  ))
 

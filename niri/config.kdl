@@ -377,6 +377,10 @@ window-rule {
 window-rule {
     match is-active=false
     opacity 0.85
+	 /-background-effect {
+	     xray true
+		  blur true
+    }
 }
 
 window-rule {
@@ -431,6 +435,10 @@ window-rule {
 window-rule {
     geometry-corner-radius 12
     clip-to-geometry true
+}
+
+/-blur {
+    saturation 2.0
 }
 
 layer-rule{

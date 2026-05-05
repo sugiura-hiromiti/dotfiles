@@ -376,8 +376,8 @@ window-rule {
 
 window-rule {
     match is-active=false
-    opacity 0.85
-	 /-background-effect {
+    opacity 0.8
+	 background-effect {
 	     xray true
 		  blur true
     }
@@ -437,8 +437,10 @@ window-rule {
     clip-to-geometry true
 }
 
-/-blur {
-    saturation 2.0
+blur {
+    passes 5
+    offset 1
+    saturation 2.5
 }
 
 layer-rule{

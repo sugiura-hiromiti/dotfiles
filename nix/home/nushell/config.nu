@@ -9,8 +9,8 @@ if (sys host | get name) == "Darwin" {
 	)
 }
 
-$env.config.buffer_editor = 'nvim'
-$env.EDITOR = 'nvim'
+$env.config.buffer_editor = 'emacsclient -n'
+$env.EDITOR = 'emacsclient -n'
 $env.WALLPAPER_DIR = $'($env.HOME)/Downloads/media/wallpapers'
 $env.XDG_CONFIG_HOME = $'($env.HOME)/.config'
 $env.GITHUB_PAT_TOKEN = (
@@ -42,6 +42,7 @@ $env.config.completions = {
 $env.config.footer_mode = 'always'
 
 alias n = nvim
+alias e = emacsclient -n
 alias wh = which -a
 
 # def fzl_cliphist [] {

@@ -269,7 +269,7 @@ in
       enable = true;
       settings = {
         ui = {
-          editor = "nvim";
+          editor = "emacsclient -n";
         };
         user = {
           name = "sugiura-hiromiti";
@@ -381,7 +381,7 @@ in
       enable = true;
       settings = {
         core = {
-          editor = "nvim";
+          editor = "emacsclient -n";
         };
         init = {
           defaultBranch = "main";
@@ -401,6 +401,7 @@ in
         ".serena/"
         ".DS_Store"
         "dist-newstyle/"
+        ".agent-shell/"
       ];
     };
     nushell = {

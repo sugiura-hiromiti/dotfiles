@@ -11,7 +11,7 @@ theme = dark:Catppuccin Mocha,light:Catppuccin Latte
 unfocused-split-fill = #000000
 
 # cursor-opacity = 0.2
-background-opacity = 0.50
+background-opacity = 1.00
 background-opacity-cells = false
 background-blur = 60
 

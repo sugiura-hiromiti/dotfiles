@@ -11,6 +11,10 @@
 		(push `(treesit . ,(package-make-builtin nil "Tree-sitter support"))
 					package--builtins)))
 
+;; Keep Emacs from resizing its outer frame while OmniWM controls it.
+(setq frame-inhibit-implied-resize t
+      frame-resize-pixelwise t)
+
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)

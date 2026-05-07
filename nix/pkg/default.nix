@@ -30,8 +30,10 @@ with pkgs;
   ffmpeg
   gifski
   reaper
-  codex-acp
   dexed
+  # dexed
+  codex-acp
   yt-dlp
   dorion
+  dexed
 ]

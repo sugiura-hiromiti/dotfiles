@@ -6,14 +6,15 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
 	  '(agent-shell apheleia auto-dark breadcrumb cape catppuccin-theme
-			colorful-mode consult-eglot-embark corfu diff-hl
+			colorful-mode consult-dir consult-eglot-embark corfu diff-hl
 			doom-modeline eat eglot-tempel embrace envrc
-			exec-path-from-shell haskell-ts-mode hl-todo ligature majutsu
-			marginalia md-ts-mode meow nerd-icons-corfu nix-ts-mode
-			nushell-ts-mode orderless org-appear org-modern pretty-hydra
-			puni rainbow-delimiters tempel tree-sitter-langs vertico))
+			exec-path-from-shell hl-todo ligature majutsu marginalia
+			md-ts-mode meow nerd-icons-corfu orderless org-appear
+			org-modern pretty-hydra puni rainbow-delimiters
+			tree-sitter-langs vertico))
  '(package-vc-selected-packages
-	  '((lsp-snippet :url "https://github.com/svaante/lsp-snippet")
+	  '((majutsu :url "https://github.com/0WD0/majutsu")
+			(lsp-snippet :url "https://github.com/svaante/lsp-snippet")
 			(lsp-snippet-tempel :url
 				"https://github.com/svaante/lsp-snippet"))))
 (custom-set-faces

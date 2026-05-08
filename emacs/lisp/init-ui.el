@@ -44,23 +44,37 @@
 	:hook (prog-mode . rainbow-delimiters-mode))
 
 (use-package catppuccin-theme
-	:config (load-theme 'catppuccin :no-confirm)
-	(catppuccin-reload)
-	)
-(use-package auto-dark
-	:custom
-	(auto-dark-themes '((catppuccin) (catppuccin)))
-	:hook
-	(auto-dark-dark-mode
-		. (lambda ()
-			  (setq catppuccin-flavor 'frappe)
-			  (catppuccin-reload)))
-	(auto-dark-light-mode
-		. (lambda ()
-			  (setq catppuccin-flavor 'latte)
-			  (catppuccin-reload)))
+	:ensure t
 	:init
-	(auto-dark-mode 1))
+	(setq catppuccin-flavor 'latte)
+	:config
+	(load-theme 'catppuccin :no-confirm))
+
+(defun my/catppuccin-apply-flavor (flavor)
+	(setq catppuccin-flavor flavor)
+	(if (memq 'catppuccin custom-enabled-themes)
+      (catppuccin-reload)
+		(load-theme 'catppuccin :no-confirm)))
+
+(use-package auto-dark
+	:ensure t
+	:hook
+	((auto-dark-dark-mode
+		 . (lambda () (my/catppuccin-apply-flavor 'frappe)))
+		(auto-dark-light-mode
+			. (lambda () (my/catppuccin-apply-flavor 'latte))))
+	:config
+	(defun my/auto-dark-on-first-gui-frame (frame)
+		(with-selected-frame frame
+			(when (display-graphic-p)
+				(auto-dark-mode 1)
+				(remove-hook 'after-make-frame-functions
+               #'my/auto-dark-on-first-gui-frame))))
+
+	(if (daemonp)
+      (add-hook 'after-make-frame-functions
+         #'my/auto-dark-on-first-gui-frame)
+		(auto-dark-mode 1)))
 
 (use-package doom-modeline
 	:init

@@ -9,7 +9,10 @@
 
 (setq treesit-font-lock-level 4)
 
-(md-ts-mode-enable-global)
+(use-package md-ts-mode
+	:config
+	(md-ts-mode-enable-global))
+
 
 ;; TODO: kdl tsさぽーと追加
 

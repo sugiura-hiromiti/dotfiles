@@ -1,4 +1,5 @@
 ;;; -*- lisp-data -*-
-(("/home/a/.config/emacs/elpa/eglot-tempel/")
+(("/home/a/.config/emacs/elpa/majutsu/")
+ ("/home/a/.config/emacs/elpa/eglot-tempel/")
  ("/home/a/.config/emacs/elpa/lsp-snippet/")
  ("/home/a/.config/emacs/elpa/lsp-snippet-tempel/"))

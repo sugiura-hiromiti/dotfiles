@@ -12,7 +12,9 @@
 	(vertico-multiform-categories '((file grid) (consult-grep buffer)))
 	:config
 	(require 'vertico-multiform)
-	(vertico-multiform-mode))
+	(add-to-list 'vertico-multiform-categories
+		'(embark-keybinding grid))
+	(vertico-multiform-mode 1))
 
 (use-package marginalia :init (marginalia-mode 1))
 
@@ -57,7 +59,116 @@
 	'append)
 
 (use-package consult-dir
-	)
+	:after consult
+	:preface
+	(require 'seq)
+
+	(defun my/consult-dir-zoxide-dirs ()
+		"Return zoxide directory candidates."
+		(when (executable-find "zoxide")
+			(delete-dups
+				(seq-filter
+					#'file-directory-p
+					(mapcar #'file-name-as-directory
+						(or (ignore-errors
+								 (process-lines "zoxide" "query" "-l"))
+							'()))))))
+
+	(defvar my/consult-dir-source-zoxide
+		`(:name "Zoxide"
+			 :narrow ?z
+			 :category file
+			 :face consult-file
+			 :history file-name-history
+			 :enabled ,(lambda () (executable-find "zoxide"))
+			 :items ,#'my/consult-dir-zoxide-dirs)
+		"Zoxide source for `consult-dir'.")
+
+	(defun my/consult-dir-source-value (source)
+		"Return plist value of SOURCE."
+		(cond
+			((and (symbolp source) (boundp source))
+				(symbol-value source))
+			((listp source)
+				source)
+			(t nil)))
+
+	(defun my/consult-dir-source-enabled-p (source)
+		"Return non-nil if consult-dir SOURCE is enabled."
+		(let ((enabled (plist-get source :enabled)))
+			(cond
+				((null enabled) t)
+				((functionp enabled) (funcall enabled))
+				(t enabled))))
+
+	(defun my/consult-dir-source-items (source)
+		"Return items from consult-dir SOURCE."
+		(let ((items (plist-get source :items)))
+			(cond
+				((functionp items) (funcall items))
+				((listp items) items)
+				(t nil))))
+
+	(defun my/consult-dir-item-directory (item)
+		"Resolve consult-dir ITEM to a directory path."
+		(let ((value (if (consp item) (cdr item) item)))
+			(when (stringp value)
+				(file-name-as-directory value))))
+
+	(defun my/consult-dir-buffer-candidates ()
+		"Return directory candidates from `consult-dir-sources' for `consult-buffer'."
+		(let ((seen (make-hash-table :test #'equal))
+				  result)
+			(dolist (source consult-dir-sources)
+				(let* ((src (my/consult-dir-source-value source))
+							(name (or (plist-get src :name) "directory"))
+							(category (plist-get src :category)))
+					;; bookmark source は使わない
+					(when (and src
+								(not (eq category 'bookmark))
+								(my/consult-dir-source-enabled-p src))
+						(dolist (item (my/consult-dir-source-items src))
+							(let ((dir (my/consult-dir-item-directory item)))
+								(when (and dir
+											(or (file-remote-p dir)
+												(file-directory-p dir))
+											(not (gethash dir seen)))
+									(puthash dir t seen)
+									(push
+										(cons
+											(format "%-12s %s"
+												name
+												(abbreviate-file-name dir))
+											dir)
+										result)))))))
+			(nreverse result)))
+
+	(defun my/consult-buffer-directory-action (dir)
+		"Open `find-file' from DIR."
+		(let ((default-directory (file-name-as-directory dir)))
+			(call-interactively #'consult-buffer)))
+
+	(defvar my/consult-source-consult-dir
+		`(:name "directory"
+			 :narrow ?d
+			 :category file
+			 :face consult-file
+			 :history file-name-history
+			 :items ,#'my/consult-dir-buffer-candidates
+			 :action ,#'my/consult-buffer-directory-action)
+		"Directory source backed by `consult-dir-sources'.")
+
+	:config
+	(add-to-list 'consult-dir-sources
+      'my/consult-dir-source-zoxide
+      t)
+
+	(setq consult-buffer-sources
+      '(consult-source-hidden-buffer
+          consult-source-buffer
+          consult-source-recent-file
+          my/consult-buffer-source-project-files
+          my/consult-source-consult-dir)))
 
 (use-package
 	orderless
@@ -75,7 +186,16 @@
 	(("C-." . embark-act)
 		("C-;" . embark-dwim)
 		("C-h B" . embark-bindings))
-	:init (setopt prefix-help-command #'embark-prefix-help-command))
+	:init (setopt prefix-help-command #'embark-prefix-help-command)
+	:config
+	(setq embark-indicators
+		'(embark-minimal-indicator
+			 embark-highlight-indicator
+			 embark-isearch-highlight-indicator))
+	(setq embark-prompter #'embark-completion-read-prompter)
+	;;minibufferを閉じない運用にしたい場合
+	;; (setq embark-quit-after-action nil)
+	)
 
 (use-package embark-consult :after (embark consult))
 

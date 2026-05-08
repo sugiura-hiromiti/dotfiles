@@ -43,26 +43,18 @@
 (use-package rainbow-delimiters
 	:hook (prog-mode . rainbow-delimiters-mode))
 
-(use-package catppuccin-theme
-	:ensure t
-	:init
-	(setq catppuccin-flavor 'latte)
+(use-package batppuccin
 	:config
-	(load-theme 'catppuccin :no-confirm))
-
-(defun my/catppuccin-apply-flavor (flavor)
-	(setq catppuccin-flavor flavor)
-	(if (memq 'catppuccin custom-enabled-themes)
-      (catppuccin-reload)
-		(load-theme 'catppuccin :no-confirm)))
+	;; 初期 theme
+	(load-theme 'batppuccin-latte :no-confirm))
 
 (use-package auto-dark
 	:ensure t
-	:hook
-	((auto-dark-dark-mode
-		 . (lambda () (my/catppuccin-apply-flavor 'frappe)))
-		(auto-dark-light-mode
-			. (lambda () (my/catppuccin-apply-flavor 'latte))))
+	:after batppuccin
+	:custom
+	;; auto-dark-themes は基本的に (dark light)
+	;; dark 側を frappe にしたいならこれでよい
+	(auto-dark-themes '((batppuccin-frappe) (batppuccin-latte)))
 	:config
 	(defun my/auto-dark-on-first-gui-frame (frame)
 		(with-selected-frame frame
@@ -71,10 +63,10 @@
 				(remove-hook 'after-make-frame-functions
                #'my/auto-dark-on-first-gui-frame))))
 
-	(if (daemonp)
-      (add-hook 'after-make-frame-functions
-         #'my/auto-dark-on-first-gui-frame)
-		(auto-dark-mode 1)))
+	(if (display-graphic-p)
+      (auto-dark-mode 1)
+		(add-hook 'after-make-frame-functions
+         #'my/auto-dark-on-first-gui-frame)))
 
 (use-package doom-modeline
 	:init

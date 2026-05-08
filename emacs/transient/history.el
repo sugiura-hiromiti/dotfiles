@@ -1,7 +1,11 @@
 ((majutsu-bookmark nil)
  (majutsu-dispatch nil)
  (majutsu-git-clone-transient nil)
- (majutsu-git-push-transient nil)
+ (majutsu-git-push-transient nil
+									  ("--bookmark=main")
+									  ("--remote=origin"))
+ (majutsu-git-push:-b)
  (majutsu-git-remote-transient nil)
  (majutsu-git-transient nil)
- (majutsu-log nil))
+ (majutsu-log nil)
+ (transient:majutsu-git-push-transient:--remote= "origin"))

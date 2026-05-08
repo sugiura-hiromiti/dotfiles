@@ -8,12 +8,13 @@
 	  '(agent-shell apheleia auto-dark breadcrumb cape catppuccin-theme
 			colorful-mode consult-dir consult-eglot-embark corfu diff-hl
 			doom-modeline eat eglot-tempel embrace envrc
-			exec-path-from-shell hl-todo ligature majutsu marginalia
-			md-ts-mode meow nerd-icons-corfu orderless org-appear
-			org-modern pretty-hydra puni rainbow-delimiters
-			tree-sitter-langs vertico))
+			exec-path-from-shell hl-todo kdl-ts-mode ligature majutsu
+			marginalia md-ts-mode meow nerd-icons-corfu nix-ts-mode
+			orderless org-appear org-modern pretty-hydra puni
+			rainbow-delimiters tree-sitter-langs vertico))
  '(package-vc-selected-packages
-	  '((majutsu :url "https://github.com/0WD0/majutsu")
+	  '((kdl-ts-mode :url "https://github.com/dataphract/kdl-ts-mode")
+			(majutsu :url "https://github.com/0WD0/majutsu")
 			(lsp-snippet :url "https://github.com/svaante/lsp-snippet")
 			(lsp-snippet-tempel :url
 				"https://github.com/svaante/lsp-snippet"))))

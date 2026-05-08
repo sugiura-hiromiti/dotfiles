@@ -13,8 +13,12 @@
 	:config
 	(md-ts-mode-enable-global))
 
+(use-package nix-ts-mode)
 
-;; TODO: kdl tsさぽーと追加
+(use-package kdl-ts-mode
+	:vc (:url "https://github.com/dataphract/kdl-ts-mode")
+	:config
+	(setq kdl-ts-mode-indent-offset 3))
 
 (defun my/treesit-languages-available-p (&rest languages)
 	"LANGUAGESのtree-sitter grammarがすべて使えるならnon-nilを返す。"
@@ -50,6 +54,7 @@
 	(my/add-treesit-auto-mode "\\.md\\'" 'md-ts-mode 'markdown 'markdown-inline)
 	(my/add-treesit-auto-mode "\\.lua\\'" 'lua-ts-mode 'lua)
 	(my/add-treesit-auto-mode "\\.rs\\'" 'rust-ts-mode 'rust)
+	(my/add-treesit-auto-mode "\\.kdl\\'" 'kdl-ts-mode 'kdl)
 
 	(my/add-treesit-mode-remap 'rust-mode 'rust-ts-mode 'rust)
 	(my/add-treesit-mode-remap 'haskell-mode 'haskell-ts-mode 'haskell)

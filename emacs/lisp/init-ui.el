@@ -8,9 +8,7 @@
 	inhibit-scratch-message nil
 	display-line-numbers-type t
 	indent-tabs-mode t
-	tab-width 3
-	tab-bar-show 1
-	)
+	tab-width 3)
 (setq whitespace-style '(face tabs tab-mark)
 	whitespace-display-mappings
 	'((tab-mark ?\t [?\│ ?\t] [?\t ?\t]))
@@ -20,7 +18,6 @@
 	(editorconfig-mode 1))
 (global-whitespace-mode 1)
 
-(tab-bar-mode)
 (global-display-line-numbers-mode 1)
 (global-hl-line-mode 1)
 
@@ -126,33 +123,15 @@
 	:config
 	(global-colorful-mode 1))
 
-;; TODO: あとで消す
-;; (use-package popper
-;;   :init
-;;   (setq popper-reference-buffers
-;; 		  '("^\\*Messages\\*"
-;; 			 "\\*scratch\\*"
-;; 			 "\\*eldoc\\*"
-;; 			 help-mode
-;; 			 eat-mode
-;; 			 compilation-mode))
-;;   :config
-;;   (popper-mode 1)
-;;   (popper-echo-mode 1)
+(use-package tab-bar
+	:ensure nil
+	:init
+	(tab-bar-mode 1)
+	:custom
+	(tab-bar-show 1)
+	(switch-to-buffer-obey-display-actions t))
 
-;;   ;; (defun my/popper-popup-local-keys ()
-;;   ;; 	 "Popupばっふぁの中でだけ使うきーを設定"
-;;   ;; 	 (local-set-key (kbd "C-'") #'popper-cycle))
-;;   ;; 	(add-hook 'popper-open-popup-hook #'my/popper-popup-local-keys)
-;;   )
-
-(require 'tab-bar)
 (require 'seq)
-
-(tab-bar-mode 1)
-
-(setopt tab-bar-show 1
-   switch-to-buffer-obey-display-actions t)
 
 (defvar my/popup-tab-name "Popper")
 (defvar my/popup-return-tab nil)
@@ -168,62 +147,100 @@
 					 (equal (alist-get 'name tab) name))
       (tab-bar-tabs)))
 
+(defun my/tab-number-by-name (name)
+	"Return 1-based tab number for tab NAME, or nil."
+	(let ((i 1)
+			  found)
+		(dolist (tab (tab-bar-tabs) found)
+			(when (and (not found)
+						(equal (alist-get 'name tab) name))
+				(setq found i))
+			(setq i (1+ i)))))
+
+(defun my/switch-tab-by-name (name)
+	"Switch to tab NAME."
+	(let ((n (my/tab-number-by-name name)))
+		(unless n
+			(error "No tab named %S" name))
+		(tab-bar-select-tab n)))
+
+(defun my/first-non-popup-tab-name ()
+	"Return the first tab name that is not the popup tab."
+	(catch 'found
+		(dolist (tab (tab-bar-tabs))
+			(let ((name (alist-get 'name tab)))
+				(unless (equal name my/popup-tab-name)
+					(throw 'found name))))
+		nil))
+
 (defun my/ensure-popup-tab ()
 	(unless (my/tab-exists-p my/popup-tab-name)
-		(tab-new)
-		(tab-rename my/popup-tab-name)
-		(set-window-buffer (selected-window)
-         (get-buffer-create "*Messages*"))))
+		(let ((origin-tab (my/current-tab-name)))
+			(tab-new)
+			(tab-rename my/popup-tab-name)
+			(set-window-buffer
+				(selected-window)
+				(get-buffer-create "*Messages*"))
+			;; Create Popper tab, then return to original tab.
+			(when (and origin-tab
+						(my/tab-exists-p origin-tab)
+						(not (equal origin-tab my/popup-tab-name)))
+				(my/switch-tab-by-name origin-tab)))))
 
-(defun my/popup-buffer-p (buffer-or-name &rest _args)
-	(and (display-graphic-p)
-      (let* ((buf (get-buffer buffer-or-name))
-					(name (if (bufferp buffer-or-name)
-                        (buffer-name buffer-or-name)
-								buffer-or-name)))
-         (or
-				(string-match-p
-					(rx bos "*"
-						(or "Help" "helpful"
-							"Backtrace"
-							"Occur"
-							"grep"
-							"xref"
-							"Async Shell Command"
-							"eshell"
-							"shell"
-							"eat")
-						(* any)
-						"*"
-						eos)
-					name)
-				(and buf
-               (with-current-buffer buf
-						(derived-mode-p 'help-mode
-                     'compilation-mode
-                     'grep-mode
-                     'occur-mode)))))))
-
-(add-to-list
-	'display-buffer-alist
-	`(my/popup-buffer-p
-		 (display-buffer-in-tab)
-		 (tab-name . ,my/popup-tab-name)
-		 (inhibit-same-window . t)))
+(defun my/delete-popup-tab ()
+	"Delete `my/popup-tab-name' tab if it exists."
+	(let ((n (my/tab-number-by-name my/popup-tab-name)))
+		(when n
+			(tab-bar-close-tab n))))
 
 (defun my/toggle-popup-tab ()
+	"Toggle transient popup tab.
+
+When called from a normal tab, create/switch to popup tab.
+When called from popup tab, return to previous tab and delete popup tab."
 	(interactive)
 	(if (equal (my/current-tab-name) my/popup-tab-name)
-      (if (and my/popup-return-tab
-             (my/tab-exists-p my/popup-return-tab)
-             (not (equal my/popup-return-tab my/popup-tab-name)))
-         (tab-switch my/popup-return-tab)
-			(tab-recent))
+      ;; Inside popup tab: return, then delete popup tab.
+      (let ((return-tab my/popup-return-tab))
+			(cond
+				((and return-tab
+                (my/tab-exists-p return-tab)
+                (not (equal return-tab my/popup-tab-name)))
+					(my/switch-tab-by-name return-tab))
+				((my/first-non-popup-tab-name)
+					(my/switch-tab-by-name (my/first-non-popup-tab-name))))
+			(my/delete-popup-tab)
+			(setq my/popup-return-tab nil))
+
+		;; Outside popup tab: remember current tab, create/switch to popup tab.
 		(setq my/popup-return-tab (my/current-tab-name))
 		(my/ensure-popup-tab)
-		(tab-switch my/popup-tab-name)))
+		(my/switch-tab-by-name my/popup-tab-name)))
 
-(global-set-key (kbd "C-,") #'my/toggle-popup-tab)
+(defun my/popper-display-in-tab (buffer alist)
+	"Display Popper BUFFER in `my/popup-tab-name' tab."
+	(my/ensure-popup-tab)
+	(display-buffer-in-tab
+		buffer
+		(append
+			`((tab-name . ,my/popup-tab-name)
+				 (inhibit-same-window . t))
+			alist)))
+
+(use-package popper
+	:ensure t
+	:custom
+	(popper-display-control t)
+	(popper-display-function #'my/popper-display-in-tab)
+	(popper-reference-buffers
+		`(,my/popper-buffer-name-regexp
+			 ,@my/popper-buffer-modes))
+	:init
+	(popper-mode 1)
+	(popper-echo-mode 1)
+	:config
+	;; Global binding
+	(keymap-global-set "C-," #'my/toggle-popup-tab))
 
 (use-package agent-shell)
 

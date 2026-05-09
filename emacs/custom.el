@@ -14,7 +14,7 @@
 			eglot-tempel embrace envrc exec-path-from-shell hl-todo
 			kdl-ts-mode ligature majutsu marginalia md-ts-mode meow
 			nerd-icons-corfu nix-ts-mode orderless org-appear org-modern
-			pretty-hydra puni rainbow-delimiters tree-sitter-langs
+			popper pretty-hydra puni rainbow-delimiters tree-sitter-langs
 			vertico))
  '(package-vc-selected-packages
 	  '((kdl-ts-mode :url "https://github.com/dataphract/kdl-ts-mode")

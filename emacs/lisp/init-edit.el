@@ -12,7 +12,13 @@
 		(setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
 
 		(meow-motion-define-key
-			'("j" . meow-next) '("k" . meow-prev) '("<escape>" . ignore))
+			'("j" . meow-next)
+			'("k" . meow-prev)
+			'("RET" . my/meow-ret-dispatch)
+			'("TAB" . meta-navigation/body)
+			'("x" . meow-line)
+			'("y" . meow-save)
+			'("<escape>" . ignore))
 
 		(meow-leader-define-key
 			'("?" . meow-cheatsheet)
@@ -72,8 +78,6 @@
 			'("K" . meow-prev-expand) ;; 要らないかも
 			'("l" . meow-right)
 			'("L" . meow-right-expand)
-			'("m" . meow-join)
-			'("n" . meow-search)
 													 ;'("o" . meow-block)
 													 ;'("O" . meow-to-block)
 			'("o" . meow-open-below)
@@ -85,9 +89,9 @@
 			'("S" . puni-transpose)
 			'("t" . comment-dwim)
 			'("u" . meow-undo)
-			;;'("w" . meow-mark-word)
+			'("w" . meow-mark-word)
 			;;'("W" . meow-mark-symbol)
-			'("w" . puni-mark-sexp-at-point) ;; 要らないかも(gでことたりる)
+			;; '("w" . puni-mark-sexp-at-point) ;; 要らないかも(gでことたりる)
 			'("x" . meow-line)
 			'("y" . meow-save)
 													 ; '("z" . meow-pop-selection)

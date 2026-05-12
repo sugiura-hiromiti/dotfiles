@@ -269,7 +269,7 @@ in
       enable = true;
       settings = {
         ui = {
-          editor = "emacsclient -n";
+          editor = "emacsclient";
         };
         user = {
           name = "sugiura-hiromiti";
@@ -381,7 +381,7 @@ in
       enable = true;
       settings = {
         core = {
-          editor = "emacsclient -n";
+          editor = "emacsclient";
         };
         init = {
           defaultBranch = "main";
@@ -482,7 +482,7 @@ in
       client = {
         enable = true;
       };
-      # defaultEditor = true;
+      defaultEditor = true;
     };
   };
 }

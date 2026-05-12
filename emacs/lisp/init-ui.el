@@ -21,6 +21,8 @@
 (global-display-line-numbers-mode 1)
 (global-hl-line-mode 1)
 
+(set-fringe-mode '(8 . 0))
+
 (set-face-attribute 'default nil
 	:family "Maple Mono NF CN"
 	:height 110
@@ -42,8 +44,10 @@
 
 (use-package batppuccin
 	:config
-	;; 初期 theme
-	(load-theme 'batppuccin-latte :no-confirm))
+	;; custom.el が消えても daemon 起動時に theme safety prompt を出さない。
+	(load-theme 'batppuccin-frappe t t)
+	(load-theme 'batppuccin-latte t t)
+	(enable-theme 'batppuccin-latte))
 
 (use-package auto-dark
 	:ensure t
@@ -135,6 +139,32 @@
 
 (defvar my/popup-tab-name "Popper")
 (defvar my/popup-return-tab nil)
+
+(defconst my/popper-buffer-name-regexp
+	(rx bos "*"
+		(or "Help"
+			"helpful"
+			"Backtrace"
+			"Occur"
+			"grep"
+			"xref"
+			"Async Shell Command"
+			"eshell"
+			"shell"
+			"eat")
+		(* any)
+		"*"
+		eos))
+
+(defconst my/popper-buffer-modes
+	'(help-mode
+		 helpful-mode
+		 compilation-mode
+		 grep-mode
+		 occur-mode
+		 eshell-mode
+		 shell-mode
+		 eat-mode))
 
 (defun my/current-tab-name ()
 	(let ((tab (seq-find (lambda (tab)

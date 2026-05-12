@@ -32,6 +32,20 @@
         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
         ("melpa" . "https://melpa.org/packages/")))
 
+;; Load archive Compat before any package is installed or compiled.
+;; Emacs 30's built-in stub can expand `compat-call' incorrectly.
+(defun my/ensure-external-package (pkg)
+  "Ensure PKG is installed from package archives and activated."
+  (unless (assq pkg package-alist)
+    (unless package-archive-contents
+      (package-refresh-contents))
+    (let ((package-install-upgrade-built-in t))
+      (package-install pkg)))
+  (package-activate pkg))
+
+(my/ensure-external-package 'compat)
+(require 'compat)
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))

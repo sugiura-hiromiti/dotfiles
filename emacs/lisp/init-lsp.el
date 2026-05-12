@@ -105,9 +105,12 @@
 		(eglot-inlay-hints-mode 1)))
 
 (defun my/rust-ts-disable-built-in-flymake ()
-	"rust-ts-mode組み込みのFlymake checkerをbuffer-localに外す。"
-	(setq-local flymake-diagnostic-functions
-      (remq 'rust-ts-flymake flymake-diagnostic-functions)))
+	"rust-ts-mode組み込みのFlymake checkerをmode hookの前に外す。"
+	(when (and (eq major-mode 'rust-ts-mode)
+	           (boundp 'flymake-diagnostic-functions)
+	           (memq 'rust-ts-flymake flymake-diagnostic-functions))
+		(setq-local flymake-diagnostic-functions
+		            (remq 'rust-ts-flymake flymake-diagnostic-functions))))
 
 (use-package
 	eglot
@@ -123,7 +126,7 @@
 	(setq-default eglot-workspace-configuration my/eglot-workspace-configuration))
 
 (add-hook 'eglot-managed-mode-hook #'my/eglot-enable-inlay-hints)
-(add-hook 'rust-ts-mode-hook #'my/rust-ts-disable-built-in-flymake)
+(add-hook 'change-major-mode-after-body-hook #'my/rust-ts-disable-built-in-flymake)
 
 (defun my/eglot-format-on-save ()
 	"eglot管理下では保存前に整形する"

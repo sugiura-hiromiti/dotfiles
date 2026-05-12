@@ -54,6 +54,7 @@
 			'("." . puni-mark-sexp-around-point)
 			'("RET" . my/meow-ret-dispatch)
 			'("TAB" . meta-navigation/body)
+			'("DEL" . tree-sitter-operations/body)
 			'("<escape>" . ignore)
 			'("a" . meow-append)
 			'("A" . embrace-add)

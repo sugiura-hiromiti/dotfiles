@@ -91,7 +91,19 @@
 				("j" majutsu "jj"))
 			"org"
 			(("c" org-capture "capture")
-				("k" org-agenda "agenda")))))
+				("k" org-agenda "agenda"))))
+	(pretty-hydra-define tree-sitter-operations
+		(:color pink :quit-key "<escape>")
+		("tsm/move"
+			(("b" tsm/node-prev "prev")
+				("f" tsm/node-next "next")
+				("p" tsm/node-parent "parent")
+				("n" tsm/node-child "child")
+				("a" tsm/node-start "start")
+				("e" tsm/node-end "end"))
+			"tsm/overlay"
+			(("d" tsm/clear-overlays "clear")
+				("m" tsm/node-mark "mark")))))
 
 (defun my/consult-ripgrep-current-dir ()
 	"現在のバッファのディレクトリ配下をrgする"

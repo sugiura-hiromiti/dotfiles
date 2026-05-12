@@ -27,7 +27,8 @@
 	:hook (after-init . envrc-global-mode))
 
 (use-package hl-todo
-	:hook ((prog-mode . hl-todo-mode)
-				(prog-mode . my/hl-todo-flymake-setup)))
+	:hook (prog-mode . hl-todo-mode)
+	:init
+	(add-hook 'prog-mode-hook #'my/hl-todo-flymake-setup 90))
 
 (provide 'init-misc)

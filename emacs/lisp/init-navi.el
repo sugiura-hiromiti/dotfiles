@@ -87,7 +87,7 @@
 			"misc"
 			(("s" save-some-buffers "save")
 				("e" eval-buffer "eval")
-				("x" eat "terminal")
+				("x" ghostel "terminal")
 				("j" majutsu "jj"))
 			"org"
 			(("c" org-capture "capture")

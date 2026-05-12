@@ -9,11 +9,13 @@
 	(add-hook 'flymake-diagnostic-functions #'hl-todo-flymake nil t)
 	(flymake-mode 1))
 
-(use-package eat
-	:ensure t
-	:commands (eat))
+;; (use-package eat
+;; 	:commands (eat))
 
-
+(use-package ghostel
+	:commands (ghostel)
+	:custom
+	(ghostel-module-auto-install 'download))
 
 (use-package diff-hl
 	:config
@@ -21,7 +23,8 @@
 	(diff-hl-flydiff-mode 1))
 
 (use-package majutsu
-	:vc (:url "https://github.com/0WD0/majutsu"))
+	:vc (:url "https://github.com/0WD0/majutsu"
+			 :rev :newest))
 
 (use-package envrc
 	:hook (after-init . envrc-global-mode))

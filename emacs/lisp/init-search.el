@@ -16,6 +16,17 @@
 		'(embark-keybinding grid))
 	(vertico-multiform-mode 1))
 
+(use-package vertico-buffer-frame
+	:after vertico
+	:vc (:url "https://github.com/kn66/vertico-buffer-frame"
+			 :rev :newest)
+	:custom
+	(vertico-buffer-frame-preview t)
+	(vertico-buffer-frame-preview-layout 'side-by-side)
+	(vertico-buffer-frame-alpha-background 80)
+	:config
+	(vertico-buffer-frame-mode 1))
+
 (use-package marginalia :init (marginalia-mode 1))
 
 (use-package

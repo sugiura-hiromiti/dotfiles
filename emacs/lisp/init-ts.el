@@ -16,7 +16,8 @@
 (use-package nix-ts-mode)
 
 (use-package kdl-ts-mode
-	:vc (:url "https://github.com/dataphract/kdl-ts-mode")
+	:vc (:url "https://github.com/dataphract/kdl-ts-mode"
+			 :rev :newest)
 	:config
 	(setq kdl-ts-mode-indent-offset 3))
 
@@ -69,37 +70,9 @@
 
 (add-hook 'after-init-hook #'my/setup-treesit-mode-associations)
 
-;; (use-package ts-movement
-;; 	:vc (:url "https://github.com/haritkapadia/ts-movement")
-;; 	:hook
-;; 	((rust-ts-mode
-;; 		 haskell-ts-mode
-;; 		 json-ts-mode
-;; 		 toml-ts-mode
-;; 		 nushell-ts-mode
-;; 		 lua-ts-mode
-;; 		 nix-ts-mode
-;; 		 yaml-ts-mode
-;; 		 md-ts-mode
-;; 		 kdl-ts-mode) . ts-movement-mode)
-;; 	:config
-;; 	(defun my/tsm-next-node-end ()
-;; 		"move to next sibling node, then go to its end"
-;; 		(interactive)
-;; 		(tsm/node-next (point))
-;; 		(tsm/node-end (point)))
-;; 	(defun my/tsm-prev-node-start ()
-;; 		"move to previous sibling node, then go to its start"
-;; 		(interactive)
-;; 		(tsm/node-prev (point))
-;; 		(tsm/node-start (point)))
-;; 	(define-key ts-movement-map (kbd "<down>") #'my/tsm-next-node-end)
-;; 	(define-key ts-movement-map (kbd "<up>") #'my/tsm-prev-node-start)
-;; 	(define-key ts-movement-map (kbd "<right>") #'tsm/node-child)
-;; 	(define-key ts-movement-map (kbd "<left>") #'tsm/node-parent))
-
 (use-package ts-movement
-	:vc (:url "https://github.com/haritkapadia/ts-movement")
+	:vc (:url "https://github.com/haritkapadia/ts-movement"
+			 :rev :newest)
 	:hook
 	((rust-ts-mode
 		 haskell-ts-mode

@@ -14,8 +14,6 @@
 	'((tab-mark ?\t [?\│ ?\t] [?\t ?\t]))
 	;; flymake-show-diagnostics-at-end-of-line t
 	)
-(when (fboundp 'editorconfig-mode)
-	(editorconfig-mode 1))
 (global-whitespace-mode 1)
 
 (global-display-line-numbers-mode 1)

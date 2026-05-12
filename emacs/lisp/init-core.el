@@ -14,9 +14,17 @@
  which-key-idle-delay 0.1
  text-mode-ispell-word-completion nil)
 
+;; Emacs internals such as VC and diff expect POSIX shell syntax.
+(when-let ((shell (or (executable-find "bash")
+                      (executable-find "sh"))))
+  (setq shell-file-name shell
+        shell-command-switch "-c"))
+
+(when-let ((nu (executable-find "nu")))
+  (setq explicit-shell-file-name nu))
+
 (when (fboundp 'editorconfig-mode)
   (editorconfig-mode 1))
-(global-whitespace-mode 1)
 
 ;; 履歴
 (savehist-mode 1)
@@ -56,8 +64,8 @@
 (use-package
  exec-path-from-shell
  :config
- (setq exec-path-from-shell-shell-name
-       "/run/current-system/sw/bin/nu")
+ (when-let ((nu (executable-find "nu")))
+   (setq exec-path-from-shell-shell-name nu))
  (exec-path-from-shell-initialize))
 
 (which-key-mode 1)

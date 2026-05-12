@@ -192,7 +192,7 @@
 		'(embark-minimal-indicator
 			 embark-highlight-indicator
 			 embark-isearch-highlight-indicator))
-	(setq embark-prompter #'embark-completion-read-prompter)
+	(setq embark-prompter #'embark-completing-read-prompter)
 	;;minibufferを閉じない運用にしたい場合
 	;; (setq embark-quit-after-action nil)
 	)

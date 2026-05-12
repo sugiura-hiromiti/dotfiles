@@ -48,10 +48,6 @@ in
     };
     packages = mypkgs;
     file = {
-      ".npmrc" = {
-        target = ".npmrc";
-        source = ../../.npmrc;
-      };
       "ssh" = {
         target = ".ssh/config";
         source = ../../.ssh/config;

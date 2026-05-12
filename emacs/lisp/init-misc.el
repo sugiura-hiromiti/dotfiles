@@ -9,9 +9,6 @@
 	(add-hook 'flymake-diagnostic-functions #'hl-todo-flymake nil t)
 	(flymake-mode 1))
 
-;; (use-package eat
-;; 	:commands (eat))
-
 (use-package ghostel
 	:commands (ghostel)
 	:custom

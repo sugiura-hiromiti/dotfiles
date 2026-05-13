@@ -26,3 +26,8 @@ run = "git"
 id = "git"
 url = "*/"
 run = "git"
+
+[opener]
+edit = [
+	{ run = 'emacsclient -n %s', desc = "edit in emacs tab", for = "unix" }
+]

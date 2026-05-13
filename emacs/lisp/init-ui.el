@@ -270,6 +270,9 @@ When called from popup tab, return to previous tab and delete popup tab."
 	;; Global binding
 	(keymap-global-set "C-," #'my/toggle-popup-tab))
 
-(use-package agent-shell)
+(use-package agent-shell
+	:bind (:map agent-shell-mode-map
+				("RET" . newline)
+				("S-<return>" . shell-maker-submit)))
 
 (provide 'init-ui)

@@ -194,7 +194,7 @@
 (use-package
 	embark
 	:bind
-	(("C-." . embark-act)
+	(("S-<RETURN>" . embark-act)
 		("C-;" . embark-dwim)
 		("C-h B" . embark-bindings))
 	:init (setopt prefix-help-command #'embark-prefix-help-command)
@@ -205,10 +205,36 @@
 			 embark-isearch-highlight-indicator))
 	(setq embark-prompter #'embark-completing-read-prompter)
 	;;minibufferを閉じない運用にしたい場合
-	;; (setq embark-quit-after-action nil)
-	)
+	(setq embark-quit-after-action nil))
 
-(use-package embark-consult :after (embark consult))
+(use-package embark-consult :after (embark consult)
+	:hook
+	(embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package wgrep
+	:custom
+	;; wgrep終了時に自動保存するか とりあえずoff
+	(wgrep-auto-save-buffer nil))
+
+;; NOTE: vertico-directory, vertico-quick, vertico-indexed導入検討
+
+(use-package nerd-icons-completion
+	:after marginalia
+	:config
+	(nerd-icons-completion-mode)
+	(add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+
+(use-package consult-gh
+	:after consult
+	:custom
+	(consult-gh-show-preview t)
+	(consult-gh-default-clone-directory "~/Downloads/awa")
+	(consult-gh-confirm-before-clone t))
+
+(use-package consult-gh-embark
+	:after (consult-gh embark)
+	:config
+	(consult-gh-embark-mode))
 
 (use-package consult-eglot :after (consult eglot))
 

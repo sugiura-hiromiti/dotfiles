@@ -98,6 +98,16 @@
 													 ; '("z" . meow-pop-selection)
 			))
 	(my/meow-setup) (meow-global-mode 1)
+
+	(defun my/save-some-buffers-when-meow-insert-exit (&rest _)
+		"save modified file-visiting buffers without confirmation when leaving meow insert mode"
+		(condition-case err
+			(save-some-buffers t)
+			(error
+				(message "save-some-buffers failed: %s" (error-message-string err)))))
+	(advice-add #'meow-insert-exit
+		:before
+		#'my/save-some-buffers-when-meow-insert-exit)
 	:custom (meow-use-clipboard t))
 
 (defun my/meow-ret-dispatch ()

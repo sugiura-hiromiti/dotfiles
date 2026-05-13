@@ -85,10 +85,11 @@
 				("p" consult-ripgrep "prj rg")
 				("m" compile "compilation-mode"))
 			"misc"
-			(("s" save-some-buffers "save")
+			(;;("s" save-some-buffers "save")
 				("e" eval-buffer "eval")
 				("x" ghostel "terminal")
-				("j" majutsu "jj"))
+				("j" majutsu "jj")
+				("s" consult-info "seek"))
 			"org"
 			(("c" org-capture "capture")
 				("k" org-agenda "agenda"))))
@@ -111,5 +112,12 @@
 	(consult-ripgrep
 		default-directory
 		(thing-at-point 'symbol t)))
+
+(use-package flymake
+	:ensure nil
+	:bind
+	(:map flymake-mode-map
+		("<f1>" . flymake-goto-prev-error)
+		("<f2>" . flymake-goto-next-error)))
 
 (provide 'init-navi)

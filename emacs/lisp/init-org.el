@@ -42,9 +42,18 @@
 (setq org-refile-use-outline-path 'file)
 
 (defun my/org-force-tab-width-8 ()
-	(setq-local tab-width 8))
-
+	"Force `tab-width' to 8 in Org buffers."
+	(when (derived-mode-p 'org-mode)
+		(setq-local tab-width 8)))
 (add-hook 'org-mode-hook #'my/org-force-tab-width-8)
+;; .dir-locals.el / file-local variables 適用後にも戻す
+(add-hook 'hack-local-variables-hook #'my/org-force-tab-width-8)
+
+(with-eval-after-load 'editorconfig
+	(add-hook 'editorconfig-after-apply-functions
+      (lambda (_props)
+         (when (derived-mode-p 'org-mode)
+            (setq-local tab-width 8)))))
 
 (use-package org-modern
 	:hook ((org-mode . org-modern-mode)

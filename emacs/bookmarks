@@ -4,8 +4,8 @@
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
 (("org-capture-last-stored"
  (filename . "~/Downloads/awa/org/inbox.org")
- (front-context-string . "* TODO emacsのsni")
- (rear-context-string . "on 09:36]\n:END:\n")
- (position . 1478)
- (last-modified 27125 27214 369815 231000))
+ (front-context-string . "* TODO toml フォーマ")
+ (rear-context-string . "ue 12:46]\n:END:\n")
+ (position . 56)
+ (last-modified 27140 2831 344196 204000))
 )

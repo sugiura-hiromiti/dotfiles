@@ -284,7 +284,7 @@ in
       enable = true;
       context = ''
         if command execution failed and repository contains flake.nix at root, retry with nix's devshell or execute via `direnv exec`.
-        use serena if possible.
+        use serena if possible. if anything is unclear, please make sure to ask for clarification.
       '';
       settings = {
         model = "gpt-5.5";

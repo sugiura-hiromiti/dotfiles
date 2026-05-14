@@ -4,12 +4,12 @@
   ("--colocate" "--remote=origin")
   ("--colocate"))
  (majutsu-git-fetch-transient nil)
- (majutsu-git-push-transient
-  ("--bookmark=normalize_repository1")
-  nil
-  ("--bookmark=xtask_runner_definition")
-  ("--bookmark=main")
-  ("--remote=origin"))
+ (majutsu-git-push-transient nil
+									  ("--bookmark=normalize_repository2")
+									  ("--bookmark=normalize_repository1")
+									  ("--bookmark=xtask_runner_definition")
+									  ("--bookmark=main")
+									  ("--remote=origin"))
  (majutsu-git-push:-b)
  (majutsu-git-remote-transient nil)
  (majutsu-git-transient nil)
@@ -19,5 +19,6 @@
   ("--onto=kurzuxpm")
   ("--onto=wmqvqusk")
   ("--onto=npwqsnyl"))
+ (majutsu-split nil)
  (transient:majutsu-git-clone-transient:--remote= "origin")
  (transient:majutsu-git-push-transient:--remote= "origin"))

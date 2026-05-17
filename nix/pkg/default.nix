@@ -31,7 +31,9 @@ with pkgs;
   ffmpeg
   gifski
   reaper
-  dexed
   codex-acp
   dexed
+  ff2mpv-rust
+  mpv
+  yt-dlp
 ]

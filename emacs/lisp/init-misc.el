@@ -10,7 +10,7 @@
 	(flymake-mode 1))
 
 (use-package ghostel
-	:commands (ghostel)
+	:commands (ghostel ghostel-compile)
 	:custom
 	(ghostel-module-auto-install 'download))
 
@@ -30,5 +30,31 @@
 	:hook (prog-mode . hl-todo-mode)
 	:init
 	(add-hook 'prog-mode-hook #'my/hl-todo-flymake-setup 90))
+
+(use-package elfeed
+	:commands (elfeed)
+	:custom
+	;; 未読かつ直近1週間だけ表示
+	(elfeed-search-filter "@1-week-ago +unread ")
+	(elfeed-use-curl t)
+	:config
+	(setq elfeed-feeds
+		'(("https://apribase.net/program/feed")
+			 ("https://opaupafz2.hatenablog.com/rss")
+			 ("https://this-week-in-rust.org/rss.xml")
+			 ("https://www.matem.unam.mx/~omar/apropos-emacs.xml"))))
+
+(use-package eww
+	:ensure nil
+	:custom
+	;; サイト側の色、フォントを無視する
+	(shr-use-colors nil)
+	(shr-use-fonts nil))
+
+(use-package browse-url
+	:ensure nil
+	:custom
+	(browse-url-browser-function #'eww-browse-url)
+	(browse-url-secondary-browser-function #'browse-url-default-browser))
 
 (provide 'init-misc)

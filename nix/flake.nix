@@ -42,9 +42,9 @@
         };
       };
     };
-    neovim-nightly-overlay = {
-      url = "github:nix-community/neovim-nightly-overlay";
-    };
+    # neovim-nightly-overlay = {
+    #   url = "github:nix-community/neovim-nightly-overlay";
+    # };
     catppuccin = {
       url = "github:catppuccin/nix";
     };
@@ -106,7 +106,7 @@
       nixpkgs,
       home-manager,
       nix-darwin,
-      neovim-nightly-overlay,
+      # neovim-nightly-overlay,
       catppuccin,
       nur,
       flake-parts,
@@ -188,7 +188,7 @@
         home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             overlays = [
-              neovim-nightly-overlay.overlays.default
+              # neovim-nightly-overlay.overlays.default
               nur.overlays.default
               # niri-flake.overlays.niri
             ];

@@ -4,6 +4,7 @@
   theme,
   has_gui,
   lib,
+  config,
   ...
 }:
 let
@@ -607,9 +608,21 @@ in
     };
   };
   xdg = {
+    desktopEntries = {
+      org-protocol = {
+        name = "org-protocol";
+        comment = "handle org-protocol:// urls with emacsclient";
+        exec = "${config.programs.emacs.finalPackage}/bin/emacsclient -n -- %u";
+        terminal = false;
+        type = "Application";
+        categories = [ "Utility" ];
+        mimeType = [ "x-scheme-handler/org-protocol" ];
+      };
+    };
     mimeApps = {
       enable = true;
       defaultApplications = {
+        "x-scheme-handler/org-protocol" = "org-protocol.desktop";
         "inode/directory" = "yazi.desktop";
         "text/uri-list" = "yazi.desktop";
         "video/*" = "firefox.desktop";

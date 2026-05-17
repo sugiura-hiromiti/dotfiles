@@ -83,16 +83,18 @@
 				("i" consult-line "line")
 				("g" my/consult-ripgrep-current-dir "rg")
 				("p" consult-ripgrep "prj rg")
-				("m" compile "compilation-mode"))
+				;; TODO: ghostel-compileに置き換え
+				("m" ghostel-compile "compilation-mode"))
 			"misc"
-			(;;("s" save-some-buffers "save")
-				("e" eval-buffer "eval")
+			(("e" eval-buffer "eval")
 				("x" ghostel "terminal")
 				("j" majutsu "jj")
-				("s" consult-info "seek"))
+				("n" elfeed "rss notification"))
 			"org"
 			(("c" org-capture "capture")
-				("k" org-agenda "agenda"))))
+				("k" org-agenda "agenda")
+				("s" org-store-link "store link"))))
+
 	(pretty-hydra-define tree-sitter-operations
 		(:color pink :quit-key "<escape>")
 		("tsm/move"

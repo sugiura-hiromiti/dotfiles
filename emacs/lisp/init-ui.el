@@ -149,7 +149,7 @@
 			"Async Shell Command"
 			"eshell"
 			"shell"
-			"eat")
+			"ghostel")
 		(* any)
 		"*"
 		eos))
@@ -162,7 +162,7 @@
 		 occur-mode
 		 eshell-mode
 		 shell-mode
-		 eat-mode))
+		 ghostel-mode))
 
 (defun my/current-tab-name ()
 	(let ((tab (seq-find (lambda (tab)

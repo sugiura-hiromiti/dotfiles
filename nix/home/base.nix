@@ -69,6 +69,16 @@ in
     });
   };
   programs = {
+    mpv = {
+      enable = true;
+      config = {
+        ytdl = true;
+        ytdl-format = "bestvideo+bestaudio/best";
+        hwdec = "auto-safe";
+        force-window = "yes";
+        save-position-on-quit = "yes";
+      };
+    };
     translate-shell = {
       enable = true;
     };
@@ -119,6 +129,7 @@ in
           Fingerprinting = true;
         };
       };
+      nativeMessagingHosts = [ pkgs.ff2mpv-rust ];
       profiles = {
         dflt = {
           isDefault = true;

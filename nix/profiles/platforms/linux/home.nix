@@ -403,15 +403,17 @@ in
           lockScreenAnimations = true;
           enableLockScreenMediaControls = true;
           lockScreenBlur = 0.7;
+          lockScreenTint = 0.3;
         };
         wallpaper = {
           # directory = (homeDir.content + "/Downloads/media/wallpapers/");
           overviewEnabled = true;
           automationEnabled = true;
-          overviewTing = 0.5;
+          overviewBlur = 0.35;
+          overviewTint = 0.5;
           useWallhaven = true;
           wallhavenSorting = "hot";
-          wallhavenCategories = "010";
+          wallhavenCategories = "110";
           wallhavenPurity = "010";
         };
         appLauncher = {
@@ -625,9 +627,9 @@ in
         "x-scheme-handler/org-protocol" = "org-protocol.desktop";
         "inode/directory" = "yazi.desktop";
         "text/uri-list" = "yazi.desktop";
-        "video/*" = "firefox.desktop";
-        "image/*" = "firefox.desktop";
-        "audio/*" = "firefox.desktop";
+        "video/*" = "mpv.desktop";
+        "image/*" = "mpv.desktop";
+        "audio/*" = "mpv.desktop";
       };
     };
     portal = {

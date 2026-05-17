@@ -23,7 +23,6 @@ with pkgs;
   nufmt
   bat
   wezterm
-  lazyjj
   imagemagick
   python3
   tesseract
@@ -33,7 +32,6 @@ with pkgs;
   reaper
   codex-acp
   dexed
-  ff2mpv-rust
-  mpv
   yt-dlp
+  dorion
 ]

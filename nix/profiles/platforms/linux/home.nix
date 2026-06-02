@@ -402,16 +402,19 @@ in
         general = {
           lockScreenAnimations = true;
           enableLockScreenMediaControls = true;
+          enableBlurBehind = true;
           lockScreenBlur = 0.7;
           lockScreenTint = 0.3;
         };
         wallpaper = {
-          # directory = (homeDir.content + "/Downloads/media/wallpapers/");
+          directory = (homeDir.content + "/Downloads/media/wallpapers/");
           overviewEnabled = true;
           automationEnabled = true;
+          randomIntervalSec = 60;
+          wallpaperChangeMode = "random";
           overviewBlur = 0.35;
           overviewTint = 0.5;
-          useWallhaven = true;
+          useWallhaven = false;
           wallhavenSorting = "hot";
           wallhavenCategories = "110";
           wallhavenPurity = "010";
@@ -632,6 +635,21 @@ in
         "audio/*" = "mpv.desktop";
       };
     };
+    configFile."xdg-desktop-portal-termfilechooser/config".text = ''
+      [filechooser]
+      cmd=${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+      default_dir=$HOME
+      env=TERMCMD=${pkgs.wezterm}/bin/wezterm start --always-new-process
+          PATH=${
+            lib.makeBinPath [
+              config.programs.yazi.package
+              pkgs.coreutils
+              pkgs.gnused
+            ]
+          }
+      open_mode=suggested
+      save_mode=suggested
+    '';
     portal = {
       enable = true;
       extraPortals = [
@@ -640,8 +658,15 @@ in
         # pkgs.xdg-desktop-portal-gtk
       ];
       config = {
-        common = {
+        niri = {
+          default = [
+            "gnome"
+            "gtk"
+          ];
+          "org.freedesktop.impl.portal.Access" = "gtk";
           "org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
+          "org.freedesktop.impl.portal.Notification" = "gtk";
+          "org.freedesktop.impl.portal.Secret" = "gnome-keyring";
           # "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
           # "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
         };

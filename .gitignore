@@ -60,3 +60,7 @@ cabal/
 nushell/history.txt
 /.serena
 /.agent-shell/
+elfeed/
+tramp
+emacs/url/
+emacs/bookmarks

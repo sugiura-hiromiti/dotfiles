@@ -343,6 +343,14 @@
       enable = true;
     };
   };
+  xdg.portal = {
+    extraPortals = [
+      pkgs.xdg-desktop-portal-termfilechooser
+    ];
+    config.niri = {
+      "org.freedesktop.impl.portal.FileChooser" = lib.mkForce "termfilechooser";
+    };
+  };
 
   # Enable automatic login for the user.
   # services.getty.autologinUser = "a";

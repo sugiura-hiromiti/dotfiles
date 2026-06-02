@@ -377,7 +377,7 @@ window-rule {
 
 window-rule {
     match is-active=false
-    opacity 0.8
+    opacity 0.7
 	 background-effect {
 	     xray true
 		  blur true
@@ -447,6 +447,13 @@ blur {
 layer-rule{
     match namespace="^noctalia-overview"
     place-within-backdrop true
+}
+
+layer-rule {
+	match namespace="^noctalia-(launcher-overlay|dock)-.*$"
+	background-effect {
+		blur true
+	}
 }
 
 recent-windows {

@@ -31,7 +31,6 @@ yarn
 karabiner/automatic_backups/
 nv_config_rs/target
 configstore/zenn-cli.json
-flake.lock
 git/
 .ssh/id_ed*
 .ssh/flk*

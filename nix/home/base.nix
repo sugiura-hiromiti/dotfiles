@@ -1,5 +1,5 @@
 {
-  user,
+  accountName,
   pkgs,
   config,
   lib,
@@ -15,7 +15,6 @@ let
     "alacritty"
     "fcitx5"
     "fish"
-    "geonkick"
     "ghostty"
     "ironbar"
     "kitty"
@@ -36,7 +35,7 @@ in
     shell = {
       enableNushellIntegration = true;
     };
-    username = user;
+    username = accountName;
     stateVersion = "26.05";
     sessionVariables = {
       CLAP_PATH = "~/.nix-profile/lib/clap";
@@ -54,11 +53,11 @@ in
       };
       "dprint" = {
         target = ".config/dprint/dprint.jsonc";
-        source = ../../.dprint.jsonc;
+        source = ../formatters/dprint-settings.json;
       };
       "stylua" = {
         target = ".config/.stylua.toml";
-        source = ../../.stylua.toml;
+        source = ../formatters/stylua.toml;
       };
     };
   };
@@ -69,16 +68,6 @@ in
     });
   };
   programs = {
-    mpv = {
-      enable = true;
-      config = {
-        ytdl = true;
-        ytdl-format = "bestvideo+bestaudio/best";
-        hwdec = "auto-safe";
-        force-window = "yes";
-        save-position-on-quit = "yes";
-      };
-    };
     translate-shell = {
       enable = true;
     };
@@ -129,7 +118,6 @@ in
           Fingerprinting = true;
         };
       };
-      nativeMessagingHosts = [ pkgs.ff2mpv-rust ];
       profiles = {
         dflt = {
           isDefault = true;
@@ -266,48 +254,6 @@ in
     eza = {
       enable = true;
       # enableNushellIntegration = true;
-    };
-    codex = {
-      enable = true;
-      context = ''
-        if command execution failed and repository contains flake.nix at root, retry with nix's devshell or execute via `direnv exec`.
-        use serena if possible. if anything is unclear, please make sure to ask for clarification.
-      '';
-      settings = {
-        model = "gpt-5.5";
-        model_reasoning_effort = "xhigh";
-        hide_agent_reasoning = true;
-        network_access = true;
-        approval_policy = "never";
-        sandbox_mode = "workspace-write";
-        features = {
-          web_search_rrequests = true;
-        };
-        sandbox_workspace_write = {
-          network_access = true;
-        };
-        tui = {
-          notifications = true;
-        };
-        mcp_servers = {
-          serena = {
-            command = "uvx";
-            args = [
-              "--from"
-              "git+https://github.com/oraios/serena"
-              "serena"
-              "start-mcp-server"
-              "--context"
-              "codex"
-            ];
-            startup_timeout_sec = 30;
-          };
-          github = {
-            url = "https://api.githubcopilot.com/mcp";
-            bearer_token_env_var = "GITHUB_PAT_TOKEN";
-          };
-        };
-      };
     };
     bottom = {
       enable = true;

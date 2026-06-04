@@ -2,7 +2,6 @@
   lib,
   system,
   host ? null,
-  user,
   roles ? [ ],
   variants ? [ ],
   ...
@@ -12,11 +11,19 @@ let
   resolve = import ../lib/resolve-profiles.nix { inherit lib; };
 in
 {
-  imports =
-    [ ./base.nix ]
-    ++ resolve {
-      baseDir = ../.;
-      target = "nixos";
-      inherit platform system host user roles variants;
-    };
+  imports = [
+    ../modules/nixos
+    ./base.nix
+  ]
+  ++ resolve {
+    baseDir = ../.;
+    target = "nixos";
+    inherit
+      platform
+      system
+      host
+      roles
+      variants
+      ;
+  };
 }

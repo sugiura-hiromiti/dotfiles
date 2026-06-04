@@ -1,6 +1,4 @@
 [Hotkey]
-# Toggle Input Method
-TriggerKeys=
 # Enumerate when holding modifier of Toggle key
 EnumerateWithTriggerKeys=True
 # Activate Input Method
@@ -21,6 +19,9 @@ EnumerateGroupForwardKeys=
 EnumerateGroupBackwardKeys=
 # Time limit in milliseconds for triggering modifier key shortcuts
 ModifierOnlyKeyTimeout=250
+
+[Hotkey/TriggerKeys]
+0=Control+space
 
 [Hotkey/PrevPage]
 0=Page_Up

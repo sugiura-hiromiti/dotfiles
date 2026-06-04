@@ -13,7 +13,6 @@ with pkgs;
   # yaml-language-server
   sd
   nil
-  viu
   uv
   # vscode-langservers-extracted
   sqlite
@@ -23,17 +22,6 @@ with pkgs;
   nufmt
   bat
   wezterm
-  imagemagick
   python3
-  tesseract
-  zbar
-  ffmpeg
-  gifski
-  reaper
-  dexed
-  # dexed
-  codex-acp
-  yt-dlp
   dorion
-  dexed
 ]

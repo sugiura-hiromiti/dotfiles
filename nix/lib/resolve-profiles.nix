@@ -5,26 +5,33 @@
   platform,
   system,
   host,
-  user,
   roles ? [ ],
   variants ? [ ],
 }:
 let
   base = toString baseDir;
-  optional = path: lib.optionals (builtins.pathExists path) [ path ];
+  optionalFile = path: lib.optionals (builtins.pathExists path) [ path ];
+  profileDir = kind: name: "${base}/profiles/${kind}/${name}";
+  requireProfileDir =
+    kind: name:
+    let
+      dir = profileDir kind name;
+    in
+    assert lib.assertMsg (builtins.pathExists dir)
+      "Unknown ${kind} profile '${name}' for ${target} target";
+    dir;
   perKind =
     kind: name:
     let
-      dir = "${base}/profiles/${kind}/${name}";
+      dir = requireProfileDir kind name;
     in
-    optional "${dir}/common.nix" ++ optional "${dir}/${target}.nix";
+    optionalFile "${dir}/common.nix" ++ optionalFile "${dir}/${target}.nix";
   perKindMaybe = kind: name: if name == null || name == "" then [ ] else perKind kind name;
 in
 lib.unique (
   perKindMaybe "platforms" platform
   ++ perKindMaybe "systems" system
   ++ perKindMaybe "hosts" host
-  ++ perKindMaybe "users" user
   ++ lib.concatMap (role: perKind "roles" role) roles
   ++ lib.concatMap (variant: perKind "variants" variant) variants
 )

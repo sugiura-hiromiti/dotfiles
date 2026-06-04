@@ -1,10 +1,18 @@
 {
   system = "aarch64-darwin";
-  user = "hiromichisugiura";
+  accounts = {
+    primary = "hiromichisugiura";
+    users = {
+      hiromichisugiura = { };
+    };
+  };
   targets = [
     "home"
     "darwin"
   ];
   roles = [ ];
-  variants = [ ];
+  variants = [
+    "ai-tools"
+    "media"
+  ];
 }

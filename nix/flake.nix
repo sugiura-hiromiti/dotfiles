@@ -1,14 +1,14 @@
 # ~/.config/nix/flake.nix
 # -----------------------------------------------------------------------------
 # 概要
-# - profiles/hosts/<host>/meta.nix が system/user/targets/roles/variants を定義
+# - profiles/hosts/<host>/meta.nix が system/accounts/targets/roles/variants を定義
 # - home/ が Home Manager、nixos/ が NixOS、nix-darwin/ が macOS 設定の入口
-# - profiles/{platforms,systems,users,hosts} は home/ から解決して取り込み
-# - secret.nix で user/theme/has_gui/host(任意) を供給
+# - profiles/{platforms,systems,hosts} は各target入口から解決して取り込み
+# - runtime-contexts.nix が theme/session と追加 variants の対応を定義
 #
 # 使い方
 # 1) 新しい端末を追加:
-#    profiles/hosts/<host>/meta.nix を作成し system/user/targets を指定
+#    profiles/hosts/<host>/meta.nix を作成し system/accounts/targets を指定
 #    (必要なら同ディレクトリに nixos.nix / hardware-configuration.nix)
 # 2) 反映:
 #    - Home Manager: nix run nixpkgs#home-manager -- switch --flake .#<host>
@@ -16,9 +16,10 @@
 #    - macOS: sudo nix run nix-darwin -- switch --flake .#<host>
 # 3) まとめて更新:
 #    nix run .#update
-#    - git stage -> flake.lock 更新 -> Home Manager 反映
+#    - git stage -> flake.lock 更新/stage -> Home Manager 反映
 #    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
-#    - ホスト名は secret.host を優先、無ければ "<system>-<user>"
+#    - account は未指定なら current user を使う
+#    - theme/session は未指定なら実行時に検出する
 # -----------------------------------------------------------------------------
 {
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
@@ -58,6 +59,14 @@
     };
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
+    };
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
     };
     systems = {
       url = "github:nix-systems/default";
@@ -110,6 +119,7 @@
       catppuccin,
       nur,
       flake-parts,
+      treefmt-nix,
       systems,
       # paneru,
       # niri-flake,
@@ -118,71 +128,41 @@
       # zen-browser,
     }:
     let
-      lib = nixpkgs.lib;
-      secret = import ./secret.nix { };
-      defaultUser = secret.user;
-      theme = secret.theme;
-      has_gui = secret.has_gui;
-      defaultHost = if secret ? host then secret.host else null;
-
-      hostDir = ./profiles/hosts;
-      hostEntries = builtins.readDir hostDir;
-      hostNames = lib.attrNames (lib.filterAttrs (_: type: type == "directory") hostEntries);
-      mkHost =
-        host:
-        let
-          meta = import (hostDir + "/${host}/meta.nix");
-          system = meta.system;
-          user = meta.user or defaultUser;
-          uid = meta.uid or null;
-          hostName = meta.hostName or host;
-          roles = meta.roles or [ ];
-          variants = meta.variants or [ ];
-          targets = meta.targets or [ "home" ];
-        in
-        {
-          inherit
-            host
-            system
-            user
-            uid
-            hostName
-            roles
-            variants
-            targets
-            ;
-        };
-      hosts = builtins.listToAttrs (
-        map (host: {
-          name = host;
-          value = mkHost host;
-        }) hostNames
-      );
-      mkTargetConfigs =
-        target: mkConf:
-        lib.listToAttrs (
-          lib.concatMap (
-            host:
-            let
-              h = hosts.${host};
-            in
-            lib.optionals (lib.elem target h.targets) [
-              {
-                name = host;
-                value = mkConf h;
-              }
-            ]
-          ) hostNames
-        );
+      inherit (nixpkgs) lib;
+      runtimeContexts = import ./runtime-contexts.nix;
+      hostRegistry = import ./lib/hosts.nix {
+        inherit lib runtimeContexts;
+        hostDir = ./profiles/hosts;
+      };
+      inherit (hostRegistry) hosts hostNames;
+      runtime = import ./lib/runtime.nix {
+        inherit lib runtimeContexts;
+      };
+      targets = import ./lib/targets.nix {
+        inherit
+          lib
+          hosts
+          hostNames
+          runtime
+          ;
+      };
+      inherit (targets) mkTargetConfigs targetConfigNamesForSystem;
       hm-conf =
         {
           system,
-          user,
+          accountName,
+          account,
           host,
           hostName,
+          accounts,
+          primaryAccountName,
+          primaryAccount,
           roles,
           variants,
-          targets,
+          theme,
+          session,
+          hasGui,
+          has_gui,
           ...
         }:
         home-manager.lib.homeManagerConfiguration {
@@ -196,11 +176,17 @@
           };
           extraSpecialArgs = {
             inherit theme;
-            inherit user;
+            inherit session;
+            inherit hasGui;
             inherit has_gui;
             inherit system;
             inherit host;
             inherit hostName;
+            inherit accountName;
+            inherit account;
+            inherit accounts;
+            inherit primaryAccountName;
+            inherit primaryAccount;
             inherit roles;
             inherit variants;
             # inherit paneru;
@@ -216,12 +202,18 @@
       nixos-conf =
         {
           system,
-          user,
           host,
           hostName,
+          accounts,
+          accountNames,
+          primaryAccountName,
+          primaryAccount,
           roles,
           variants,
-          targets,
+          theme,
+          session,
+          hasGui,
+          has_gui,
           ...
         }:
         nixpkgs.lib.nixosSystem {
@@ -229,9 +221,15 @@
           specialArgs = {
             inherit system;
             inherit theme;
-            inherit user;
+            inherit session;
+            inherit hasGui;
+            inherit has_gui;
             inherit host;
             inherit hostName;
+            inherit accounts;
+            inherit accountNames;
+            inherit primaryAccountName;
+            inherit primaryAccount;
             inherit roles;
             inherit variants;
           };
@@ -243,23 +241,34 @@
       darwin-conf =
         {
           system,
-          user,
-          uid,
           host,
           hostName,
+          accounts,
+          accountNames,
+          primaryAccountName,
+          primaryAccount,
           roles,
           variants,
-          targets,
+          theme,
+          session,
+          hasGui,
+          has_gui,
           ...
         }:
         nix-darwin.lib.darwinSystem {
           inherit system;
           specialArgs = {
             inherit system;
-            inherit user;
-            inherit uid;
+            inherit theme;
+            inherit session;
+            inherit hasGui;
+            inherit has_gui;
             inherit host;
             inherit hostName;
+            inherit accounts;
+            inherit accountNames;
+            inherit primaryAccountName;
+            inherit primaryAccount;
             inherit roles;
             inherit variants;
             # inherit paneru;
@@ -270,6 +279,9 @@
         };
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        treefmt-nix.flakeModule
+      ];
       systems = import systems;
       flake = {
         #
@@ -279,31 +291,70 @@
       };
       perSystem =
         {
+          config,
           pkgs,
           system,
           ...
         }:
         let
-          host = if defaultHost != null then defaultHost else "${system}-${defaultUser}";
+          homeTargets = targetConfigNamesForSystem "home" system;
+          nixosTargets = targetConfigNamesForSystem "nixos" system;
+          darwinTargets = targetConfigNamesForSystem "darwin" system;
+          currentSystemHosts = lib.filter (host: hosts.${host}.system == system) hostNames;
+          currentSystemAccounts = lib.unique (
+            lib.concatMap (host: hosts.${host}.accountNames) currentSystemHosts
+          );
+          currentSystemHostAliases = lib.genAttrs currentSystemHosts (host: hosts.${host}.matchNames);
+          validThemes = lib.attrNames runtimeContexts.themes;
+          validSessions = lib.attrNames runtimeContexts.sessions;
         in
         {
+          treefmt = {
+            imports = [
+              ./treefmt.nix
+            ];
+          };
 
-          apps.update = {
-            type = "app";
-            program = toString (
-              pkgs.writeShellScript "update-script" ''
-                set -e
-                git stage .
-                nix flake update
-                nix run nixpkgs#home-manager -- switch --flake .#${host}
+          checks = import ./checks.nix {
+            inherit
+              lib
+              pkgs
+              self
+              ;
+            targetConfigNames = {
+              home = homeTargets;
+              nixos = nixosTargets;
+              darwin = darwinTargets;
+            };
+          };
 
-                if [ $(uname) = "Darwin" ]; then
-                  sudo nix run nix-darwin -- switch --flake .#${host}
-                elif grep -qi nixos /etc/os-release; then
-                  sudo nixos-rebuild switch --flake .#${host}
-                fi
-              ''
-            );
+          apps.update = import ./apps/update.nix {
+            inherit
+              lib
+              pkgs
+              system
+              currentSystemHosts
+              currentSystemAccounts
+              currentSystemHostAliases
+              validThemes
+              validSessions
+              homeTargets
+              nixosTargets
+              darwinTargets
+              ;
+          };
+
+          devShells.default = pkgs.mkShell {
+            inputsFrom = [
+              config.treefmt.build.devShell
+            ];
+            packages = with pkgs; [
+              deadnix
+              fish
+              jq
+              nil
+              statix
+            ];
           };
         };
     };

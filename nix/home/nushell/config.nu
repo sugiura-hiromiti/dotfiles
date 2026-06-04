@@ -79,12 +79,13 @@ def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme
 def u [] {
 	use std/dirs
 	dirs add $'($env.HOME)/dotfiles/nix'
-	let who = whoami
 	let theme = (hour | if 5 < $in and $in < 17 { 'light' } else { 'dark' })
-	let has_gui = if (wh dconf | is-empty) { false } else { true }
-	echo $'{}:{ user = "($who)"; theme = "($theme)"; has_gui = "($has_gui)";}' | save -f secret.nix
+	let session = if (
+		($env.WAYLAND_DISPLAY? | default "" | is-empty)
+		and ($env.DISPLAY? | default "" | is-empty)
+	) { 'tty' } else { 'gui' }
 	sudo -v
-	nix run .#update
+	nix run .#update -- --theme $theme --session $session
 	dirs drop
 }
 # def s [glob?] {

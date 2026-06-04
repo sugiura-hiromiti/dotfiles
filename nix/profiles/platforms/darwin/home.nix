@@ -1,11 +1,15 @@
 {
   pkgs,
-  user,
+  accountName,
+  account ? { },
   lib,
   config,
   ...
 }:
 let
+  configuredHomeDirectory = account.homeDirectory or null;
+  homeDir =
+    if configuredHomeDirectory != null then configuredHomeDirectory else "/Users/${accountName}";
   emacsPackage = config.programs.emacs.package;
   emacsApp = "${emacsPackage}/Applications/Emacs.app";
   emacsAppExecutable = "${emacsApp}/Contents/MacOS/Emacs";
@@ -84,17 +88,18 @@ let
   lsregister = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
 in
 {
-  home.homeDirectory = lib.mkDefault "/Users/${user}";
-  home.sessionVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.dylib";
-  programs.nushell.environmentVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.dylib";
+  home = {
+    homeDirectory = lib.mkDefault homeDir;
+    sessionVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.dylib";
+    file = {
 
-  home.file = {
-
-    "nushell_appsupport_config" = {
-      target = "Library/Application Support/nushell/config.nu";
-      source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/nushell/config.nu";
+      "nushell_appsupport_config" = {
+        target = "Library/Application Support/nushell/config.nu";
+        source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/nushell/config.nu";
+      };
     };
   };
+  programs.nushell.environmentVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.dylib";
   home.activation.registerEmacsApp = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     app_dir="$HOME/Applications/Home Manager Apps"
 

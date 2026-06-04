@@ -5,8 +5,6 @@
 {
   lib,
   pkgs,
-  user,
-  theme,
   hostName ? null,
   host ? null,
   ...
@@ -118,25 +116,30 @@
   time.timeZone = "Asia/Tokyo";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "en_US.UTF-8";
+  i18n = {
+    defaultLocale = "en_US.UTF-8";
 
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "en_US.UTF-8";
-    LC_IDENTIFICATION = "en_US.UTF-8";
-    LC_MEASUREMENT = "en_US.UTF-8";
-    LC_MONETARY = "en_US.UTF-8";
-    LC_NAME = "en_US.UTF-8";
-    LC_NUMERIC = "en_US.UTF-8";
-    LC_PAPER = "en_US.UTF-8";
-    LC_TELEPHONE = "en_US.UTF-8";
-    LC_TIME = "en_US.UTF-8";
-  };
-  i18n.inputMethod = {
-    enable = true;
-    type = "fcitx5";
-    fcitx5 = {
-      waylandFrontend = true;
-      addons = [ pkgs.fcitx5-skk ];
+    extraLocaleSettings = {
+      LC_ADDRESS = "en_US.UTF-8";
+      LC_IDENTIFICATION = "en_US.UTF-8";
+      LC_MEASUREMENT = "en_US.UTF-8";
+      LC_MONETARY = "en_US.UTF-8";
+      LC_NAME = "en_US.UTF-8";
+      LC_NUMERIC = "en_US.UTF-8";
+      LC_PAPER = "en_US.UTF-8";
+      LC_TELEPHONE = "en_US.UTF-8";
+      LC_TIME = "en_US.UTF-8";
+    };
+    inputMethod = {
+      enable = true;
+      type = "fcitx5";
+      fcitx5 = {
+        waylandFrontend = true;
+        addons = with pkgs; [
+          fcitx5-mozc-ut
+          fcitx5-gtk
+        ];
+      };
     };
   };
 
@@ -164,26 +167,6 @@
     };
     power-profiles-daemon = {
       enable = true;
-    };
-    gnome = {
-      evolution-data-server = {
-        enable = true;
-      };
-    };
-    greetd = {
-      enable = true;
-      useTextGreeter = true;
-      settings = {
-        default_session = {
-          command = ''
-            ${pkgs.tuigreet}/bin/tuigreet \
-            --remember-session \
-            --remember \
-            --cmd ${pkgs.niri}/bin/niri-session
-          '';
-          user = "greeter";
-        };
-      };
     };
     udev = {
       extraRules = ''
@@ -215,42 +198,6 @@
       };
       pulse = {
         enable = true;
-      };
-      jack = {
-        enable = true;
-      };
-      wireplumber = {
-        extraConfig = {
-          "50-alsa-config" = {
-            "monitor.alsa.rules" = [
-              {
-                matches = [ { "node.name" = "~alsa_output.*"; } ];
-                actions = {
-                  update-props = {
-                    "api.alsa.period-size" = 2048;
-                    "api.alsa.headroom" = 8192;
-                  };
-                };
-              }
-            ];
-          };
-        };
-      };
-      extraConfig = {
-        pipewire = {
-          "10-buffer" = {
-            "context.properties" = {
-              "default.clock.rate" = 48000;
-              "default.clock.allowed-rates" = [
-                44100
-                48000
-              ];
-              "default.clock.quantum" = 512;
-              "default.clock.min-quantum" = 256;
-              "default.clock.max-quantum" = 1024;
-            };
-          };
-        };
       };
     };
     # kanata = {
@@ -331,24 +278,8 @@
     #     extraArgs = "--optimise";
     #   };
     # };
-    xwayland = {
-      enable = true;
-    };
-    niri = {
-      enable = true;
-      # package = pkgs.niri-unstable;
-      useNautilus = false;
-    };
     nix-ld = {
       enable = true;
-    };
-  };
-  xdg.portal = {
-    extraPortals = [
-      pkgs.xdg-desktop-portal-termfilechooser
-    ];
-    config.niri = {
-      "org.freedesktop.impl.portal.FileChooser" = lib.mkForce "termfilechooser";
     };
   };
 
@@ -363,10 +294,6 @@
   environment = {
     systemPackages = with pkgs; [
       pipewire
-      pipewire.jack
-      jack2
-      jack-example-tools
-      tuigreet
       tailscale
       #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
       #  wget
@@ -402,7 +329,7 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "25.11"; # Did you read the comment?
+  system.stateVersion = "26.05"; # Did you read the comment?
   nix = {
     settings = {
       auto-optimise-store = true;
@@ -414,7 +341,7 @@
   };
   catppuccin = {
     enable = true;
-    flavor = if theme == "dark" then "frappe" else "latte";
+    autoEnable = true;
     fcitx5 = {
       accent = "yellow";
       enableRounded = true;

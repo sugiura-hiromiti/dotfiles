@@ -1,10 +1,22 @@
 {
-  user,
-  uid ? null,
+  accounts,
+  primaryAccountName,
   lib,
   pkgs,
   ...
 }:
+let
+  accountUsers = accounts.users or { };
+  accountNamesWithUid = lib.filter (name: accountUsers.${name}.uid != null) (
+    lib.attrNames accountUsers
+  );
+  accountHomeDirectory =
+    name: account:
+    let
+      configuredHomeDirectory = account.homeDirectory or null;
+    in
+    if configuredHomeDirectory != null then configuredHomeDirectory else "/Users/${name}";
+in
 {
   security = {
     pam = {
@@ -76,16 +88,6 @@
       enable = true;
     };
   };
-  system = {
-    activationScripts = {
-      pmset = {
-        text = ''
-          /usr/bin/pmset -a womp 1
-          /usr/bin/pmset -a powernap 1
-        '';
-      };
-    };
-  };
   environment = {
     shells = [
       pkgs.nushell
@@ -94,18 +96,6 @@
       nushell
       tailscale
     ];
-    variables = {
-      XDG_CONFIG_HOME = "/Users/${user}/.config";
-      XDG_DATA_HOME = "/Users/${user}/.local/share";
-      XDG_STATE_HOME = "/Users/${user}/.local/state";
-      XDG_CACHE_HOME = "/Users/${user}/.cache";
-    };
-  };
-  launchd.user.envVariables = {
-    XDG_CONFIG_HOME = "/Users/${user}/.config";
-    XDG_DATA_HOME = "/Users/${user}/.local/share";
-    XDG_STATE_HOME = "/Users/${user}/.local/state";
-    XDG_CACHE_HOME = "/Users/${user}/.cache";
   };
   launchd.user.agents."xdg-env" = {
     serviceConfig = {
@@ -115,26 +105,37 @@
         "/bin/sh"
         "-c"
         ''
-          /bin/launchctl setenv XDG_CONFIG_HOME "/Users/${user}/.config"
-          /bin/launchctl setenv XDG_DATA_HOME "/Users/${user}/.local/share"
-          /bin/launchctl setenv XDG_STATE_HOME "/Users/${user}/.local/state"
-          /bin/launchctl setenv XDG_CACHE_HOME "/Users/${user}/.cache"
+          /bin/launchctl setenv XDG_CONFIG_HOME "$HOME/.config"
+          /bin/launchctl setenv XDG_DATA_HOME "$HOME/.local/share"
+          /bin/launchctl setenv XDG_STATE_HOME "$HOME/.local/state"
+          /bin/launchctl setenv XDG_CACHE_HOME "$HOME/.cache"
         ''
       ];
     };
   };
   users = {
-    knownUsers = lib.optionals (uid != null) [ user ];
-    users = lib.optionalAttrs (uid != null) {
-      ${user} = {
-        uid = uid;
-        home = lib.mkDefault "/Users/${user}";
-        shell = "/Users/${user}/.nix-profile/bin/nu";
-      };
-    };
+    knownUsers = accountNamesWithUid;
+    users = lib.listToAttrs (
+      map (name: {
+        inherit name;
+        value = {
+          uid = accountUsers.${name}.uid;
+          home = lib.mkDefault (accountHomeDirectory name accountUsers.${name});
+          shell = "/Users/${name}/.nix-profile/bin/nu";
+        };
+      }) accountNamesWithUid
+    );
   };
   system = {
-    primaryUser = user;
+    activationScripts = {
+      pmset = {
+        text = ''
+          /usr/bin/pmset -a womp 1
+          /usr/bin/pmset -a powernap 1
+        '';
+      };
+    };
+    primaryUser = primaryAccountName;
     stateVersion = 6;
     defaults = {
       NSGlobalDomain = {

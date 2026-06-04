@@ -1,36 +1,24 @@
 {
   pkgs,
-  user,
-  theme,
-  has_gui,
+  accountName,
+  account ? { },
   lib,
-  config,
   ...
 }:
 let
-  homeDir = lib.mkDefault "/home/${user}";
+  configuredHomeDirectory = account.homeDirectory or null;
+  homeDir =
+    if configuredHomeDirectory != null then configuredHomeDirectory else "/home/${accountName}";
 in
 {
-  home.homeDirectory = homeDir;
-  home.sessionVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
+  home = {
+    homeDirectory = lib.mkDefault homeDir;
+    sessionVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
+    packages = with pkgs; [
+      clang
+    ];
+  };
   programs.nushell.environmentVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
-
-  home.packages = with pkgs; [
-    xwayland-satellite
-    geonkick
-    clang
-    wl-clipboard-rs
-    ddcutil
-    evolution-data-server
-    synthv1
-    lsp-plugins
-    calf
-    helm
-    cardinal
-    grim
-    slurp
-    dexed
-  ];
 
   # progerams = {
   # niri = {
@@ -220,238 +208,6 @@ in
     cava = {
       enable = true;
     };
-    noctalia-shell = {
-      enable = true;
-      package = (pkgs.noctalia-shell.override { calendarSupport = true; });
-      # colors =
-      #   {
-      #     dark = {
-      #       mPrimary = "#cba6f7";
-      #       mOnPrimary = "#11111b";
-      #       mSecondary = "#fab387";
-      #       mOnSecondary = "#11111b";
-      #       mTertiary = "#94e2d5";
-      #       mOnTertiary = "#11111b";
-      #       mError = "#f38ba8";
-      #       mOnError = "#11111b";
-      #       mSurface = "#1e1e2e";
-      #       mOnSurface = "#cdd6f4";
-      #       mSurfaceVariant = "#313244";
-      #       mOnSurfaceVariant = "#a3b4eb";
-      #       mOutline = "#4c4f69";
-      #       mShadow = "#11111b";
-      #       mHover = "#94e2d5";
-      #       mOnHover = "#11111b";
-      #       terminal = {
-      #         normal = {
-      #           black = "#45475a";
-      #           red = "#f38ba8";
-      #           green = "#a6e3a1";
-      #           yellow = "#f9e2af";
-      #           blue = "#89b4fa";
-      #           magenta = "#f5c2e7";
-      #           cyan = "#94e2d5";
-      #           white = "#a6adc8";
-      #         };
-      #         bright = {
-      #           black = "#585b70";
-      #           red = "#f37799";
-      #           green = "#89d88b";
-      #           yellow = "#ebd391";
-      #           blue = "#74a8fc";
-      #           magenta = "#f2aede";
-      #           cyan = "#6bd7ca";
-      #           white = "#bac2de";
-      #         };
-      #         foreground = "#cdd6f4";
-      #         background = "#1e1e2e";
-      #         selectionFg = "#cdd6f4";
-      #         selectionBg = "#585b70";
-      #         cursorText = "#1e1e2e";
-      #         cursor = "#f5e0dc";
-      #       };
-      #     };
-      #     light = {
-      #       mPrimary = "#8839ef";
-      #       mOnPrimary = "#eff1f5";
-      #       mSecondary = "#fe640b";
-      #       mOnSecondary = "#eff1f5";
-      #       mTertiary = "#40a02b";
-      #       mOnTertiary = "#eff1f5";
-      #       mError = "#d20f39";
-      #       mOnError = "#dce0e8";
-      #       mSurface = "#eff1f5";
-      #       mOnSurface = "#4c4f69";
-      #       mSurfaceVariant = "#ccd0da";
-      #       mOnSurfaceVariant = "#6c6f85";
-      #       mOutline = "#a5adcb";
-      #       mShadow = "#dce0e8";
-      #       mHover = "#40a02b";
-      #       mOnHover = "#eff1f5";
-      #       terminal = {
-      #         normal = {
-      #           black = "#51576d";
-      #           red = "#e78284";
-      #           green = "#a6d189";
-      #           yellow = "#e5c890";
-      #           blue = "#8caaee";
-      #           magenta = "#f4b8e4";
-      #           cyan = "#81c8be";
-      #           white = "#a5adce";
-      #         };
-      #         bright = {
-      #           black = "#626880";
-      #           red = "#e67172";
-      #           green = "#8ec772";
-      #           yellow = "#d9ba73";
-      #           blue = "#7b9ef0";
-      #           magenta = "#f2a4db";
-      #           cyan = "#5abfb5";
-      #           white = "#b5bfe2";
-      #         };
-      #         foreground = "#c6d0f5";
-      #         background = "#303446";
-      #         selectionFg = "#c6d0f5";
-      #         selectionBg = "#626880";
-      #         cursorText = "#303446";
-      #         cursor = "#f2d5cf";
-      #       };
-      #     };
-      #   }
-      #   .${theme};
-      plugins = {
-        sources = [
-          {
-            enabled = true;
-            name = "official noctalia plugins";
-            url = "https://github.com/noctalia-dev/noctalia-plugins";
-          }
-        ];
-        states = {
-          keybind-cheatsheet = {
-            enabled = true;
-            sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
-          };
-          screen-toolkit = {
-            enabled = true;
-            sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
-          };
-        };
-        version = 2;
-      };
-      pluginSettings = { };
-      settings = {
-        bar = {
-          barType = "floating";
-          position = "right";
-          density = "spacious";
-          fontScale = 1;
-          floating = true;
-          useSeparateOpacity = true;
-          backgroundOpacity = 0.0;
-          capsureOpacity = 0.85;
-          marginVertical = 10;
-          marginHorizontal = 10;
-          displayMode = "auto_hide";
-          autoHideDelay = 600;
-          autoShowDelay = 0;
-          widgets = {
-            left = [
-              { id = "Launcher"; }
-              {
-                id = "Workspace";
-                showApplications = true;
-              }
-              { id = "SystemMonitor"; }
-              {
-                id = "ActiveWindow";
-                colorizeIcons = true;
-              }
-              {
-                id = "MediaMini";
-                showVisualizer = true;
-              }
-            ];
-            center = [
-              {
-                id = "Clock";
-                formatVertical = "MM dd | HH mm";
-                useMonospacedFont = true;
-              }
-            ];
-            right = [
-              { id = "NotificationHistory"; }
-              {
-                id = "Battery";
-                alwaysShowPercentage = true;
-                warningThreshold = 30;
-              }
-              {
-                id = "Volume";
-              }
-              { id = "Brightness"; }
-              # {
-              #   id = "ControlCenter";
-              #   useDistroLogo = true;
-              # }
-              { id = "WallpaperSelector"; }
-              { id = "plugin:screen-toolkit"; }
-            ];
-          };
-        };
-        general = {
-          lockScreenAnimations = true;
-          enableLockScreenMediaControls = true;
-          enableBlurBehind = true;
-          lockScreenBlur = 0.7;
-          lockScreenTint = 0.3;
-        };
-        wallpaper = {
-          directory = (homeDir.content + "/Downloads/media/wallpapers/");
-          overviewEnabled = true;
-          automationEnabled = true;
-          randomIntervalSec = 60;
-          wallpaperChangeMode = "random";
-          overviewBlur = 0.35;
-          overviewTint = 0.5;
-          useWallhaven = false;
-          wallhavenSorting = "hot";
-          wallhavenCategories = "110";
-          wallhavenPurity = "010";
-        };
-        appLauncher = {
-          enableClipboardHistory = true;
-          autoPasteClipboard = true;
-          terminalCommand = "wezterm start";
-          showIconBackground = true;
-          density = "comfortable";
-        };
-        network = {
-          bluetoothRssiPollingEnabled = true;
-        };
-        notifications = {
-          enableMarkdown = true;
-          location = "bottom_left";
-          backgroundOpacity = 0.3;
-          saveToHistory = {
-            low = false;
-          };
-          sounds = {
-            enable = true;
-            excludedApps = "";
-            enableMediaToast = true;
-          };
-        };
-        brightness = {
-          enableDdcSupport = true;
-        };
-        colorSchemes = {
-          predefinedScheme = "Catppuccin";
-          schedulingMode = "location";
-          darkMode = theme == "dark";
-        };
-      };
-    };
   };
 
   # services.mako = {
@@ -606,86 +362,18 @@ in
   #   '';
   # };
 
-  services = {
-    cliphist = {
-      enable = true;
-      clipboardPackage = pkgs.wl-clipboard-rs;
-    };
-  };
-  xdg = {
-    desktopEntries = {
-      org-protocol = {
-        name = "org-protocol";
-        comment = "handle org-protocol:// urls with emacsclient";
-        exec = "${config.programs.emacs.finalPackage}/bin/emacsclient -n -- %u";
-        terminal = false;
-        type = "Application";
-        categories = [ "Utility" ];
-        mimeType = [ "x-scheme-handler/org-protocol" ];
-      };
-    };
-    mimeApps = {
-      enable = true;
-      defaultApplications = {
-        "x-scheme-handler/org-protocol" = "org-protocol.desktop";
-        "inode/directory" = "yazi.desktop";
-        "text/uri-list" = "yazi.desktop";
-        "video/*" = "mpv.desktop";
-        "image/*" = "mpv.desktop";
-        "audio/*" = "mpv.desktop";
-      };
-    };
-    configFile."xdg-desktop-portal-termfilechooser/config".text = ''
-      [filechooser]
-      cmd=${pkgs.xdg-desktop-portal-termfilechooser}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
-      default_dir=$HOME
-      env=TERMCMD=${pkgs.wezterm}/bin/wezterm start --always-new-process
-          PATH=${
-            lib.makeBinPath [
-              config.programs.yazi.package
-              pkgs.coreutils
-              pkgs.gnused
-            ]
-          }
-      open_mode=suggested
-      save_mode=suggested
-    '';
-    portal = {
-      enable = true;
-      extraPortals = [
-        pkgs.xdg-desktop-portal-termfilechooser
-        # pkgs.xdg-desktop-portal-gnome
-        # pkgs.xdg-desktop-portal-gtk
-      ];
-      config = {
-        niri = {
-          default = [
-            "gnome"
-            "gtk"
-          ];
-          "org.freedesktop.impl.portal.Access" = "gtk";
-          "org.freedesktop.impl.portal.FileChooser" = "termfilechooser";
-          "org.freedesktop.impl.portal.Notification" = "gtk";
-          "org.freedesktop.impl.portal.Secret" = "gnome-keyring";
-          # "org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
-          # "org.freedesktop.impl.portal.Screenshot" = [ "gnome" ];
-        };
-      };
-    };
-  };
-
-  dconf =
-    {
-      true = {
-        settings = {
-          "org/gnome/desktop/interface" = {
-            color-scheme = "prefer-" + theme;
-          };
-        };
-      };
-      false = { };
-    }
-    .${has_gui};
+  #  dconf =
+  #    {
+  #      true = {
+  #        settings = {
+  #          "org/gnome/desktop/interface" = {
+  #            color-scheme = "prefer-" + theme;
+  #          };
+  #        };
+  #      };
+  #      false = { };
+  #    }
+  #    .${has_gui};
 
   # systemd = {
   #   user = {
@@ -733,7 +421,6 @@ in
   catppuccin = {
     enable = true;
     accent = "blue";
-    flavor = if theme == "dark" then "frappe" else "latte";
     cursors = {
       enable = true;
       accent = "sky";

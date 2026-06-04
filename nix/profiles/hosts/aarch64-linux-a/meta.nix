@@ -1,11 +1,31 @@
 {
   system = "aarch64-linux";
-  user = "a";
   hostName = "nixos";
+  accounts = {
+    primary = "a";
+    users = {
+      a = {
+        extraGroups = [
+          "networkmanager"
+          "wheel"
+          "inputs"
+        ];
+        authorizedKeys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM8t5TzxjrjRbwyCUZLKrYAK8Yl1g5qmolDF/cHUq0ro android"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID/SVDZ/Jc53n3NbfQMadDpq5cmtRvjBzLXrVE8NzW1m ios"
+        ];
+      };
+    };
+  };
   targets = [
     "home"
     "nixos"
   ];
   roles = [ ];
-  variants = [ ];
+  variants = [
+    "ai-tools"
+    "dtm"
+    "media"
+    "noctalia-shell"
+  ];
 }

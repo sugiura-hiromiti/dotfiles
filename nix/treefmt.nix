@@ -1,7 +1,10 @@
-{ pkgs, ... }:
+{
+  lib,
+  pkgs,
+  ...
+}:
 let
-  dprintSettings = builtins.fromJSON (builtins.readFile ./formatters/dprint-settings.json);
-  styluaSettings = builtins.fromTOML (builtins.readFile ./formatters/stylua.toml);
+  formatters = import ./formatters { inherit lib pkgs; };
 in
 {
   projectRootFile = ".git/config";
@@ -16,16 +19,7 @@ in
         "*.yaml"
         "*.yml"
       ];
-      settings = dprintSettings // {
-        plugins = pkgs.dprint-plugins.getPluginList (
-          plugins: with plugins; [
-            dprint-plugin-json
-            dprint-plugin-markdown
-            dprint-plugin-typescript
-            g-plane-pretty_yaml
-          ]
-        );
-      };
+      settings = formatters.dprint.settings;
     };
 
     fish_indent.enable = true;
@@ -37,7 +31,7 @@ in
 
     stylua = {
       enable = true;
-      settings = styluaSettings;
+      settings = formatters.stylua.settings;
     };
 
     # dprint rewrites TOML schema directives such as #:schema; taplo preserves them.

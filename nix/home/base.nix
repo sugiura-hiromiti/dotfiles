@@ -49,15 +49,7 @@ in
     file = {
       "ssh" = {
         target = ".ssh/config";
-        source = ../../.ssh/config;
-      };
-      "dprint" = {
-        target = ".config/dprint/dprint.jsonc";
-        source = ../formatters/dprint-settings.json;
-      };
-      "stylua" = {
-        target = ".config/.stylua.toml";
-        source = ../formatters/stylua.toml;
+        source = config.lib.file.mkOutOfStoreSymlink "${dotfilesRoot}/.ssh/config";
       };
     };
   };

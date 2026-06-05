@@ -305,8 +305,24 @@
             lib.concatMap (host: hosts.${host}.accountNames) currentSystemHosts
           );
           currentSystemHostAliases = lib.genAttrs currentSystemHosts (host: hosts.${host}.matchNames);
+          currentSystemHostDefaultSessions = lib.genAttrs currentSystemHosts (
+            host: hosts.${host}.runtime.defaultSession
+          );
           validThemes = lib.attrNames runtimeContexts.themes;
           validSessions = lib.attrNames runtimeContexts.sessions;
+          formatters = import ./formatters { inherit lib pkgs; };
+          repoMaintenancePackages = with pkgs; [
+            formatters.editorTools
+            deadnix
+            fish
+            nil
+            statix
+          ];
+          nvimMaintenancePackages = with pkgs; [
+            lua-language-server
+            luajitPackages.luarocks
+            tree-sitter
+          ];
         in
         {
           treefmt = {
@@ -336,6 +352,7 @@
               currentSystemHosts
               currentSystemAccounts
               currentSystemHostAliases
+              currentSystemHostDefaultSessions
               validThemes
               validSessions
               homeTargets
@@ -345,16 +362,19 @@
           };
 
           devShells.default = pkgs.mkShell {
+            name = "dotfiles-maintenance";
             inputsFrom = [
               config.treefmt.build.devShell
             ];
-            packages = with pkgs; [
-              deadnix
-              fish
-              jq
-              nil
-              statix
+            packages = repoMaintenancePackages;
+          };
+
+          devShells.nvim = pkgs.mkShell {
+            name = "dotfiles-nvim";
+            inputsFrom = [
+              config.treefmt.build.devShell
             ];
+            packages = repoMaintenancePackages ++ nvimMaintenancePackages;
           };
         };
     };

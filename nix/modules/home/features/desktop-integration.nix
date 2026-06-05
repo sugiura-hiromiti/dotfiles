@@ -78,8 +78,8 @@ in
       terminal = {
         package = lib.mkOption {
           type = lib.types.package;
-          default = pkgs.wezterm;
-          defaultText = lib.literalExpression "pkgs.wezterm";
+          default = config.dotfiles.features.terminal.package;
+          defaultText = lib.literalExpression "config.dotfiles.features.terminal.package";
           description = "Terminal package used by the terminal file chooser.";
         };
         command = lib.mkOption {

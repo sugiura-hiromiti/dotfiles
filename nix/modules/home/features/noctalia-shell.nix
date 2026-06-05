@@ -21,6 +21,8 @@ let
       cfg.terminal.command
     else if cfg.terminal.package != null then
       "${lib.getExe cfg.terminal.package} start"
+    else if config.dotfiles.features.terminal.enable then
+      config.dotfiles.features.terminal.command
     else
       "wezterm start";
   settings = import ./noctalia-shell/settings.nix {
@@ -53,8 +55,8 @@ in
     terminal = {
       package = mkOption {
         type = types.nullOr types.package;
-        default = pkgs.wezterm;
-        description = "Terminal package used by Noctalia app launcher.";
+        default = null;
+        description = "Optional terminal package installed for Noctalia app launcher. Null delegates installation to dotfiles.features.terminal.";
       };
       command = mkOption {
         type = types.nullOr types.str;

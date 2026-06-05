@@ -1,19 +1,26 @@
 function u
-    pushd "$HOME/.config/nix" >/dev/null
-    # build secret.nix content (note fish command substitutions)
-    set who (whoami)
+    set dotfiles_nix "$HOME/dotfiles/nix"
+    if not test -d "$dotfiles_nix"
+        set dotfiles_nix "$HOME/.config/nix"
+    end
+
+    pushd "$dotfiles_nix" >/dev/null; or return 1
+
     set theme dark
     set hour (date +%H)
-    if test $hour -gt 13 -a $hour -lt 15
+    set hour (math $hour)
+    if test $hour -gt 5; and test $hour -lt 17
         set theme light
     end
 
-    set has_gui false
-    if type -q dconf
-        set has_gui true
+    set session tty
+    if set -q WAYLAND_DISPLAY; and test -n "$WAYLAND_DISPLAY"
+        set session gui
+    else if set -q DISPLAY; and test -n "$DISPLAY"
+        set session gui
     end
 
-    printf "{}:\n{\n  user = \"%s\";\n  theme = \"%s\";\n  has_gui = %s;\n}\n" $who $theme $has_gui >secret.nix
-    nix run .#update
+    sudo -v
+    nix run .#update -- --theme $theme --session $session
     popd >/dev/null
 end

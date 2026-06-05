@@ -36,12 +36,16 @@ let
     );
 
   nixosConfigNames = targetConfigNames.nixos or [ ];
+  homeConfigNames = targetConfigNames.home or [ ];
   darwinConfigNames = targetConfigNames.darwin or [ ];
 in
 {
   deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --no-lambda-pattern-names --fail .";
   statix = mkLintCheck "statix" pkgs.statix "statix check .";
 }
+// mkEvalChecks "home" homeConfigNames (
+  host: self.homeConfigurations.${host}.activationPackage.drvPath
+)
 // mkEvalChecks "nixos" nixosConfigNames (
   host: self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath
 )

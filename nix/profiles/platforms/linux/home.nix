@@ -14,9 +14,6 @@ in
   home = {
     homeDirectory = lib.mkDefault homeDir;
     sessionVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
-    packages = with pkgs; [
-      clang
-    ];
   };
   programs.nushell.environmentVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
 

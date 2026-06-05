@@ -16,5 +16,6 @@
   variants = [
     "ai-tools"
     "media"
+    "terminal"
   ];
 }

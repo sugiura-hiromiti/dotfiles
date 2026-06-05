@@ -27,5 +27,6 @@
     "dtm"
     "media"
     "noctalia-shell"
+    "terminal"
   ];
 }

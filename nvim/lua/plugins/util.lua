@@ -89,7 +89,7 @@ return {
 			-- null_ls.register { nufmt_source }
 			null_ls.setup {
 				sources = {
-					b.formatting.stylua, --.with { args = { '--config-path ~/.stylua.toml' } },
+					b.formatting.stylua,
 					b.formatting.ocamlformat,
 					-- b.diagnostics.sqlfluff.with { extra_args = { '--dialect', 'postgres' } },
 					b.formatting.sqlfluff.with { extra_args = { '--dialect', 'postgres' } },

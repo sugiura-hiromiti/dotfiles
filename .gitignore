@@ -6,6 +6,8 @@ coc/
 logs/
 .fig/bin/
 apps/
+!nix/apps/
+!nix/apps/**
 animations/
 shell/
 # themes/

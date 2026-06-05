@@ -76,16 +76,21 @@ def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme
 # 	let file = ($files | get $idx)
 # 	awww img $file
 # }
-def u [] {
+def --wrapped u [...args: string] {
 	use std/dirs
-	dirs add $'($env.HOME)/dotfiles/nix'
-	let theme = (hour | if 5 < $in and $in < 17 { 'light' } else { 'dark' })
-	let session = if (
-		($env.WAYLAND_DISPLAY? | default "" | is-empty)
-		and ($env.DISPLAY? | default "" | is-empty)
-	) { 'tty' } else { 'gui' }
-	sudo -v
-	nix run .#update -- --theme $theme --session $session
+	let dotfiles_nix = if (($'($env.HOME)/dotfiles/nix' | path type) == "dir") {
+		$'($env.HOME)/dotfiles/nix'
+	} else {
+		$'($env.HOME)/.config/nix'
+	}
+
+	dirs add $dotfiles_nix
+	try {
+		nix run .#update -- ...$args
+	} catch {|err|
+		dirs drop
+		error make $err
+	}
 	dirs drop
 }
 # def s [glob?] {

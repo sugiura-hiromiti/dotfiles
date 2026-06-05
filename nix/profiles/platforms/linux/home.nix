@@ -417,6 +417,7 @@ in
 
   catppuccin = {
     enable = true;
+    autoEnable = true;
     accent = "blue";
     cursors = {
       enable = true;

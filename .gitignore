@@ -14,7 +14,7 @@ shell/
 tools/
 user/
 extensions/
-ssh*
+/ssh*
 tmux
 history
 .warp/
@@ -59,6 +59,7 @@ rover/
 cabal/
 **/fish_variables
 nushell/history.txt
+/emacs/
 /.serena
 /.agent-shell/
 elfeed/

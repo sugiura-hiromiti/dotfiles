@@ -1,5 +1,0 @@
-_: {
-  user = "a";
-  theme = "light";
-  has_gui = "true";
-}

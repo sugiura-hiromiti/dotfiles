@@ -1,8 +1,0 @@
-;;; -*- lisp-data -*-
-(("/home/a/.config/emacs/elpa/vertico-buffer-frame/")
- ("/home/a/.config/emacs/elpa/ts-movement/")
- ("/home/a/.config/emacs/elpa/kdl-ts-mode/")
- ("/home/a/.config/emacs/elpa/majutsu/")
- ("/home/a/.config/emacs/elpa/eglot-tempel/")
- ("/home/a/.config/emacs/elpa/lsp-snippet/")
- ("/home/a/.config/emacs/elpa/lsp-snippet-tempel/"))

@@ -9,27 +9,16 @@ let
   mypkgs = import ../pkg {
     inherit pkgs;
   };
-  dotfilesRoot = "${config.home.homeDirectory}/dotfiles";
-  configDirs = [
-    "emacs"
-    "alacritty"
-    "fcitx5"
-    "fish"
-    "ghostty"
-    "ironbar"
-    "kitty"
-    "libskk"
-    "niri"
-    "nvim"
-    "wezterm"
-    "omniwm"
-  ];
 in
 {
   nixpkgs = {
     config = {
       allowUnfree = true;
     };
+  };
+  catppuccin = {
+    enable = true;
+    autoEnable = lib.mkDefault false;
   };
   home = {
     shell = {
@@ -46,49 +35,13 @@ in
       SHELL = "${pkgs.nushell}/bin/nu";
     };
     packages = mypkgs;
-    file = {
-      "ssh" = {
-        target = ".ssh/config";
-        source = config.lib.file.mkOutOfStoreSymlink "${dotfilesRoot}/.ssh/config";
-      };
-    };
   };
   xdg = {
     enable = true;
-    configFile = lib.genAttrs configDirs (name: {
-      source = config.lib.file.mkOutOfStoreSymlink "${dotfilesRoot}/${name}";
-    });
   };
   programs = {
     translate-shell = {
       enable = true;
-    };
-    emacs = {
-      enable = true;
-      package = (pkgs.emacsPackagesFor pkgs.emacs-pgtk).emacsWithPackages (epkgs: [
-        epkgs.tree-sitter-langs
-        (epkgs.treesit-grammars.with-grammars (grammars: [
-          grammars.tree-sitter-rust
-          grammars.tree-sitter-typescript
-          grammars.tree-sitter-haskell
-          grammars.tree-sitter-toml
-          grammars.tree-sitter-nu
-          grammars.tree-sitter-csv
-          grammars.tree-sitter-diff
-          grammars.tree-sitter-gitcommit
-          grammars.tree-sitter-gitignore
-          grammars.tree-sitter-json
-          grammars.tree-sitter-kdl
-          grammars.tree-sitter-lua
-          grammars.tree-sitter-markdown
-          grammars.tree-sitter-markdown-inline
-          grammars.tree-sitter-nix
-          grammars.tree-sitter-sql
-          grammars.tree-sitter-yaml
-          grammars.tree-sitter-tsx
-          grammars.tree-sitter-html
-        ]))
-      ]);
     };
     firefox = {
       enable = true;
@@ -394,16 +347,6 @@ in
       settings = builtins.fromTOML (builtins.readFile ./yazi/yazi.toml);
       keymap = builtins.fromTOML (builtins.readFile ./yazi/keymap.toml);
       initLua = ./yazi/init.lua;
-    };
-  };
-  services = {
-    emacs = {
-      enable = true;
-      startWithUserSession = "graphical";
-      client = {
-        enable = true;
-      };
-      defaultEditor = true;
     };
   };
 }

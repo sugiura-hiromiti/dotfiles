@@ -5,5 +5,19 @@
     ./features/media.nix
     ./features/noctalia-shell.nix
     ./features/terminal.nix
+    ./programs/alacritty
+    ./programs/emacs
+    ./programs/fcitx5
+    ./programs/fish
+    ./programs/geonkick
+    ./programs/ghostty
+    ./programs/ironbar
+    ./programs/kitty
+    ./programs/libskk
+    ./programs/niri
+    ./programs/nvim
+    ./programs/omniwm
+    ./programs/ssh
+    ./programs/wezterm
   ];
 }

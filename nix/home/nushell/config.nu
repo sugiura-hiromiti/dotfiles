@@ -78,15 +78,22 @@ def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme
 # }
 def --wrapped u [...args: string] {
 	use std/dirs
-	let dotfiles_nix = if (($'($env.HOME)/dotfiles/nix' | path type) == "dir") {
-		$'($env.HOME)/dotfiles/nix'
-	} else {
-		$'($env.HOME)/.config/nix'
+	let flake_roots = (
+		[
+			$'($env.HOME)/dotfiles'
+			$'($env.HOME)/dotfiles/nix'
+			$'($env.HOME)/.config/nix'
+		]
+		| where {|candidate| (($'($candidate)/flake.nix' | path type) == "file") }
+	)
+	if ($flake_roots | is-empty) {
+		error make { msg: "could not find dotfiles flake" }
 	}
+	let flake_root = ($flake_roots | first)
 
-	dirs add $dotfiles_nix
+	dirs add $flake_root
 	try {
-		nix run .#update -- ...$args
+		nix run path:.#update -- ...$args
 	} catch {|err|
 		dirs drop
 		error make $err

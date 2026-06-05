@@ -1,13 +1,11 @@
 {
   pkgs,
   lib,
-  config,
   ...
 }:
-let
-  dotfilesRoot = "${config.home.homeDirectory}/dotfiles";
-in
 {
+  dotfiles.programs.geonkick.enable = pkgs.stdenv.isLinux;
+
   home.packages =
     with pkgs;
     [
@@ -22,8 +20,4 @@ in
       helm
       cardinal
     ];
-
-  xdg.configFile = lib.mkIf pkgs.stdenv.isLinux {
-    geonkick.source = config.lib.file.mkOutOfStoreSymlink "${dotfilesRoot}/geonkick";
-  };
 }

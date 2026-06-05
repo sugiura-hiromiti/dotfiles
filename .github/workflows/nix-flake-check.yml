@@ -29,5 +29,8 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check flake
-        run: nix flake check --no-write-lock-file --print-build-logs ./nix
+      - name: Check current system
+        run: nix flake check --no-write-lock-file --print-build-logs .
+
+      - name: Check all systems evaluation
+        run: nix flake check --all-systems --no-build --no-write-lock-file --print-build-logs .

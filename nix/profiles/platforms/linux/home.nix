@@ -11,11 +11,7 @@ let
     if configuredHomeDirectory != null then configuredHomeDirectory else "/home/${accountName}";
 in
 {
-  home = {
-    homeDirectory = lib.mkDefault homeDir;
-    sessionVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
-  };
-  programs.nushell.environmentVariables.LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
+  home.homeDirectory = lib.mkDefault homeDir;
 
   # progerams = {
   # niri = {
@@ -200,12 +196,6 @@ in
   #   };
   # };
   # };
-
-  programs = {
-    cava = {
-      enable = true;
-    };
-  };
 
   # services.mako = {
   #   enable = true;
@@ -415,29 +405,5 @@ in
   #   };
   # };
 
-  catppuccin = {
-    enable = true;
-    autoEnable = true;
-    accent = "blue";
-    cursors = {
-      enable = true;
-      accent = "sky";
-    };
-    # firefox = {
-    #   accent = "mauve";
-    #   profiles = {
-    #     dflt = {
-    #       force = true;
-    #     };
-    #   };
-    # };
-    gtk = {
-      icon = {
-        accent = "sapphire";
-      };
-    };
-    yazi = {
-      accent = "blue";
-    };
-  };
+  dotfiles.features.theme.enable = lib.mkDefault true;
 }

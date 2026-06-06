@@ -5,6 +5,15 @@
 }:
 let
   cfg = config.dotfiles.programs.fish;
+  completionFiles = lib.attrNames (
+    lib.filterAttrs (_: type: type == "regular") (builtins.readDir ./config/completions)
+  );
+  completionConfigFiles = lib.listToAttrs (
+    map (name: {
+      name = "fish/completions/${name}";
+      value.source = ./config/completions + "/${name}";
+    }) completionFiles
+  );
 in
 {
   options.dotfiles.programs.fish.enable = lib.mkOption {
@@ -24,10 +33,7 @@ in
         source = ./config/functions;
         recursive = true;
       };
-      "fish/completions" = {
-        source = ./config/completions;
-        recursive = true;
-      };
-    };
+    }
+    // completionConfigFiles;
   };
 }

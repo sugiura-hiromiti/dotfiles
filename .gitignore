@@ -33,7 +33,7 @@ yarn
 karabiner/automatic_backups/
 nv_config_rs/target
 configstore/zenn-cli.json
-git/
+/git/
 .ssh/id_ed*
 .ssh/flk*
 .ssh/known_host*
@@ -43,7 +43,7 @@ configstore/
 commit_summary.html
 obsidian/
 dconf/
-gh/
+/gh/
 **/target/
 gcloud/
 **/*nix.conf

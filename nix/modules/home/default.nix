@@ -1,23 +1,48 @@
 {
   imports = [
     ./features/ai-tools.nix
+    ./features/darwin-apps.nix
     ./features/desktop-integration.nix
+    ./features/dtm.nix
     ./features/media.nix
     ./features/noctalia-shell.nix
+    ./features/session-gui.nix
+    ./features/theme.nix
     ./features/terminal.nix
     ./programs/alacritty
+    ./programs/aria2
+    ./programs/bottom
+    ./programs/carapace
+    ./programs/cava
+    ./programs/cargo
+    ./programs/direnv
+    ./programs/eza
+    ./programs/fd
+    ./programs/firefox
     ./programs/emacs
     ./programs/fcitx5
     ./programs/fish
+    ./programs/fzf
     ./programs/geonkick
+    ./programs/gh
+    ./programs/git
     ./programs/ghostty
     ./programs/ironbar
+    ./programs/jujutsu
     ./programs/kitty
+    ./programs/lazygit
     ./programs/libskk
+    ./programs/nh
     ./programs/niri
+    ./programs/nushell
     ./programs/nvim
     ./programs/omniwm
+    ./programs/ripgrep
     ./programs/ssh
+    ./programs/starship
+    ./programs/translate-shell
     ./programs/wezterm
+    ./programs/yazi
+    ./programs/zoxide
   ];
 }

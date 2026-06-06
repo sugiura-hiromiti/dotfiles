@@ -1,7 +1,6 @@
 { pkgs }:
 with pkgs;
 [
-  neovim
   rm-improved
   # skim # has hm and nushell plugin
   plemoljp-nf

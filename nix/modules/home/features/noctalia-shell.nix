@@ -90,7 +90,7 @@ in
         pkgs.slurp
       ];
 
-    programs.cava.enable = mkIf cfg.visualizer.enable true;
+    dotfiles.programs.cava.enable = mkIf cfg.visualizer.enable true;
 
     services.cliphist = mkIf cfg.clipboard.enable {
       enable = true;

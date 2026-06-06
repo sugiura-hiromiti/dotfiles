@@ -16,5 +16,6 @@ let
 in
 {
   imports = [ ./hardware-configuration.nix ];
+  dotfiles.nixos.boot.performanceTuning.enable = lib.mkDefault true;
   users.users = lib.mapAttrs mkUser accounts.users;
 }

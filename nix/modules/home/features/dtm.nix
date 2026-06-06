@@ -22,14 +22,21 @@ in
 
     linuxPackages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
-      default = with pkgs; [
-        geonkick
-        synthv1
-        lsp-plugins
-        calf
-        helm
-        cardinal
-      ];
+      default =
+        with pkgs;
+        [
+          geonkick
+          synthv1
+          lsp-plugins
+          calf
+          helm
+          cardinal
+        ]
+        ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
+          surge-xt
+          vital
+          bristol
+        ];
       description = "DTM packages installed only on Linux.";
     };
 

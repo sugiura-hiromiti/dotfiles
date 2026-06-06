@@ -10,16 +10,19 @@
 # 1) 新しい端末を追加:
 #    nix/profiles/hosts/<host>/meta.nix を作成し system/accounts/targets を指定
 #    (必要なら同ディレクトリに nixos.nix / hardware-configuration.nix)
-# 2) 反映:
-#    - Home Manager: nix run nixpkgs#home-manager -- switch --flake .#<host>
-#    - NixOS: sudo nixos-rebuild switch --flake .#<host>
-#    - macOS: sudo nix run nix-darwin -- switch --flake .#<host>
-# 3) まとめて更新:
-#    nix run .#update
-#    - git stage -> flake.lock 更新/stage -> Home Manager 反映
-#    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
+# 2) まとめて更新/反映:
+#    nix run path:.#update -- --host <host> --account <account> --theme <theme> --session <session>
 #    - account は未指定なら current user を使う
 #    - theme/session は未指定なら実行時に検出する
+#    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
+# 3) 直接 switch:
+#    - Home Manager target:
+#      <host>--account-<account>--theme-<theme>--session-<session>
+#    - NixOS / macOS target:
+#      <host>--theme-<theme>--session-<session>
+#    - Home Manager: nix run nixpkgs#home-manager -- switch --flake path:.#<target>
+#    - NixOS: sudo nixos-rebuild switch --flake path:.#<target>
+#    - macOS: sudo nix run nix-darwin -- switch --flake path:.#<target>
 # -----------------------------------------------------------------------------
 {
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
@@ -147,50 +150,49 @@
           ;
       };
       inherit (targets) mkTargetConfigs targetConfigNamesForSystem;
-      hm-conf =
+      commonOverlays = [
+        # neovim-nightly-overlay.overlays.default
+        nur.overlays.default
+        # niri-flake.overlays.niri
+      ];
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = commonOverlays;
+        };
+      commonSpecialArgs =
+        config:
         {
-          system,
-          accountName,
-          account,
-          host,
-          hostName,
-          accounts,
-          primaryAccountName,
-          primaryAccount,
-          roles,
-          variants,
-          theme,
-          session,
-          hasGui,
-          has_gui,
-          ...
-        }:
+          inherit (config)
+            accounts
+            hasGui
+            has_gui
+            host
+            hostName
+            primaryAccount
+            primaryAccountName
+            roles
+            session
+            system
+            theme
+            variants
+            ;
+        }
+        // lib.optionalAttrs (config ? account) {
+          inherit (config) account;
+        }
+        // lib.optionalAttrs (config ? accountName) {
+          inherit (config) accountName;
+        }
+        // lib.optionalAttrs (config ? accountNames) {
+          inherit (config) accountNames;
+        };
+      hm-conf =
+        config:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            overlays = [
-              # neovim-nightly-overlay.overlays.default
-              nur.overlays.default
-              # niri-flake.overlays.niri
-            ];
-            inherit system;
-          };
-          extraSpecialArgs = {
-            inherit theme;
-            inherit session;
-            inherit hasGui;
-            inherit has_gui;
-            inherit system;
-            inherit host;
-            inherit hostName;
-            inherit accountName;
-            inherit account;
-            inherit accounts;
-            inherit primaryAccountName;
-            inherit primaryAccount;
-            inherit roles;
-            inherit variants;
-            # inherit paneru;
-          };
+          pkgs = pkgsFor config.system;
+          extraSpecialArgs = commonSpecialArgs config;
           modules = [
             ./nix/home
             catppuccin.homeModules.catppuccin
@@ -200,79 +202,20 @@
           ];
         };
       nixos-conf =
-        {
-          system,
-          host,
-          hostName,
-          accounts,
-          accountNames,
-          primaryAccountName,
-          primaryAccount,
-          roles,
-          variants,
-          theme,
-          session,
-          hasGui,
-          has_gui,
-          ...
-        }:
+        config:
         nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = {
-            inherit system;
-            inherit theme;
-            inherit session;
-            inherit hasGui;
-            inherit has_gui;
-            inherit host;
-            inherit hostName;
-            inherit accounts;
-            inherit accountNames;
-            inherit primaryAccountName;
-            inherit primaryAccount;
-            inherit roles;
-            inherit variants;
-          };
+          inherit (config) system;
+          specialArgs = commonSpecialArgs config;
           modules = [
             ./nix/nixos/configuration.nix
             catppuccin.nixosModules.catppuccin
           ];
         };
       darwin-conf =
-        {
-          system,
-          host,
-          hostName,
-          accounts,
-          accountNames,
-          primaryAccountName,
-          primaryAccount,
-          roles,
-          variants,
-          theme,
-          session,
-          hasGui,
-          has_gui,
-          ...
-        }:
+        config:
         nix-darwin.lib.darwinSystem {
-          inherit system;
-          specialArgs = {
-            inherit system;
-            inherit theme;
-            inherit session;
-            inherit hasGui;
-            inherit has_gui;
-            inherit host;
-            inherit hostName;
-            inherit accounts;
-            inherit accountNames;
-            inherit primaryAccountName;
-            inherit primaryAccount;
-            inherit roles;
-            inherit variants;
-            # inherit paneru;
-          };
+          inherit (config) system;
+          specialArgs = commonSpecialArgs config;
           modules = [
             ./nix/nix-darwin
           ];

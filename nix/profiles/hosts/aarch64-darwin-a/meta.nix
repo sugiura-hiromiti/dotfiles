@@ -1,9 +1,12 @@
+let
+  personalIdentity = import ../../identities/sugiura-hiromiti.nix;
+in
 {
   system = "aarch64-darwin";
   accounts = {
     primary = "a";
     users = {
-      a = {
+      a = personalIdentity // {
         uid = 501;
       };
     };

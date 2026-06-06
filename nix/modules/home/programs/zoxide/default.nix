@@ -5,7 +5,7 @@ in
 {
   options.dotfiles.programs.zoxide.enable = lib.mkOption {
     type = lib.types.bool;
-    default = true;
+    default = false;
     description = "Whether to enable zoxide.";
   };
 

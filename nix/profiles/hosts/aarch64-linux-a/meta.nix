@@ -1,10 +1,13 @@
+let
+  personalIdentity = import ../../identities/sugiura-hiromiti.nix;
+in
 {
   system = "aarch64-linux";
   hostName = "nixos";
   accounts = {
     primary = "a";
     users = {
-      a = {
+      a = personalIdentity // {
         extraGroups = [
           "networkmanager"
           "wheel"

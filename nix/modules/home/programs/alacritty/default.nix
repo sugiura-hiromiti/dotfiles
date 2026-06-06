@@ -9,7 +9,7 @@ in
 {
   options.dotfiles.programs.alacritty.enable = lib.mkOption {
     type = lib.types.bool;
-    default = true;
+    default = false;
     description = "Whether to install the repository-managed Alacritty configuration.";
   };
 

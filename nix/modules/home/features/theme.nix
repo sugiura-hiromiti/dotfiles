@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -24,7 +25,8 @@ in
 
     autoEnable = lib.mkOption {
       type = lib.types.bool;
-      default = true;
+      default = pkgs.stdenv.isLinux;
+      defaultText = lib.literalExpression "pkgs.stdenv.isLinux";
       description = "Whether to automatically enable supported Catppuccin integrations.";
     };
 
@@ -48,11 +50,12 @@ in
       accent = lib.mkDefault cfg.accent;
 
       cursors = {
-        enable = lib.mkDefault true;
+        enable = lib.mkDefault pkgs.stdenv.isLinux;
         accent = lib.mkDefault cfg.cursorAccent;
       };
 
       gtk.icon.accent = lib.mkDefault cfg.gtkIconAccent;
+      gemini-cli.enable = lib.mkDefault false;
       yazi.accent = lib.mkDefault cfg.yaziAccent;
     };
   };

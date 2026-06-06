@@ -29,7 +29,8 @@ in
     orgProtocol = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = config.programs.emacs.enable;
+        defaultText = lib.literalExpression "config.programs.emacs.enable";
         description = "Whether to register org-protocol URL handling.";
       };
       emacsPackage = lib.mkOption {
@@ -48,11 +49,14 @@ in
       };
       defaultApplications = lib.mkOption {
         type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.listOf lib.types.str));
-        default = {
-          "x-scheme-handler/org-protocol" = "org-protocol.desktop";
-          "inode/directory" = "yazi.desktop";
-          "text/uri-list" = "yazi.desktop";
-        };
+        default =
+          lib.optionalAttrs cfg.orgProtocol.enable {
+            "x-scheme-handler/org-protocol" = "org-protocol.desktop";
+          }
+          // {
+            "inode/directory" = "yazi.desktop";
+            "text/uri-list" = "yazi.desktop";
+          };
         description = "Default applications registered with xdg.mimeApps.";
       };
     };

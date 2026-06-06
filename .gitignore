@@ -59,8 +59,13 @@ rover/
 cabal/
 **/fish_variables
 nushell/history.txt
+/fish/
 /emacs/
+/.agents/
+/.codex/
+/.jj/
 /.serena
+/.ssh/
 /.agent-shell/
 elfeed/
 tramp

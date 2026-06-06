@@ -55,7 +55,9 @@ in
 
       usage() {
         cat <<EOF
-      usage: nix run .#update -- [--host HOST] [--account ACCOUNT] [--theme THEME] [--session SESSION] [--system-session SESSION]
+      usage: nix run path:.#update -- [--host HOST] [--account ACCOUNT] [--theme THEME] [--session SESSION] [--system-session SESSION]
+      home target: HOST--account-ACCOUNT--theme-THEME--session-SESSION
+      system target: HOST--theme-THEME--session-SYSTEM_SESSION
       valid hosts: ${validHostsText}
       valid accounts: ${validAccountsText}
       valid themes: ${validThemesText}
@@ -108,6 +110,7 @@ in
       theme=""
       session=""
       system_session=""
+      flake_ref="path:$(pwd -P)"
 
       while [ "$#" -gt 0 ]; do
         case "$1" in
@@ -251,19 +254,18 @@ in
         sudo -v
       fi
 
-      git stage .
-      nix flake update
+      nix flake update --flake "$flake_ref"
       git stage flake.lock
 
-      nix eval --raw ".#homeConfigurations.\"$home_target\".activationPackage.drvPath" >/dev/null
-      nix run nixpkgs#home-manager -- switch --flake ".#$home_target"
+      nix eval --raw "$flake_ref#homeConfigurations.\"$home_target\".activationPackage.drvPath" >/dev/null
+      nix run nixpkgs#home-manager -- switch --flake "$flake_ref#$home_target"
 
       case "$system_switch" in
         darwin)
-          sudo nix run nix-darwin -- switch --flake ".#$system_target"
+          sudo nix run nix-darwin -- switch --flake "$flake_ref#$system_target"
           ;;
         nixos)
-          sudo nixos-rebuild switch --flake ".#$system_target"
+          sudo nixos-rebuild switch --flake "$flake_ref#$system_target"
           ;;
       esac
     ''

@@ -1,9 +1,12 @@
+let
+  personalIdentity = import ../../identities/sugiura-hiromiti.nix;
+in
 {
   system = "aarch64-darwin";
   accounts = {
     primary = "hiromichisugiura";
     users = {
-      hiromichisugiura = { };
+      hiromichisugiura = personalIdentity;
     };
   };
   targets = [

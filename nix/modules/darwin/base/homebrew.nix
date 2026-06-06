@@ -7,10 +7,36 @@ let
   cfg = config.dotfiles.darwin.homebrew;
 in
 {
-  options.dotfiles.darwin.homebrew.enable = lib.mkOption {
-    type = lib.types.bool;
-    default = true;
-    description = "Whether to configure baseline Homebrew packages.";
+  options.dotfiles.darwin.homebrew = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether to configure Homebrew packages.";
+    };
+
+    brews = lib.mkOption {
+      type = lib.types.listOf lib.types.anything;
+      default = [ ];
+      description = "Homebrew formulae to install.";
+    };
+
+    casks = lib.mkOption {
+      type = lib.types.listOf lib.types.anything;
+      default = [ ];
+      description = "Homebrew casks to install.";
+    };
+
+    taps = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "Homebrew taps to configure.";
+    };
+
+    masApps = lib.mkOption {
+      type = lib.types.attrsOf lib.types.int;
+      default = { };
+      description = "Mac App Store applications to install.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -23,44 +49,12 @@ in
         cleanup = lib.mkDefault "zap";
       };
 
-      brews = [
-        # "FelixKratz/formulae/sketchybar"
-        # {
-        #   name = "koekeishiya/formulae/yabai";
-        #   args = [ "HEAD" ];
-        # }
-        # "koekeishiya/formulae/yabai"
-        # "koekeishiya/formulae/skhd"
-        # "sqlite"
-        # "acsandmann/tap/rift"
-      ];
-
-      casks = [
-        # "karabiner-elements"
-        "raycast"
-        # "the-unarchiver"
-        # "betterdisplay"
-        "homerow"
-        "docker-desktop"
-        "BarutSRB/tap/omniwm"
-        # "mouseless"
-      ];
-
-      taps = [
-        "BarutSRB/tap"
-        # "koekeishiya/formulae"
-        # "FelixKratz/formulae"
-        # "acsandmann/tap"
-      ];
-
-      masApps = {
-        # "Wallpaper Play" = 1638457121;
-        # "Logic Pro" = 634148309;
-        # "Final Cut Pro" = 424389933;
-        # "Vimlike" = 1584519802;
-        # "AdBlock Pro for Safari" = 1018301773;
-        # "Dark Reader for Safari" = 1438243180;
-      };
+      inherit (cfg)
+        brews
+        casks
+        taps
+        masApps
+        ;
     };
   };
 }

@@ -1,11 +1,24 @@
-{ config, lib, ... }:
+{
+  account ? { },
+  config,
+  lib,
+  ...
+}:
 let
   cfg = config.dotfiles.programs.git;
+  gitAccount = account.git or { };
+  userSettings =
+    lib.optionalAttrs (gitAccount ? name) {
+      inherit (gitAccount) name;
+    }
+    // lib.optionalAttrs (gitAccount ? email) {
+      inherit (gitAccount) email;
+    };
 in
 {
   options.dotfiles.programs.git.enable = lib.mkOption {
     type = lib.types.bool;
-    default = true;
+    default = false;
     description = "Whether to configure Git.";
   };
 
@@ -19,12 +32,9 @@ in
           rebase = false;
           ff = "only";
         };
-        user = {
-          name = "sugiura-hiromiti";
-          email = "pishadon57@gmail.com";
-        };
-      };
-      includes = [ { path = "~/.github_auth"; } ];
+      }
+      // lib.optionalAttrs (userSettings != { }) { user = userSettings; };
+      includes = gitAccount.includes or [ ];
       ignores = [
         ".direnv/"
         ".serena/"

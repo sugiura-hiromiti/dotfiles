@@ -1,15 +1,17 @@
 {
+  account ? { },
   config,
   lib,
   ...
 }:
 let
   cfg = config.dotfiles.programs.ssh;
+  sshAccount = account.ssh or { };
 in
 {
   options.dotfiles.programs.ssh.enable = lib.mkOption {
     type = lib.types.bool;
-    default = true;
+    default = false;
     description = "Whether to install the repository-managed OpenSSH client configuration.";
   };
 
@@ -17,17 +19,8 @@ in
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      includes = [
-        "~/.ssh/config.local"
-      ];
-      settings."github.personal" = {
-        AddKeysToAgent = "yes";
-        HostName = "ssh.github.com";
-        IdentityFile = "~/.ssh/id_ed25519";
-        IdentitiesOnly = true;
-        TCPKeepAlive = "yes";
-        User = "git";
-      };
+      includes = sshAccount.includes or [ ];
+      settings = sshAccount.settings or { };
     };
   };
 }

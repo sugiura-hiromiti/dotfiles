@@ -18,7 +18,7 @@ in
 {
   options.dotfiles.programs.fish.enable = lib.mkOption {
     type = lib.types.bool;
-    default = true;
+    default = false;
     description = "Whether to install the repository-managed Fish configuration.";
   };
 

@@ -1,10 +1,19 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
   cfg = config.dotfiles.programs.niri;
+  paths = config.dotfiles.paths;
+  niriConfig = pkgs.runCommandLocal "niri-config" { } ''
+    mkdir -p "$out"
+    cp -R "${./config}/." "$out/"
+    chmod -R u+w "$out"
+    substituteInPlace "$out/config.kdl" \
+      --replace-fail "~/Downloads/media/screenshots" "${paths.screenshotDirectory}"
+  '';
 in
 {
   options.dotfiles.programs.niri.enable = lib.mkOption {
@@ -15,7 +24,7 @@ in
 
   config = lib.mkIf cfg.enable {
     xdg.configFile."niri" = {
-      source = ./config;
+      source = niriConfig;
       recursive = true;
     };
   };

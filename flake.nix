@@ -5,6 +5,7 @@
 # - nix/home/ が Home Manager、nix/nixos/ が NixOS、nix/nix-darwin/ が macOS 設定の入口
 # - nix/profiles/{platforms,systems,hosts} は各target入口から解決して取り込み
 # - nix/runtime-contexts.nix が theme/session と追加 variants の対応を定義
+# - nix/lib/target-names.nix が公開 flake target 名の形式を定義
 #
 # 使い方
 # 1) 新しい端末を追加:
@@ -17,9 +18,9 @@
 #    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
 # 3) 直接 switch:
 #    - Home Manager target:
-#      <host>--account-<account>--theme-<theme>--session-<session>
+#      <targetHost>--account-<account>--theme-<theme>--session-<session>
 #    - NixOS / macOS target:
-#      <host>--theme-<theme>--session-<session>
+#      <targetHost>--theme-<theme>--session-<session>
 #    - Home Manager: nix run nixpkgs#home-manager -- switch --flake path:.#<target>
 #    - NixOS: sudo nixos-rebuild switch --flake path:.#<target>
 #    - macOS: sudo nix run nix-darwin -- switch --flake path:.#<target>
@@ -133,13 +134,14 @@
     let
       inherit (nixpkgs) lib;
       runtimeContexts = import ./nix/runtime-contexts.nix;
+      targetNames = import ./nix/lib/target-names.nix;
       hostRegistry = import ./nix/lib/hosts.nix {
         inherit lib runtimeContexts;
         hostDir = ./nix/profiles/hosts;
       };
       inherit (hostRegistry) hosts hostNames;
       runtime = import ./nix/lib/runtime.nix {
-        inherit lib runtimeContexts;
+        inherit lib runtimeContexts targetNames;
       };
       targets = import ./nix/lib/targets.nix {
         inherit
@@ -147,6 +149,7 @@
           hosts
           hostNames
           runtime
+          targetNames
           ;
       };
       inherit (targets) mkTargetConfigs targetConfigNamesForSystem;
@@ -161,6 +164,17 @@
           inherit system;
           overlays = commonOverlays;
         };
+      darwinProfileModule = config: {
+        dotfiles.darwin = {
+          core.primaryUser = lib.mkDefault config.primaryAccountName;
+          users.accounts = lib.mkDefault (
+            lib.mapAttrs (_: account: {
+              uid = account.uid or null;
+              homeDirectory = account.homeDirectory or null;
+            }) config.accounts.users
+          );
+        };
+      };
       commonSpecialArgs =
         config:
         {
@@ -170,11 +184,10 @@
             has_gui
             host
             hostName
-            primaryAccount
-            primaryAccountName
             roles
             session
             system
+            targetHost
             theme
             variants
             ;
@@ -184,9 +197,6 @@
         }
         // lib.optionalAttrs (config ? accountName) {
           inherit (config) accountName;
-        }
-        // lib.optionalAttrs (config ? accountNames) {
-          inherit (config) accountNames;
         };
       hm-conf =
         config:
@@ -217,6 +227,7 @@
           inherit (config) system;
           specialArgs = commonSpecialArgs config;
           modules = [
+            (darwinProfileModule config)
             ./nix/nix-darwin
           ];
         };
@@ -243,13 +254,22 @@
           homeTargets = targetConfigNamesForSystem "home" system;
           nixosTargets = targetConfigNamesForSystem "nixos" system;
           darwinTargets = targetConfigNamesForSystem "darwin" system;
-          currentSystemHosts = lib.filter (host: hosts.${host}.system == system) hostNames;
+          currentSystemProfileHosts = lib.filter (host: hosts.${host}.system == system) hostNames;
+          currentSystemHosts = map (host: hosts.${host}.targetHost) currentSystemProfileHosts;
           currentSystemAccounts = lib.unique (
-            lib.concatMap (host: hosts.${host}.accountNames) currentSystemHosts
+            lib.concatMap (host: hosts.${host}.accountNames) currentSystemProfileHosts
           );
-          currentSystemHostAliases = lib.genAttrs currentSystemHosts (host: hosts.${host}.matchNames);
-          currentSystemHostDefaultSessions = lib.genAttrs currentSystemHosts (
-            host: hosts.${host}.runtime.defaultSession
+          currentSystemHostAliases = lib.listToAttrs (
+            map (host: {
+              name = hosts.${host}.targetHost;
+              value = hosts.${host}.matchNames;
+            }) currentSystemProfileHosts
+          );
+          currentSystemHostDefaultSessions = lib.listToAttrs (
+            map (host: {
+              name = hosts.${host}.targetHost;
+              value = hosts.${host}.runtime.defaultSession;
+            }) currentSystemProfileHosts
           );
           validThemes = lib.attrNames runtimeContexts.themes;
           validSessions = lib.attrNames runtimeContexts.sessions;
@@ -296,6 +316,7 @@
               currentSystemAccounts
               currentSystemHostAliases
               currentSystemHostDefaultSessions
+              targetNames
               validThemes
               validSessions
               homeTargets

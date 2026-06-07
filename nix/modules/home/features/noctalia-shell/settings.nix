@@ -107,7 +107,7 @@
 }
 // lib.optionalAttrs cfg.wallpaper.enable {
   wallpaper = {
-    directory = "${config.home.homeDirectory}/Downloads/media/wallpapers/";
+    directory = "${config.dotfiles.paths.wallpaperDirectory}/";
     overviewEnabled = true;
     automationEnabled = true;
     randomIntervalSec = 60;

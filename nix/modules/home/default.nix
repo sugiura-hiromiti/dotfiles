@@ -1,5 +1,6 @@
 {
   imports = [
+    ./base/paths.nix
     ./features/ai-tools.nix
     ./features/darwin-apps.nix
     ./features/desktop-integration.nix

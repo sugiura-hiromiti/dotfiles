@@ -17,7 +17,11 @@ let
     let
       meta = import (hostDir + "/${host}/meta.nix");
       inherit (meta) system;
+      # host: profile registry key, derived from the directory name.
+      # targetHost: public flake target prefix used by switch/update commands.
+      # hostName: OS/network hostname configured inside the target system.
       hostName = meta.hostName or host;
+      targetHost = meta.targetHost or host;
       roles = meta.roles or [ ];
       variants = meta.variants or [ ];
       targets = meta.targets or [ "home" ];
@@ -55,7 +59,12 @@ let
           "Host '${host}' accounts.primary '${primaryAccountName}' is not defined in accounts.users";
         accounts.users.${primaryAccountName};
       matchNames = lib.unique (
-        [ host ] ++ lib.optional (hostName != host) hostName ++ (meta.aliases or [ ])
+        [
+          host
+          targetHost
+        ]
+        ++ lib.optional (hostName != host) hostName
+        ++ (meta.aliases or [ ])
       );
       runtimeMeta = meta.runtime or { };
       runtime = {
@@ -70,6 +79,7 @@ let
         host
         system
         hostName
+        targetHost
         accounts
         accountNames
         primaryAccountName
@@ -87,11 +97,16 @@ let
       value = mkHost host;
     }) hostNames
   );
+  targetHostNames = map (host: hosts.${host}.targetHost) hostNames;
 in
+assert lib.assertMsg (
+  builtins.length (lib.unique targetHostNames) == builtins.length targetHostNames
+) "Host targetHost values must be unique";
 {
   inherit
     defaultRuntime
     hosts
     hostNames
+    targetHostNames
     ;
 }

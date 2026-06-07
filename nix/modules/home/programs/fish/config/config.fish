@@ -12,9 +12,14 @@ set -gx RIPGREP_CONFIG_PATH "$HOME/.config/rg/config"
 set -gx MY_CUSTOM_ENV_VARS_CURRENTLY_EXECUTING_PROMPT ""
 set -gx XDG_CONFIG_HOME "$HOME/.config"
 set -gx XDG_CACHE_HOME "$HOME/.cache"
-set -gx WALLPAPER_DIR "$HOME/Downloads/wallpapers"
 
 cat "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" | babelfish | source
+
+if set -q DOTFILES_WALLPAPER_DIR
+    set -gx WALLPAPER_DIR "$DOTFILES_WALLPAPER_DIR"
+else if not set -q WALLPAPER_DIR
+    set -gx WALLPAPER_DIR "$HOME/Downloads/media/wallpapers"
+end
 
 fish_add_path $HOME/.nix-profile/bin
 fish_add_path /nix/var/nix/profiles/default/bin

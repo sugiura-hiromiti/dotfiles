@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  system,
   ...
 }:
 let
@@ -9,7 +8,7 @@ let
     pkgs.nur.repos.aster-void.fcitx5-hazkey
   ];
 in
-lib.mkIf (lib.hasSuffix "-linux" system) {
+lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
   dotfiles.features.sessionGui.enable = lib.mkDefault true;
 
   dotfiles.programs = {

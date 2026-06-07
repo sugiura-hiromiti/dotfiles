@@ -1,5 +1,7 @@
 ;;; -*- lexical-binding: t; -*-
 
+(require 'init-paths)
+
 (use-package
 	vertico
 	:init (vertico-mode 1)
@@ -228,7 +230,7 @@
 	:after consult
 	:custom
 	(consult-gh-show-preview t)
-	(consult-gh-default-clone-directory "~/Downloads/awa")
+	(consult-gh-default-clone-directory my/dotfiles-workspace-root)
 	(consult-gh-confirm-before-clone t))
 
 (use-package consult-gh-embark

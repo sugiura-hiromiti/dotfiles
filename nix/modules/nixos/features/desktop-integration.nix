@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  system,
   ...
 }:
 let
@@ -48,7 +47,7 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = lib.hasSuffix "-linux" system;
+        assertion = pkgs.stdenv.hostPlatform.isLinux;
         message = "dotfiles.features.desktopIntegration is Linux-only.";
       }
     ];

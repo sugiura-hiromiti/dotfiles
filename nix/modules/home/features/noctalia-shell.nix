@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  system,
   theme,
   ...
 }:
@@ -69,7 +68,7 @@ in
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = lib.hasSuffix "-linux" system;
+        assertion = pkgs.stdenv.hostPlatform.isLinux;
         message = "dotfiles.features.noctaliaShell is Linux-only.";
       }
     ];

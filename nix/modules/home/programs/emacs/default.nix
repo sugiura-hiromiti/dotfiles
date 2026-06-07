@@ -6,6 +6,31 @@
 }:
 let
   cfg = config.dotfiles.programs.emacs;
+  paths = config.dotfiles.paths;
+  emacsLispFiles = lib.attrNames (
+    lib.filterAttrs (
+      name: type: name != "init-paths.el" && type == "regular" && lib.hasSuffix ".el" name
+    ) (builtins.readDir ./config/lisp)
+  );
+  emacsLispConfigFiles = lib.listToAttrs (
+    map (name: {
+      name = "emacs/lisp/${name}";
+      value.source = ./config/lisp + "/${name}";
+    }) emacsLispFiles
+  );
+  emacsPathsConfig = ''
+    ;;; -*- lexical-binding: t; -*-
+    ;; Generated from dotfiles.paths by Home Manager.
+
+    (defconst my/dotfiles-downloads ${builtins.toJSON paths.downloads})
+    (defconst my/dotfiles-media-directory ${builtins.toJSON paths.mediaDirectory})
+    (defconst my/dotfiles-workspace-root ${builtins.toJSON paths.workspaceRoot})
+    (defconst my/dotfiles-org-directory ${builtins.toJSON paths.orgDirectory})
+    (defconst my/dotfiles-wallpaper-directory ${builtins.toJSON paths.wallpaperDirectory})
+    (defconst my/dotfiles-screenshot-directory ${builtins.toJSON paths.screenshotDirectory})
+
+    (provide 'init-paths)
+  '';
   emacsPackage = (pkgs.emacsPackagesFor pkgs.emacs-pgtk).emacsWithPackages (epkgs: [
     epkgs.tree-sitter-langs
     (epkgs.treesit-grammars.with-grammars (grammars: [
@@ -132,11 +157,9 @@ in
         xdg.configFile = {
           "emacs/init.el".source = ./config/init.el;
           "emacs/early-init.el".source = ./config/early-init.el;
-          "emacs/lisp" = {
-            source = ./config/lisp;
-            recursive = true;
-          };
-        };
+          "emacs/lisp/init-paths.el".text = emacsPathsConfig;
+        }
+        // emacsLispConfigFiles;
       }
 
       (lib.mkIf pkgs.stdenv.isDarwin {

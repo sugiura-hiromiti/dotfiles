@@ -57,7 +57,9 @@ in
       ];
       environmentVariables = {
         CLAP_PATH = lib.mkDefault "~/.nix-profile/lib/clap";
+        DOTFILES_WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
         LIBSQLITE = lib.mkDefault cfg.sqliteLibrary;
+        WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
       };
       configFile.source = ./config/config.nu;
     };

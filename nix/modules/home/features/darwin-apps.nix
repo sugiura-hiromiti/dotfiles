@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  system,
   ...
 }:
 let
@@ -31,7 +30,7 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = lib.hasSuffix "-darwin" system;
+        assertion = pkgs.stdenv.hostPlatform.isDarwin;
         message = "dotfiles.features.darwinApps is Darwin-only.";
       }
     ];

@@ -3,6 +3,7 @@
   hosts,
   hostNames,
   runtime,
+  targetNames,
 }:
 let
   inherit (runtime) mkRuntimeConfigs;
@@ -27,7 +28,10 @@ let
     in
     config
     // {
-      configName = "${config.host}--account-${accountName}--theme-${config.themeName}--session-${config.sessionName}";
+      configName = targetNames.mkHomeTargetName {
+        inherit accountName;
+        inherit (config) targetHost themeName sessionName;
+      };
       inherit account accountName;
       roles = config.roles ++ account.roles;
       variants = config.variants ++ account.variants;

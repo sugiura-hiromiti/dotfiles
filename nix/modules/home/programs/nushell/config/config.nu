@@ -11,7 +11,7 @@ if (sys host | get name) == "Darwin" {
 
 $env.config.buffer_editor = 'emacsclient'
 $env.EDITOR = 'emacsclient'
-$env.WALLPAPER_DIR = $'($env.HOME)/Downloads/media/wallpapers'
+$env.WALLPAPER_DIR = ($env.DOTFILES_WALLPAPER_DIR? | default $'($env.HOME)/Downloads/media/wallpapers')
 $env.XDG_CONFIG_HOME = $'($env.HOME)/.config'
 $env.GITHUB_PAT_TOKEN = (
 	open ~/.github_auth | lines | get 0 | split row ':' | get 2 | split row '@' | get 0

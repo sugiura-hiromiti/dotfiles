@@ -55,7 +55,6 @@ in
       };
 
       gtk.icon.accent = lib.mkDefault cfg.gtkIconAccent;
-      gemini-cli.enable = lib.mkDefault false;
       yazi.accent = lib.mkDefault cfg.yaziAccent;
     };
   };

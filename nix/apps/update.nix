@@ -6,6 +6,7 @@
   currentSystemAccounts,
   currentSystemHostAliases,
   currentSystemHostDefaultSessions,
+  targetNames,
   validThemes,
   validSessions,
   homeTargets,
@@ -24,6 +25,19 @@ let
   validAccountsText = lib.concatStringsSep ", " currentSystemAccounts;
   validThemesText = lib.concatStringsSep ", " validThemes;
   validSessionsText = lib.concatStringsSep ", " validSessions;
+  homeTargetExample = targetNames.examples.home;
+  systemTargetExample = targetNames.examples.system;
+  homeTargetShell = targetNames.mkHomeTargetName {
+    targetHost = "$target_host";
+    accountName = "$target_account";
+    themeName = "$theme";
+    sessionName = "$session";
+  };
+  systemTargetShell = targetNames.mkSystemTargetName {
+    targetHost = "$target_host";
+    themeName = "$theme";
+    sessionName = "$system_session";
+  };
   hostDefaultSessionCases = lib.concatStringsSep "\n" (
     map (host: ''
       ${lib.escapeShellArg host})
@@ -56,8 +70,8 @@ in
       usage() {
         cat <<EOF
       usage: nix run path:.#update -- [--host HOST] [--account ACCOUNT] [--theme THEME] [--session SESSION] [--system-session SESSION]
-      home target: HOST--account-ACCOUNT--theme-THEME--session-SESSION
-      system target: HOST--theme-THEME--session-SYSTEM_SESSION
+      home target: ${homeTargetExample}
+      system target: ${systemTargetExample}
       valid hosts: ${validHostsText}
       valid accounts: ${validAccountsText}
       valid themes: ${validThemesText}
@@ -111,6 +125,30 @@ in
       session=""
       system_session=""
       flake_ref="path:$(pwd -P)"
+      lock_path="$(pwd -P)/flake.lock"
+      lock_backup="$(mktemp "''${TMPDIR:-/tmp}/dotfiles-flake-lock.XXXXXX")"
+      lock_had_file=0
+      lock_updated=0
+      restore_lock_on_failure=1
+
+      cleanup() {
+        status="$?"
+        if [ "$status" -ne 0 ] && [ "$lock_updated" -eq 1 ] && [ "$restore_lock_on_failure" -eq 1 ]; then
+          if [ "$lock_had_file" -eq 1 ]; then
+            cp "$lock_backup" "$lock_path"
+          else
+            rm -f "$lock_path"
+          fi
+          echo "restored flake.lock because the updated configuration did not pass preflight" >&2
+        fi
+        rm -f "$lock_backup"
+      }
+      trap cleanup EXIT
+
+      if [ -e "$lock_path" ]; then
+        cp "$lock_path" "$lock_backup"
+        lock_had_file=1
+      fi
 
       while [ "$#" -gt 0 ]; do
         case "$1" in
@@ -231,8 +269,8 @@ in
         exit 2
       fi
 
-      home_target="$target_host--account-$target_account--theme-$theme--session-$session"
-      system_target="$target_host--theme-$theme--session-$system_session"
+      home_target="${homeTargetShell}"
+      system_target="${systemTargetShell}"
 
       if ! is_member "$home_target" ${validHomeTargetsArgs}; then
         echo "home configuration is not defined: $home_target" >&2
@@ -250,14 +288,24 @@ in
         fi
       fi
 
+      lock_updated=1
+      nix flake update --flake "$flake_ref"
+
+      nix eval --raw "$flake_ref#homeConfigurations.\"$home_target\".activationPackage.drvPath" >/dev/null
+      case "$system_switch" in
+        darwin)
+          nix eval --raw "$flake_ref#darwinConfigurations.\"$system_target\".system.drvPath" >/dev/null
+          ;;
+        nixos)
+          nix eval --raw "$flake_ref#nixosConfigurations.\"$system_target\".config.system.build.toplevel.drvPath" >/dev/null
+          ;;
+      esac
+
       if [ -n "$system_switch" ]; then
         sudo -v
       fi
 
-      nix flake update --flake "$flake_ref"
-      git stage flake.lock
-
-      nix eval --raw "$flake_ref#homeConfigurations.\"$home_target\".activationPackage.drvPath" >/dev/null
+      restore_lock_on_failure=0
       nix run nixpkgs#home-manager -- switch --flake "$flake_ref#$home_target"
 
       case "$system_switch" in
@@ -268,6 +316,8 @@ in
           sudo nixos-rebuild switch --flake "$flake_ref#$system_target"
           ;;
       esac
+
+      git stage flake.lock
     ''
   );
 }

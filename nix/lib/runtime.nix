@@ -1,6 +1,7 @@
 {
   lib,
   runtimeContexts,
+  targetNames,
 }:
 let
   getRuntimeContext =
@@ -19,7 +20,10 @@ let
     in
     hostConfig
     // {
-      configName = "${hostConfig.host}--theme-${themeName}--session-${sessionName}";
+      configName = targetNames.mkSystemTargetName {
+        inherit themeName sessionName;
+        inherit (hostConfig) targetHost;
+      };
       inherit (themeContext) theme;
       inherit (sessionContext) session hasGui;
       inherit themeName sessionName;

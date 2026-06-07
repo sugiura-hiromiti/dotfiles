@@ -178,6 +178,7 @@ in
               PATH=${
                 lib.makeBinPath [
                   cfg.termfilechooser.fileManager.package
+                  pkgs.bash
                   pkgs.coreutils
                   pkgs.gnused
                 ]

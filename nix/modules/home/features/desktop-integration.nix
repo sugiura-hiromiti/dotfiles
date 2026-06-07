@@ -11,6 +11,18 @@ let
       cfg.termfilechooser.terminal.command
     else
       "${lib.getExe cfg.termfilechooser.terminal.package} start --always-new-process";
+  termfilechooserRuntimePath = lib.makeBinPath [
+    cfg.termfilechooser.fileManager.package
+    cfg.termfilechooser.terminal.package
+    pkgs.bash
+    pkgs.coreutils
+    pkgs.gnused
+  ];
+  termfilechooserWrapper = pkgs.writeShellScript "termfilechooser-yazi-wrapper" ''
+    export TERMCMD=${lib.escapeShellArg terminalCommand}
+    export PATH=${lib.escapeShellArg termfilechooserRuntimePath}
+    exec ${cfg.termfilechooser.package}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
+  '';
   portalConfig = {
     default = cfg.portal.defaultBackends;
     "org.freedesktop.impl.portal.Access" = cfg.portal.accessBackend;
@@ -172,17 +184,8 @@ in
       (lib.mkIf cfg.termfilechooser.enable {
         xdg.configFile."xdg-desktop-portal-termfilechooser/config".text = ''
           [filechooser]
-          cmd=${cfg.termfilechooser.package}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+          cmd=${termfilechooserWrapper}
           default_dir=$HOME
-          env=TERMCMD=${terminalCommand}
-              PATH=${
-                lib.makeBinPath [
-                  cfg.termfilechooser.fileManager.package
-                  pkgs.bash
-                  pkgs.coreutils
-                  pkgs.gnused
-                ]
-              }
           open_mode=suggested
           save_mode=suggested
         '';

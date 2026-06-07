@@ -100,7 +100,8 @@
 	(my/meow-setup) (meow-global-mode 1)
 
 	(defun my/save-some-buffers-when-meow-insert-exit (&rest _)
-		"save modified file-visiting buffers without confirmation when leaving meow insert mode"
+		"Save modified file-visiting buffers without confirmation.
+Runs when leaving Meow insert mode."
 		(condition-case err
 			(save-some-buffers t)
 			(error

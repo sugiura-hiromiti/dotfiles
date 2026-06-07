@@ -53,7 +53,7 @@
 				(enclosures (elfeed-entry-enclosures entry)))
 		(unless enclosures
 			(user-error "no enclosure in this entry"))
-		(let * ((idx (or enclosure-index
+		(let* ((idx (or enclosure-index
 							 (if (= 1 (length enclosures))
 								 1
 								 (read-number

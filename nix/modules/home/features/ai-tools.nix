@@ -37,7 +37,7 @@ let
     approval_policy = "never";
     sandbox_mode = "workspace-write";
     features = {
-      web_search_rrequests = true;
+      web_search_requests = true;
     };
     sandbox_workspace_write = {
       network_access = true;

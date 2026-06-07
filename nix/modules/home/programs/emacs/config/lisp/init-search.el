@@ -2,6 +2,8 @@
 
 (require 'init-paths)
 
+(declare-function embark-completing-read-prompter "embark")
+
 (use-package
 	vertico
 	:init (vertico-mode 1)

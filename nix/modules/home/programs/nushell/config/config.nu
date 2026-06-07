@@ -66,7 +66,7 @@ def hour [] {
 	date now | format date '%H' | into int
 }
 def auto_theme [] {
-	hour | if 6 < $in and 18 > $in { set_theme light } else { set_theme light }
+	hour | if 6 < $in and 18 > $in { set_theme light } else { set_theme dark }
 }
 def "set_theme dark" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-dark"' }
 def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-light"' }

@@ -2,7 +2,6 @@
   git = {
     name = "sugiura-hiromiti";
     email = "pishadon57@gmail.com";
-    includes = [ { path = "~/.github_auth"; } ];
   };
 
   jujutsu = {

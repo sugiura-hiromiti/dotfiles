@@ -13,6 +13,13 @@ function u
 
     pushd "$flake_root" >/dev/null; or return 1
 
+    set -l nix_access_token_override "access-tokens ="
+    if set -q NIX_CONFIG; and test -n "$NIX_CONFIG"
+        set -lx NIX_CONFIG (string join \n -- "$NIX_CONFIG" "$nix_access_token_override")
+    else
+        set -lx NIX_CONFIG "$nix_access_token_override"
+    end
+
     nix run path:.#update -- $argv
     set update_status $status
     popd >/dev/null

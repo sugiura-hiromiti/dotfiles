@@ -32,4 +32,18 @@ in
     "noctalia-shell"
     "terminal"
   ];
+  runtime = {
+    themes = [
+      "dark"
+      "light"
+    ];
+    sessions = [
+      "gui"
+      "tty"
+    ];
+    targetAxes = {
+      theme = true;
+      session = true;
+    };
+  };
 }

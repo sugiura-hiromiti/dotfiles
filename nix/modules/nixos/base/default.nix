@@ -10,5 +10,6 @@
     ./networking.nix
     ./remote-access.nix
     ./theme.nix
+    ./users.nix
   ];
 }

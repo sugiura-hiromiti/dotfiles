@@ -6,6 +6,7 @@
   currentSystemAccounts,
   currentSystemHostAliases,
   currentSystemHostDefaultSessions,
+  currentSystemHostRuntimes,
   targetNames,
   validThemes,
   validSessions,
@@ -25,23 +26,85 @@ let
   validAccountsText = lib.concatStringsSep ", " currentSystemAccounts;
   validThemesText = lib.concatStringsSep ", " validThemes;
   validSessionsText = lib.concatStringsSep ", " validSessions;
-  homeTargetExample = targetNames.examples.home;
-  systemTargetExample = targetNames.examples.system;
-  homeTargetShell = targetNames.mkHomeTargetName {
-    targetHost = "$target_host";
-    accountName = "$target_account";
-    themeName = "$theme";
-    sessionName = "$session";
-  };
-  systemTargetShell = targetNames.mkSystemTargetName {
-    targetHost = "$target_host";
-    themeName = "$theme";
-    sessionName = "$system_session";
-  };
+  homeTargetExample = if homeTargets == [ ] then targetNames.examples.home else lib.head homeTargets;
+  systemTargetExample =
+    if nixosTargets != [ ] then
+      lib.head nixosTargets
+    else if darwinTargets != [ ] then
+      lib.head darwinTargets
+    else
+      targetNames.examples.system;
+  mkHomeTargetShell =
+    host:
+    targetNames.mkHomeTargetName {
+      targetHost = "$target_host";
+      accountName = "$target_account";
+      themeName = "$theme";
+      sessionName = "$session";
+      inherit (currentSystemHostRuntimes.${host}) targetAxes;
+    };
+  mkSystemTargetShell =
+    host:
+    targetNames.mkSystemTargetName {
+      targetHost = "$target_host";
+      themeName = "$theme";
+      sessionName = "$system_session";
+      inherit (currentSystemHostRuntimes.${host}) targetAxes;
+    };
   hostDefaultSessionCases = lib.concatStringsSep "\n" (
     map (host: ''
       ${lib.escapeShellArg host})
         printf '%s\n' ${lib.escapeShellArg currentSystemHostDefaultSessions.${host}}
+        return 0
+        ;;
+    '') currentSystemHosts
+  );
+  hostSessionAxisCases = lib.concatStringsSep "\n" (
+    map (
+      host:
+      lib.optionalString currentSystemHostRuntimes.${host}.targetAxes.session ''
+        ${lib.escapeShellArg host})
+          return 0
+          ;;
+      ''
+    ) currentSystemHosts
+  );
+  hostThemeSupportCases = lib.concatStringsSep "\n" (
+    lib.flatten (
+      map (
+        host:
+        map (theme: ''
+          ${lib.escapeShellArg "${host}:${theme}"})
+            return 0
+            ;;
+        '') currentSystemHostRuntimes.${host}.themes
+      ) currentSystemHosts
+    )
+  );
+  hostSessionSupportCases = lib.concatStringsSep "\n" (
+    lib.flatten (
+      map (
+        host:
+        map (session: ''
+          ${lib.escapeShellArg "${host}:${session}"})
+            return 0
+            ;;
+        '') currentSystemHostRuntimes.${host}.sessions
+      ) currentSystemHosts
+    )
+  );
+  homeTargetCases = lib.concatStringsSep "\n" (
+    map (host: ''
+      ${lib.escapeShellArg host})
+        printf '%s\n' "${mkHomeTargetShell host}"
+        return 0
+        ;;
+    '') currentSystemHosts
+  );
+  systemTargetCases = lib.concatStringsSep "\n" (
+    map (host: ''
+      ${lib.escapeShellArg host})
+        printf '%s\n' "${mkSystemTargetShell host}"
         return 0
         ;;
     '') currentSystemHosts
@@ -116,6 +179,48 @@ in
         esac
 
         echo "could not find default session for host: $1" >&2
+        return 1
+      }
+
+      host_has_session_axis() {
+        case "$1" in
+      ${hostSessionAxisCases}
+        esac
+
+        return 1
+      }
+
+      host_supports_theme() {
+        case "$1:$2" in
+      ${hostThemeSupportCases}
+        esac
+
+        return 1
+      }
+
+      host_supports_session() {
+        case "$1:$2" in
+      ${hostSessionSupportCases}
+        esac
+
+        return 1
+      }
+
+      home_target_for_host() {
+        case "$1" in
+      ${homeTargetCases}
+        esac
+
+        echo "could not build home target for host: $1" >&2
+        return 1
+      }
+
+      system_target_for_host() {
+        case "$1" in
+      ${systemTargetCases}
+        esac
+
+        echo "could not build system target for host: $1" >&2
         return 1
       }
 
@@ -217,6 +322,18 @@ in
         target_host="$(detect_host)"
       fi
 
+      if ! is_member "$target_host" ${validHostsArgs}; then
+        echo "unknown host for ${system}: $target_host" >&2
+        usage >&2
+        exit 2
+      fi
+
+      if ! is_member "$target_account" ${validAccountsArgs}; then
+        echo "unknown account for ${system}: $target_account" >&2
+        usage >&2
+        exit 2
+      fi
+
       if [ -z "$theme" ]; then
         hour="$(date +%H)"
         hour="$((10#$hour))"
@@ -228,23 +345,13 @@ in
       fi
 
       if [ -z "$session" ]; then
-        if [ -n "''${WAYLAND_DISPLAY:-}" ] || [ -n "''${DISPLAY:-}" ]; then
+        if ! host_has_session_axis "$target_host"; then
+          session="$(default_session_for_host "$target_host")"
+        elif [ -n "''${WAYLAND_DISPLAY:-}" ] || [ -n "''${DISPLAY:-}" ]; then
           session="gui"
         else
           session="tty"
         fi
-      fi
-
-      if ! is_member "$target_host" ${validHostsArgs}; then
-        echo "unknown host for ${system}: $target_host" >&2
-        usage >&2
-        exit 2
-      fi
-
-      if ! is_member "$target_account" ${validAccountsArgs}; then
-        echo "unknown account for ${system}: $target_account" >&2
-        usage >&2
-        exit 2
       fi
 
       if ! is_member "$theme" ${validThemesArgs}; then
@@ -259,6 +366,18 @@ in
         exit 2
       fi
 
+      if ! host_supports_theme "$target_host" "$theme"; then
+        echo "theme is not supported for $target_host: $theme" >&2
+        usage >&2
+        exit 2
+      fi
+
+      if ! host_supports_session "$target_host" "$session"; then
+        echo "session is not supported for $target_host: $session" >&2
+        usage >&2
+        exit 2
+      fi
+
       if [ -z "$system_session" ]; then
         system_session="$(default_session_for_host "$target_host")"
       fi
@@ -269,8 +388,14 @@ in
         exit 2
       fi
 
-      home_target="${homeTargetShell}"
-      system_target="${systemTargetShell}"
+      if ! host_supports_session "$target_host" "$system_session"; then
+        echo "system session is not supported for $target_host: $system_session" >&2
+        usage >&2
+        exit 2
+      fi
+
+      home_target="$(home_target_for_host "$target_host")"
+      system_target="$(system_target_for_host "$target_host")"
 
       if ! is_member "$home_target" ${validHomeTargetsArgs}; then
         echo "home configuration is not defined: $home_target" >&2

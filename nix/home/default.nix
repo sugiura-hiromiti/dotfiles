@@ -4,6 +4,10 @@
   host ? null,
   roles ? [ ],
   variants ? [ ],
+  themeProfiles ? [ ],
+  sessionProfiles ? [ ],
+  hostVariants ? variants,
+  accountVariants ? [ ],
   ...
 }:
 let
@@ -23,7 +27,10 @@ in
       system
       host
       roles
-      variants
+      themeProfiles
+      sessionProfiles
+      accountVariants
       ;
+    variants = hostVariants;
   };
 }

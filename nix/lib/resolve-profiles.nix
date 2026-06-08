@@ -7,31 +7,40 @@
   host,
   roles ? [ ],
   variants ? [ ],
+  themeProfiles ? [ ],
+  sessionProfiles ? [ ],
+  accountVariants ? [ ],
 }:
 let
   base = toString baseDir;
   optionalFile = path: lib.optionals (builtins.pathExists path) [ path ];
   profileDir = kind: name: "${base}/profiles/${kind}/${name}";
   requireProfileDir =
-    kind: name:
+    kind: label: name:
     let
       dir = profileDir kind name;
     in
     assert lib.assertMsg (builtins.pathExists dir)
-      "Unknown ${kind} profile '${name}' for ${target} target";
+      "Unknown ${label} profile '${name}' for ${target} target";
     dir;
   perKind =
-    kind: name:
+    kind: label: name:
     let
-      dir = requireProfileDir kind name;
+      dir = requireProfileDir kind label name;
     in
     optionalFile "${dir}/common.nix" ++ optionalFile "${dir}/${target}.nix";
-  perKindMaybe = kind: name: if name == null || name == "" then [ ] else perKind kind name;
+  perKindMaybe =
+    kind: label: name:
+    if name == null || name == "" then [ ] else perKind kind label name;
+  perVariant = label: name: perKind "variants" label name;
 in
 lib.unique (
-  perKindMaybe "platforms" platform
-  ++ perKindMaybe "systems" system
-  ++ perKindMaybe "hosts" host
-  ++ lib.concatMap (role: perKind "roles" role) roles
-  ++ lib.concatMap (variant: perKind "variants" variant) variants
+  perKindMaybe "platforms" "platform" platform
+  ++ perKindMaybe "systems" "system" system
+  ++ perKindMaybe "hosts" "host" host
+  ++ lib.concatMap (role: perKind "roles" "role" role) roles
+  ++ lib.concatMap (variant: perVariant "variant" variant) variants
+  ++ lib.concatMap (profile: perVariant "theme runtime" profile) themeProfiles
+  ++ lib.concatMap (profile: perVariant "session runtime" profile) sessionProfiles
+  ++ lib.concatMap (variant: perVariant "account variant" variant) accountVariants
 )

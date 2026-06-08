@@ -20,18 +20,12 @@ let
         touch "$out"
       '';
 
-  mkEvalCheck =
-    name: drvPath:
-    pkgs.writeText "eval-${name}" ''
-      ${builtins.unsafeDiscardStringContext (toString drvPath)}
-    '';
-
-  mkEvalChecks =
-    prefix: names: getDrvPath:
+  mkBuildChecks =
+    prefix: names: getDerivation:
     lib.listToAttrs (
-      map (host: {
-        name = "eval-${prefix}-${host}";
-        value = mkEvalCheck "${prefix}-${host}" (getDrvPath host);
+      map (target: {
+        name = "build-${prefix}-${target}";
+        value = getDerivation target;
       }) names
     );
 
@@ -43,10 +37,10 @@ in
   deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --no-lambda-pattern-names --fail .";
   statix = mkLintCheck "statix" pkgs.statix "statix check .";
 }
-// mkEvalChecks "home" homeConfigNames (
-  host: self.homeConfigurations.${host}.activationPackage.drvPath
+// mkBuildChecks "home" homeConfigNames (
+  target: self.homeConfigurations.${target}.activationPackage
 )
-// mkEvalChecks "nixos" nixosConfigNames (
-  host: self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath
+// mkBuildChecks "nixos" nixosConfigNames (
+  target: self.nixosConfigurations.${target}.config.system.build.toplevel
 )
-// mkEvalChecks "darwin" darwinConfigNames (host: self.darwinConfigurations.${host}.system.drvPath)
+// mkBuildChecks "darwin" darwinConfigNames (target: self.darwinConfigurations.${target}.system)

@@ -7,14 +7,14 @@
   themes = {
     light = {
       theme = "light";
-      variants = [
+      profiles = [
         "theme-light"
       ];
     };
 
     dark = {
       theme = "dark";
-      variants = [
+      profiles = [
         "theme-dark"
       ];
     };
@@ -24,7 +24,7 @@
     gui = {
       session = "gui";
       hasGui = true;
-      variants = [
+      profiles = [
         "desktop-integration"
         "session-gui"
       ];
@@ -33,7 +33,7 @@
     tty = {
       session = "tty";
       hasGui = false;
-      variants = [
+      profiles = [
         "session-tty"
       ];
     };

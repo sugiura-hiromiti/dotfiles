@@ -31,9 +31,12 @@ let
       configName = targetNames.mkHomeTargetName {
         inherit accountName;
         inherit (config) targetHost themeName sessionName;
+        inherit (config.runtime) targetAxes;
       };
       inherit account accountName;
       roles = config.roles ++ account.roles;
+      accountVariants = account.variants;
+      hostVariants = config.hostVariants or config.variants;
       variants = config.variants ++ account.variants;
     };
   mkHomeTargetConfigEntries = lib.concatMap (
@@ -64,13 +67,21 @@ let
   ) hostNames;
   mkTargetConfigEntries =
     target: if target == "home" then mkHomeTargetConfigEntries else mkHostTargetConfigEntries target;
+  assertUniqueTargetNames =
+    target: entries:
+    let
+      names = map (entry: entry.name) entries;
+    in
+    assert lib.assertMsg (builtins.length (lib.unique names) == builtins.length names)
+      "Generated duplicate ${target} target names; check runtime.targetAxes for hidden multi-value axes";
+    entries;
   mkTargetConfigs =
     target: mkConf:
     lib.listToAttrs (
       map (entry: {
         inherit (entry) name;
         value = mkConf entry.config;
-      }) (mkTargetConfigEntries target)
+      }) (assertUniqueTargetNames target (mkTargetConfigEntries target))
     );
   targetConfigNamesForSystem =
     target: system:

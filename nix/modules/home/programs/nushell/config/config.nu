@@ -13,9 +13,6 @@ $env.config.buffer_editor = 'emacsclient'
 $env.EDITOR = 'emacsclient'
 $env.WALLPAPER_DIR = ($env.DOTFILES_WALLPAPER_DIR? | default $'($env.HOME)/Downloads/media/wallpapers')
 $env.XDG_CONFIG_HOME = $'($env.HOME)/.config'
-$env.GITHUB_PAT_TOKEN = (
-	open ~/.github_auth | lines | get 0 | split row ':' | get 2 | split row '@' | get 0
-)
 $env.path = ($env.path | prepend $'($env.HOME)/.cargo/bin')
 $env.config.hooks.env_change.PWD = ( $env.config.hooks.env_change.PWD? | default [] | append { code: { |_,_|
 	let rslt = s
@@ -90,10 +87,18 @@ def --wrapped u [...args: string] {
 		error make { msg: "could not find dotfiles flake" }
 	}
 	let flake_root = ($flake_roots | first)
+	let current_nix_config = ($env.NIX_CONFIG? | default "")
+	let update_nix_config = (
+		[$current_nix_config "access-tokens ="]
+		| where {|line| $line != "" }
+		| str join (char nl)
+	)
 
 	dirs add $flake_root
 	try {
-		nix run path:.#update -- ...$args
+		with-env { NIX_CONFIG: $update_nix_config } {
+			nix run path:.#update -- ...$args
+		}
 	} catch {|err|
 		dirs drop
 		error make $err

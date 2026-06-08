@@ -5,11 +5,19 @@
 }:
 let
   defaultRuntime = {
-    themes = lib.attrNames runtimeContexts.themes;
-    sessions = lib.attrNames runtimeContexts.sessions;
+    themes = [ runtimeContexts.defaults.theme ];
+    sessions = [ runtimeContexts.defaults.session ];
     defaultTheme = runtimeContexts.defaults.theme;
     defaultSession = runtimeContexts.defaults.session;
+    targetAxes = {
+      theme = false;
+      session = false;
+    };
   };
+  runtimeAxisNames = [
+    "theme"
+    "session"
+  ];
   hostEntries = builtins.readDir hostDir;
   hostNames = lib.attrNames (lib.filterAttrs (_: type: type == "directory") hostEntries);
   mkHost =
@@ -67,13 +75,70 @@ let
         ++ (meta.aliases or [ ])
       );
       runtimeMeta = meta.runtime or { };
+      runtimeTargetAxesMeta = runtimeMeta.targetAxes or { };
+      unknownTargetAxes = lib.filter (axis: !(lib.elem axis runtimeAxisNames)) (
+        lib.attrNames runtimeTargetAxesMeta
+      );
+      rawRuntimeThemes = runtimeMeta.themes or defaultRuntime.themes;
+      rawRuntimeSessions = runtimeMeta.sessions or defaultRuntime.sessions;
+      runtimeThemes =
+        assert lib.assertMsg (rawRuntimeThemes != [ ]) "Host '${host}' runtime.themes must not be empty";
+        lib.unique rawRuntimeThemes;
+      runtimeSessions =
+        assert lib.assertMsg (
+          rawRuntimeSessions != [ ]
+        ) "Host '${host}' runtime.sessions must not be empty";
+        lib.unique rawRuntimeSessions;
+      unknownThemes = lib.filter (
+        themeName: !(builtins.hasAttr themeName runtimeContexts.themes)
+      ) runtimeThemes;
+      unknownSessions = lib.filter (
+        sessionName: !(builtins.hasAttr sessionName runtimeContexts.sessions)
+      ) runtimeSessions;
+      runtimeDefaultTheme =
+        runtimeMeta.defaultTheme or (
+          if lib.elem defaultRuntime.defaultTheme runtimeThemes then
+            defaultRuntime.defaultTheme
+          else
+            lib.head runtimeThemes
+        );
+      runtimeDefaultSession =
+        runtimeMeta.defaultSession or (
+          if lib.elem defaultRuntime.defaultSession runtimeSessions then
+            defaultRuntime.defaultSession
+          else
+            lib.head runtimeSessions
+        );
+      targetAxes = {
+        theme = runtimeTargetAxesMeta.theme or defaultRuntime.targetAxes.theme;
+        session = runtimeTargetAxesMeta.session or defaultRuntime.targetAxes.session;
+      };
       runtime = {
-        themes = runtimeMeta.themes or defaultRuntime.themes;
-        sessions = runtimeMeta.sessions or defaultRuntime.sessions;
-        defaultTheme = runtimeMeta.defaultTheme or defaultRuntime.defaultTheme;
-        defaultSession = runtimeMeta.defaultSession or defaultRuntime.defaultSession;
+        inherit targetAxes;
+        themes = runtimeThemes;
+        sessions = runtimeSessions;
+        defaultTheme =
+          assert lib.assertMsg (lib.elem runtimeDefaultTheme runtimeThemes)
+            "Host '${host}' runtime.defaultTheme '${runtimeDefaultTheme}' must be one of runtime.themes";
+          runtimeDefaultTheme;
+        defaultSession =
+          assert lib.assertMsg (lib.elem runtimeDefaultSession runtimeSessions)
+            "Host '${host}' runtime.defaultSession '${runtimeDefaultSession}' must be one of runtime.sessions";
+          runtimeDefaultSession;
       };
     in
+    assert lib.assertMsg (unknownTargetAxes == [ ])
+      "Host '${host}' runtime.targetAxes contains unknown axes: ${lib.concatStringsSep ", " unknownTargetAxes}";
+    assert lib.assertMsg (unknownThemes == [ ])
+      "Host '${host}' runtime.themes contains unknown themes: ${lib.concatStringsSep ", " unknownThemes}";
+    assert lib.assertMsg (unknownSessions == [ ])
+      "Host '${host}' runtime.sessions contains unknown sessions: ${lib.concatStringsSep ", " unknownSessions}";
+    assert lib.assertMsg (
+      targetAxes.theme || builtins.length runtimeThemes == 1
+    ) "Host '${host}' has multiple runtime.themes, so runtime.targetAxes.theme must be true";
+    assert lib.assertMsg (
+      targetAxes.session || builtins.length runtimeSessions == 1
+    ) "Host '${host}' has multiple runtime.sessions, so runtime.targetAxes.session must be true";
     {
       inherit
         host

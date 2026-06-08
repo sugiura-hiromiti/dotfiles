@@ -1,12 +1,62 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.dotfiles.programs.firefox;
+  firefoxAddons = pkgs.nur.repos.rycee.firefox-addons;
 in
 {
-  options.dotfiles.programs.firefox.enable = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-    description = "Whether to enable Firefox.";
+  options.dotfiles.programs.firefox = {
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = "Whether to enable Firefox.";
+    };
+
+    addons = {
+      force = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to remove Firefox add-ons not listed in Nix configuration.";
+      };
+
+      packages = lib.mkOption {
+        type = lib.types.listOf lib.types.package;
+        default = [
+          firefoxAddons.firefox-color
+          firefoxAddons.bitwarden
+          firefoxAddons.darkreader
+          firefoxAddons.ff2mpv
+          firefoxAddons.org-capture
+          firefoxAddons.vimium-c
+        ];
+        defaultText = lib.literalExpression ''
+          with pkgs.nur.repos.rycee.firefox-addons; [
+            firefox-color
+            bitwarden
+            darkreader
+            ff2mpv
+            org-capture
+            vimium-c
+          ]
+        '';
+        example = lib.literalExpression ''
+          with pkgs.nur.repos.rycee.firefox-addons; [
+            firefox-color
+            bitwarden
+            darkreader
+            ff2mpv
+            org-capture
+            vimium-c
+            ublock-origin
+          ]
+        '';
+        description = "Firefox add-on packages to install in the default profile.";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -32,7 +82,8 @@ in
       };
       profiles.dflt = {
         isDefault = true;
-        extensions.force = true;
+        extensions.force = cfg.addons.force;
+        extensions.packages = cfg.addons.packages;
         settings = {
           "browser.startup.page" = 3;
           "browser.startup.homepage" = "https://www.google.com";

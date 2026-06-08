@@ -1,10 +1,10 @@
 # ~/dotfiles/flake.nix
 # -----------------------------------------------------------------------------
 # 概要
-# - nix/profiles/hosts/<host>/meta.nix が system/accounts/targets/roles/variants を定義
+# - nix/profiles/hosts/<host>/meta.nix が system/accounts/targets/roles/variants/runtime を定義
 # - nix/home/ が Home Manager、nix/nixos/ が NixOS、nix/nix-darwin/ が macOS 設定の入口
 # - nix/profiles/{platforms,systems,hosts} は各target入口から解決して取り込み
-# - nix/runtime-contexts.nix が theme/session と追加 variants の対応を定義
+# - nix/runtime-contexts.nix が theme/session と runtime profile の対応を定義
 # - nix/lib/target-names.nix が公開 flake target 名の形式を定義
 #
 # 使い方
@@ -18,9 +18,9 @@
 #    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
 # 3) 直接 switch:
 #    - Home Manager target:
-#      <targetHost>--account-<account>--theme-<theme>--session-<session>
+#      <targetHost>--account-<account>[--theme-<theme>][--session-<session>]
 #    - NixOS / macOS target:
-#      <targetHost>--theme-<theme>--session-<session>
+#      <targetHost>[--theme-<theme>][--session-<session>]
 #    - Home Manager: nix run nixpkgs#home-manager -- switch --flake path:.#<target>
 #    - NixOS: sudo nixos-rebuild switch --flake path:.#<target>
 #    - macOS: sudo nix run nix-darwin -- switch --flake path:.#<target>
@@ -134,7 +134,7 @@
     let
       inherit (nixpkgs) lib;
       runtimeContexts = import ./nix/runtime-contexts.nix;
-      targetNames = import ./nix/lib/target-names.nix;
+      targetNames = import ./nix/lib/target-names.nix { inherit lib; };
       hostRegistry = import ./nix/lib/hosts.nix {
         inherit lib runtimeContexts;
         hostDir = ./nix/profiles/hosts;
@@ -175,6 +175,17 @@
           );
         };
       };
+      nixosProfileModule = config: {
+        dotfiles.nixos.users.accounts = lib.mkDefault (
+          lib.mapAttrs (_: account: {
+            description = account.description or null;
+            extraGroups = account.extraGroups or [ ];
+            authorizedKeys = account.authorizedKeys or [ ];
+            uid = account.uid or null;
+            homeDirectory = account.homeDirectory or null;
+          }) config.accounts.users
+        );
+      };
       commonSpecialArgs =
         config:
         {
@@ -189,8 +200,12 @@
             system
             targetHost
             theme
+            themeProfiles
             variants
+            sessionProfiles
             ;
+          accountVariants = config.accountVariants or [ ];
+          hostVariants = config.hostVariants or config.variants or [ ];
         }
         // lib.optionalAttrs (config ? account) {
           inherit (config) account;
@@ -217,6 +232,7 @@
           inherit (config) system;
           specialArgs = commonSpecialArgs config;
           modules = [
+            (nixosProfileModule config)
             ./nix/nixos/configuration.nix
             catppuccin.nixosModules.catppuccin
           ];
@@ -271,8 +287,18 @@
               value = hosts.${host}.runtime.defaultSession;
             }) currentSystemProfileHosts
           );
-          validThemes = lib.attrNames runtimeContexts.themes;
-          validSessions = lib.attrNames runtimeContexts.sessions;
+          currentSystemHostRuntimes = lib.listToAttrs (
+            map (host: {
+              name = hosts.${host}.targetHost;
+              value = hosts.${host}.runtime;
+            }) currentSystemProfileHosts
+          );
+          validThemes = lib.unique (
+            lib.concatMap (host: hosts.${host}.runtime.themes) currentSystemProfileHosts
+          );
+          validSessions = lib.unique (
+            lib.concatMap (host: hosts.${host}.runtime.sessions) currentSystemProfileHosts
+          );
           formatters = import ./nix/formatters { inherit lib pkgs; };
           repoMaintenancePackages = with pkgs; [
             formatters.editorTools
@@ -316,6 +342,7 @@
               currentSystemAccounts
               currentSystemHostAliases
               currentSystemHostDefaultSessions
+              currentSystemHostRuntimes
               targetNames
               validThemes
               validSessions

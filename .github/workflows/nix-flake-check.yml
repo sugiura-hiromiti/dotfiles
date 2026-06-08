@@ -13,8 +13,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  flake-check:
-    name: Flake check
+  flake-eval:
+    name: Flake evaluation
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 
@@ -29,8 +29,34 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check current system
-        run: nix flake check --no-write-lock-file --print-build-logs .
-
       - name: Check all systems evaluation
         run: nix flake check --all-systems --no-build --no-write-lock-file --print-build-logs .
+
+  flake-build:
+    name: Build checks (${{ matrix.system }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            runner: ubuntu-24.04
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+          - system: aarch64-darwin
+            runner: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build checks
+        run: nix flake check --no-write-lock-file --print-build-logs .

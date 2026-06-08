@@ -6,6 +6,33 @@
 }:
 let
   cfg = config.dotfiles.features.aiTools;
+  codexBasePackage = if cfg.codex.package == null then pkgs.codex else cfg.codex.package;
+  shouldWrapCodex = cfg.codex.mcp.github.enable && cfg.codex.mcp.github.tokenCommand != null;
+  codexPackage =
+    if shouldWrapCodex then
+      pkgs.symlinkJoin {
+        name = "${codexBasePackage.pname or "codex"}-with-github-token";
+        paths = [ codexBasePackage ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild =
+          let
+            tokenCommand = lib.escapeShellArgs cfg.codex.mcp.github.tokenCommand;
+            tokenEnvVar = lib.escapeShellArg cfg.codex.mcp.github.bearerTokenEnvVar;
+          in
+          ''
+            wrapProgram $out/bin/codex --run ${lib.escapeShellArg ''
+              token_env_var=${tokenEnvVar}
+              if [ -z "$(printenv "$token_env_var")" ]; then
+                token="$(${tokenCommand} 2>/dev/null || true)"
+                if [ -n "$token" ]; then
+                  export "$token_env_var=$token"
+                fi
+              fi
+            ''}
+          '';
+      }
+    else
+      codexBasePackage;
 
   mcpServers =
     lib.optionalAttrs cfg.codex.mcp.serena.enable {
@@ -142,6 +169,20 @@ in
             default = "GITHUB_PAT_TOKEN";
             description = "Environment variable containing the GitHub MCP bearer token.";
           };
+          tokenCommand = lib.mkOption {
+            type = lib.types.nullOr (lib.types.listOf lib.types.str);
+            default = [
+              "${pkgs.gh}/bin/gh"
+              "auth"
+              "token"
+              "--hostname"
+              "github.com"
+            ];
+            description = ''
+              Command used by the Codex wrapper to populate bearerTokenEnvVar when
+              it is not already set. Null disables automatic token lookup.
+            '';
+          };
         };
       };
     };
@@ -157,8 +198,8 @@ in
           context = cfg.codex.context;
           settings = lib.recursiveUpdate defaultCodexSettings cfg.codex.settings;
         }
-        // lib.optionalAttrs (cfg.codex.package != null) {
-          package = cfg.codex.package;
+        // lib.optionalAttrs (shouldWrapCodex || cfg.codex.package != null) {
+          package = codexPackage;
         };
       })
     ]

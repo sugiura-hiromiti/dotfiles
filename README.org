@@ -1,0 +1,170 @@
+#+title: Dotfiles
+
+Nix flake based dotfiles for Home Manager, NixOS, and nix-darwin.
+
+* Bootstrap
+
+** Prerequisites
+
+- Nix with flakes enabled.
+- Git.
+- =sudo= access for NixOS or nix-darwin system switches.
+- Optional: =direnv= for entering the repository dev shell automatically.
+
+If flakes are not enabled yet, add this to =~/.config/nix/nix.conf=:
+
+#+begin_src conf
+experimental-features = nix-command flakes
+#+end_src
+
+** Clone
+
+The shell helper =u= searches these locations in order:
+
+- =~/dotfiles=
+- =~/dotfiles/nix=
+- =~/.config/nix=
+
+Use =~/dotfiles= for the default bootstrap path:
+
+#+begin_src sh
+git clone https://github.com/sugiura-hiromiti/dotfiles.git ~/dotfiles
+cd ~/dotfiles
+#+end_src
+
+If =direnv= is installed:
+
+#+begin_src sh
+direnv allow
+#+end_src
+
+** First switch
+
+Before the shell helper is installed, run the flake commands directly from the
+repository root.
+
+Home Manager:
+
+#+begin_src sh
+nix run nixpkgs#home-manager -- switch --flake path:.#<home-target>
+#+end_src
+
+NixOS:
+
+#+begin_src sh
+sudo nixos-rebuild switch --flake path:.#<system-target>
+#+end_src
+
+macOS with nix-darwin:
+
+#+begin_src sh
+sudo nix run nix-darwin -- switch --flake path:.#<system-target>
+#+end_src
+
+After Home Manager installs the shell functions, use =u= for normal updates:
+
+#+begin_src sh
+u --host <host> --account <account> --theme <theme> --session <session>
+#+end_src
+
+=u= updates =flake.lock=, evaluates the selected Home Manager and system
+configuration, switches Home Manager, switches the matching system
+configuration on NixOS or macOS, then stages =flake.lock=.
+
+** Targets
+
+Target names are generated from host metadata in =nix/profiles/hosts/*/meta.nix=.
+
+Home target shape:
+
+#+begin_src text
+<host>--account-<account>[--theme-<theme>][--session-<session>]
+#+end_src
+
+System target shape:
+
+#+begin_src text
+<host>[--theme-<theme>][--session-<session>]
+#+end_src
+
+Current examples:
+
+#+begin_src text
+aarch64-linux-a--account-a--theme-dark--session-gui
+aarch64-linux-a--theme-dark--session-gui
+aarch64-darwin-a--account-a--theme-dark
+aarch64-darwin-a--theme-dark
+aarch64-darwin-hiromichisugiura--account-hiromichisugiura--theme-dark
+aarch64-darwin-hiromichisugiura--theme-dark
+#+end_src
+
+List all generated outputs:
+
+#+begin_src sh
+nix flake show
+#+end_src
+
+** Add a Host
+
+1. Create =nix/profiles/hosts/<host>/meta.nix=.
+2. Set =system=, =accounts=, =targets=, =variants=, and =runtime=.
+3. For NixOS hosts, add =nixos.nix= and =hardware-configuration.nix= in the
+   same host directory when needed.
+4. Check the generated targets:
+
+#+begin_src sh
+nix flake show
+#+end_src
+
+5. Switch using =u= or the direct commands above.
+
+** Maintenance
+
+Run checks:
+
+#+begin_src sh
+nix flake check
+#+end_src
+
+Format:
+
+#+begin_src sh
+nix fmt
+#+end_src
+
+Enter the default maintenance shell:
+
+#+begin_src sh
+nix develop
+#+end_src
+
+Enter the Neovim maintenance shell:
+
+#+begin_src sh
+nix develop .#nvim
+#+end_src
+
+** Troubleshooting
+
+*** GitHub 401 Bad credentials
+
+If a direct Nix command fails while fetching GitHub inputs with =Bad credentials=,
+check Nix's GitHub access token configuration:
+
+#+begin_src sh
+nix config show access-tokens
+#+end_src
+
+Remove or refresh the stale =github.com= token in =~/.config/nix/nix.conf=.
+The =u= wrapper clears Nix access tokens only for its own update command so
+public GitHub inputs are not blocked by an expired local token.
+
+*** Cache permission errors
+
+If Nix reports that it cannot open =~/.cache/nix/fetcher-cache-v4.sqlite=,
+check ownership and writability of =~/.cache/nix=:
+
+#+begin_src sh
+mkdir -p ~/.cache/nix
+chmod u+rwx ~/.cache ~/.cache/nix
+#+end_src

@@ -11,6 +11,12 @@ in
   options.dotfiles.features.media = {
     enable = lib.mkEnableOption "media playback and media-processing tools";
 
+    programs = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ "firefox" ];
+      description = "Repository program modules enabled with the media feature.";
+    };
+
     mpv = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -87,6 +93,12 @@ in
 
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
+      {
+        dotfiles.programs = lib.genAttrs cfg.programs (_: {
+          enable = lib.mkDefault true;
+        });
+      }
+
       (lib.mkIf cfg.cli.enable {
         home.packages = cfg.cli.packages;
       })

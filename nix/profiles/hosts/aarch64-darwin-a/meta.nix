@@ -21,4 +21,15 @@ in
     "media"
     "terminal"
   ];
+  runtime = {
+    themes = [
+      "dark"
+      "light"
+    ];
+    sessions = [ "gui" ];
+    targetAxes = {
+      theme = true;
+      session = false;
+    };
+  };
 }

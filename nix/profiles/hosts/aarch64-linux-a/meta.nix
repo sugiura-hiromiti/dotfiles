@@ -31,6 +31,7 @@ in
     "media"
     "noctalia-shell"
     "terminal"
+    "game"
   ];
   runtime = {
     themes = [

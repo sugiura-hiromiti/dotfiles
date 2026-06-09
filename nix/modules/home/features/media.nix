@@ -31,6 +31,9 @@ in
           hwdec = "auto-safe";
           force-window = "yes";
           save-position-on-quit = "yes";
+          keepaspect-window = "yes";
+          auto-window-resize = "yes";
+          autofit-large = "80%x80%";
         };
         description = "mpv configuration values.";
       };

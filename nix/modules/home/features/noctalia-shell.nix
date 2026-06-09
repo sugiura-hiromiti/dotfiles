@@ -24,7 +24,7 @@ let
 
     bar.main = {
       position = "right";
-      background_opacity = 0.0;
+      background_opacity = 0.3;
       margin_h = 10;
       margin_v = 10;
       auto_hide = true;

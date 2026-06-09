@@ -10,28 +10,87 @@ let
     mkEnableOption
     mkIf
     mkOption
-    optional
+    optionalAttrs
     optionals
     types
     ;
   cfg = config.dotfiles.features.noctaliaShell;
-  terminalCommand =
-    if cfg.terminal.command != null then
-      cfg.terminal.command
-    else if cfg.terminal.package != null then
-      "${lib.getExe cfg.terminal.package} start"
-    else if config.dotfiles.features.terminal.enable then
-      config.dotfiles.features.terminal.command
-    else
-      "wezterm start";
-  settings = import ./noctalia-shell/settings.nix {
-    inherit
-      config
-      cfg
-      lib
-      terminalCommand
-      theme
-      ;
+  settings = {
+    shell = {
+      settings_show_advanced = true;
+      clipboard_enabled = cfg.clipboard.enable;
+      clipboard_auto_paste = if cfg.clipboard.enable then "auto" else "off";
+    };
+
+    bar.main = {
+      position = "right";
+      background_opacity = 0.0;
+      margin_h = 10;
+      margin_v = 10;
+      auto_hide = true;
+      reserve_space = false;
+      scale = 1.0;
+      start = [
+        "launcher"
+        "workspaces"
+        "system-monitor"
+        "media"
+      ];
+      center = [
+        "clock"
+      ];
+      end = [
+        "notifications"
+        "battery"
+        "volume"
+      ]
+      ++ optionals cfg.ddc.enable [
+        "brightness"
+      ]
+      ++ optionals cfg.clipboard.enable [
+        "clipboard"
+      ]
+      ++ optionals cfg.wallpaper.enable [
+        "wallpaper"
+      ];
+    };
+
+    shell.panel = {
+      launcher_placement = "floating";
+      clipboard_placement = "floating";
+      wallpaper_placement = "attached";
+      session_placement = "attached";
+    };
+
+    theme = {
+      mode = theme;
+      source = "builtin";
+      builtin = "Catppuccin";
+    };
+
+    notification = {
+      background_opacity = 0.3;
+    };
+
+    audio = {
+      enable_sounds = true;
+    };
+
+    brightness = {
+      enable_ddcutil = cfg.ddc.enable;
+    };
+  }
+  // optionalAttrs cfg.wallpaper.enable {
+    wallpaper = {
+      enabled = true;
+      directory = "${config.dotfiles.paths.wallpaperDirectory}/";
+      automation = {
+        enabled = true;
+        interval_minutes = 1;
+        order = "random";
+        recursive = true;
+      };
+    };
   };
 in
 {
@@ -41,28 +100,15 @@ in
     package = mkOption {
       type = types.nullOr types.package;
       default = null;
-      description = "Noctalia Shell package. Defaults to pkgs.noctalia-shell with calendar support matching the feature setting.";
+      description = "Noctalia package. Null delegates to the upstream Home Manager module default.";
     };
 
     calendar.enable = mkEnableOption "Noctalia calendar integration";
     clipboard.enable = mkEnableOption "Noctalia clipboard history integration";
     ddc.enable = mkEnableOption "Noctalia DDC brightness integration";
-    screenToolkit.enable = mkEnableOption "Noctalia screen toolkit plugin";
+    screenToolkit.enable = mkEnableOption "Noctalia screen toolkit helpers";
     visualizer.enable = mkEnableOption "Noctalia audio visualizer integration";
     wallpaper.enable = mkEnableOption "Noctalia wallpaper integration";
-
-    terminal = {
-      package = mkOption {
-        type = types.nullOr types.package;
-        default = null;
-        description = "Optional terminal package installed for Noctalia app launcher. Null delegates installation to dotfiles.features.terminal.";
-      };
-      command = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        description = "Terminal command used by Noctalia app launcher. When null, this is derived from terminal.package.";
-      };
-    };
   };
 
   config = mkIf cfg.enable {
@@ -74,8 +120,7 @@ in
     ];
 
     home.packages =
-      optional (cfg.terminal.package != null) cfg.terminal.package
-      ++ optionals cfg.calendar.enable [
+      optionals cfg.calendar.enable [
         pkgs.evolution-data-server
       ]
       ++ optionals cfg.clipboard.enable [
@@ -96,37 +141,12 @@ in
       clipboardPackage = pkgs.wl-clipboard-rs;
     };
 
-    programs.noctalia-shell = {
+    programs.noctalia = {
       enable = true;
-      package =
-        if cfg.package != null then
-          cfg.package
-        else
-          pkgs.noctalia-shell.override { calendarSupport = cfg.calendar.enable; };
-      plugins = {
-        sources = [
-          {
-            enabled = true;
-            name = "official noctalia plugins";
-            url = "https://github.com/noctalia-dev/noctalia-plugins";
-          }
-        ];
-        states = {
-          keybind-cheatsheet = {
-            enabled = true;
-            sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
-          };
-        }
-        // lib.optionalAttrs cfg.screenToolkit.enable {
-          screen-toolkit = {
-            enabled = true;
-            sourceUrl = "https://github.com/noctalia-dev/noctalia-plugins";
-          };
-        };
-        version = 2;
-      };
-      pluginSettings = { };
       inherit settings;
+    }
+    // optionalAttrs (cfg.package != null) {
+      package = cfg.package;
     };
   };
 }

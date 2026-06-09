@@ -324,7 +324,7 @@ layout {
 
 // This line starts waybar, a commonly used bar for Wayland compositors.
 spawn-at-startup "firefox"
-spawn-at-startup "noctalia-shell"
+spawn-at-startup "noctalia"
 @terminalStartup@
 
 hotkey-overlay {
@@ -474,16 +474,12 @@ binds {
     // Most actions that you can bind here can also be invoked programmatically with
     // `niri msg action do-something`.
 
-    // Mod-Shift-/, which is usually the same as Mod-?,
-    // shows a list of important hotkeys.
-    Mod+Shift+Slash { spawn "noctalia-shell" "ipc" "call" "plugin:keybind-cheatsheet" "toggle"; }
-
     // Suggested binds for running programs: terminal, app launcher, screen locker.
 @terminalKeybind@
-    Mod+Space repeat=false { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Mod+C repeat=false { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
-    Mod+Escape repeat=false { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "toggle"; }
-    Mod+N { spawn "noctalia-shell" "ipc" "call" "notifications" "dismissOldest"; }
+    Mod+Space repeat=false { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+C repeat=false { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+Escape repeat=false { spawn "noctalia" "msg" "panel-toggle" "session"; }
+    Mod+N { spawn "noctalia" "msg" "notification-clear-active"; }
     // Mod+M { spawn "kitten" "quick-access-terminal"; }
 
     // You can also use a shell. Do this if you need pipes, multiple commands, etc.
@@ -496,12 +492,12 @@ binds {
     // XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.05-"; }
     // XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
     // XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "increase"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "decrease"; }
-    Shift+XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "increaseInput"; }
-    Shift+XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "volume" "decreaseInput"; }
-    XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "brightness" "increase"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia-shell" "ipc" "call" "brightness" "decrease"; }
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-up"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "volume-down"; }
+    Shift+XF86AudioRaiseVolume allow-when-locked=true { spawn "noctalia" "msg" "mic-volume-up"; }
+    Shift+XF86AudioLowerVolume allow-when-locked=true { spawn "noctalia" "msg" "mic-volume-down"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
 
     // Open/close the Overview: a zoomed-out view of workspaces and windows.
     // You can also move the mouse into the top-left hot corner,

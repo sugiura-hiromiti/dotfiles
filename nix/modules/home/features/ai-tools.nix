@@ -71,6 +71,11 @@ let
     };
     tui = {
       notifications = true;
+      status_line = [
+        "model-with-reasoning"
+        "run-state"
+        "current-dir"
+      ];
     };
   }
   // lib.optionalAttrs (mcpServers != { }) {

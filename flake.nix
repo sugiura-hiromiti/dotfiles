@@ -88,17 +88,6 @@
         nixpkgs = {
           follows = "nixpkgs";
         };
-        noctalia-qs = {
-          follows = "noctalia-qs";
-        };
-      };
-    };
-    noctalia-qs = {
-      url = "github:noctalia-dev/noctalia-qs";
-      inputs = {
-        nixpkgs = {
-          follows = "nixpkgs";
-        };
       };
     };
     # zen-browser = {
@@ -128,7 +117,6 @@
       # paneru,
       # niri-flake,
       noctalia,
-      noctalia-qs,
       # zen-browser,
     }:
     let

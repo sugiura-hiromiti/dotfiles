@@ -11,7 +11,8 @@ let
   codexPackage =
     if shouldWrapCodex then
       pkgs.symlinkJoin {
-        name = "${codexBasePackage.pname or "codex"}-with-github-token";
+        pname = "${codexBasePackage.pname or "codex"}-with-github-token";
+        version = codexBasePackage.version or (lib.getVersion codexBasePackage);
         paths = [ codexBasePackage ];
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild =
@@ -73,7 +74,7 @@ let
       notifications = true;
       status_line = [
         "model-with-reasoning"
-        "run-state"
+        "context-remaining"
         "current-dir"
       ];
     };

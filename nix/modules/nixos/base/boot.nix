@@ -71,6 +71,9 @@ in
           };
 
           kernelPackages = lib.mkDefault pkgs.linuxPackages;
+          tmp = {
+            cleanOnBoot = lib.mkDefault true;
+          };
         };
 
         zramSwap.enable = lib.mkDefault true;

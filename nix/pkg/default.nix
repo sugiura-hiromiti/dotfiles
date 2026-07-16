@@ -11,5 +11,4 @@ with pkgs;
   sqlite
   jq
   bat
-  dorion
 ]

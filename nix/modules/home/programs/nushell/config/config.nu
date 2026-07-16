@@ -97,6 +97,7 @@ def --wrapped u [...args: string] {
 	dirs add $flake_root
 	try {
 		with-env { NIX_CONFIG: $update_nix_config } {
+			sudo -v
 			nix run path:.#update -- ...$args
 		}
 	} catch {|err|

@@ -5,6 +5,7 @@ if (sys host | get name) == "Darwin" {
 			"/run/current-system/sw/bin"
 			"/nix/var/nix/profiles/default/bin"
 			$"($env.HOME)/.nix-profile/bin"
+			"~/.local/bin"
 		]
 	)
 }

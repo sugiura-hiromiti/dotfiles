@@ -1,5 +1,6 @@
 {
   config,
+  configName,
   lib,
   ...
 }:
@@ -28,6 +29,7 @@ in
       autoUpgrade = {
         enable = lib.mkDefault true;
         allowReboot = lib.mkDefault true;
+        flake = lib.mkDefault "github:sugiura-hiromiti/dotfiles#${configName}";
       };
       inherit (cfg) stateVersion;
     };

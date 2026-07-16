@@ -25,8 +25,8 @@ let
     bar.main = {
       position = "right";
       background_opacity = 0.3;
-      margin_h = 10;
-      margin_v = 10;
+      margin_ends = 10;
+      margin_edge = 10;
       auto_hide = true;
       reserve_space = false;
       scale = 1.0;
@@ -86,7 +86,7 @@ let
       directory = "${config.dotfiles.paths.wallpaperDirectory}/";
       automation = {
         enabled = true;
-        interval_minutes = 1;
+        interval_seconds = 60;
         order = "random";
         recursive = true;
       };

@@ -21,7 +21,6 @@ in
       sysctl = lib.mkOption {
         type = lib.types.attrsOf lib.types.anything;
         default = {
-          "net.ipv4.ip_unprivileged_port_start" = 0;
           "vm.swappiness" = 10;
           "vm.vfs_cache_pressure" = 50;
           "vm.dirty_background_ratio" = 5;
@@ -37,7 +36,6 @@ in
         type = lib.types.listOf lib.types.str;
         default = [
           "numa_balancing=disable"
-          "mitigations=off"
           "transparent_hugepage=never"
         ];
         description = "Kernel parameters used when performance tuning is enabled.";

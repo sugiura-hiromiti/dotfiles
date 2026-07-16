@@ -179,6 +179,7 @@
         {
           inherit (config)
             accounts
+            configName
             hasGui
             has_gui
             host

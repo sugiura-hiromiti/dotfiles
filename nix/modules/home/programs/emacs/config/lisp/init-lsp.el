@@ -76,13 +76,13 @@
 
 (defconst my/eglot-workspace-configuration
 	'(:Lua
-		 (:runtime (:version "LuaJIT"))
+		 (:runtime (:version "LuaJIT")
 		 :diagnostics (:globals ["vim" "hs"])
 		 :workspace
 		 ( ;; :library ["/absolute/path/one" "/absolute/path/two"]
 			 ;; :checkThirdParty "Apply"
 			 )
-		 :format (:enable :json-false))
+		 :format (:enable :json-false)))
 	"Eglotに渡すworkspace/configuration。")
 
 (defun my/eglot-configure-server-programs ()

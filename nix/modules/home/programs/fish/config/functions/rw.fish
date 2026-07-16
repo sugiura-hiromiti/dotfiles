@@ -7,7 +7,7 @@ function rw --description 'randomly choose wallpaper'
     else
         set idx (random 1 (count $files))
         set chosen $WALLPAPER_DIR/$files[$idx]
-        echo $chosen | xargs awww img
+        awww img -- $chosen
         # viu $chosen
         # viu ~/Downloads/'Konachan.com - 76594 hatsune_miku kagamine_rin twintails vocaloid.jpg'
     end

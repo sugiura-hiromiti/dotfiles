@@ -35,7 +35,7 @@ let
     else
       codexBasePackage;
 
-  mcpServers =
+  codexMcpServers =
     lib.optionalAttrs cfg.codex.mcp.serena.enable {
       serena = {
         command = "${cfg.codex.mcp.serena.uvPackage}/bin/uvx";
@@ -55,6 +55,61 @@ let
         url = cfg.codex.mcp.github.url;
         bearer_token_env_var = cfg.codex.mcp.github.bearerTokenEnvVar;
       };
+    };
+
+  claudeGitHubAuth =
+    if cfg.codex.mcp.github.tokenCommand == null then
+      {
+        headers.Authorization = lib.concatStrings [
+          "Bearer "
+          "$"
+          "{"
+          cfg.codex.mcp.github.bearerTokenEnvVar
+          "}"
+        ];
+      }
+    else
+      {
+        headersHelper = "${pkgs.writeShellScript "claude-github-mcp-headers" ''
+          set -eu
+
+          token_env_var=${lib.escapeShellArg cfg.codex.mcp.github.bearerTokenEnvVar}
+          token="$(printenv "$token_env_var" 2>/dev/null || true)"
+          if [ -z "$token" ]; then
+            token="$(${lib.escapeShellArgs cfg.codex.mcp.github.tokenCommand})"
+          fi
+          if [ -z "$token" ]; then
+            echo "GitHub MCP token is empty" >&2
+            exit 1
+          fi
+
+          exec ${lib.getExe pkgs.jq} -nc --arg token "$token" \
+            '{ Authorization: ("Bearer " + $token) }'
+        ''}";
+      };
+
+  claudeMcpServers =
+    lib.optionalAttrs cfg.codex.mcp.serena.enable {
+      serena = {
+        type = "stdio";
+        command = "${cfg.codex.mcp.serena.uvPackage}/bin/uvx";
+        args = [
+          "--from"
+          cfg.codex.mcp.serena.packageSpec
+          "serena"
+          "start-mcp-server"
+          "--context"
+          "claude-code"
+          "--project-from-cwd"
+        ];
+      };
+    }
+    // lib.optionalAttrs cfg.codex.mcp.github.enable {
+      github = {
+        type = "http";
+        url = cfg.codex.mcp.github.url;
+      }
+      // claudeGitHubAuth;
     };
 
   defaultCodexSettings = {
@@ -79,8 +134,8 @@ let
       ];
     };
   }
-  // lib.optionalAttrs (mcpServers != { }) {
-    mcp_servers = mcpServers;
+  // lib.optionalAttrs (codexMcpServers != { }) {
+    mcp_servers = codexMcpServers;
   };
 in
 {
@@ -160,7 +215,7 @@ in
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Whether to configure the Serena MCP server for Codex.";
+            description = "Whether to configure the Serena MCP server for Codex and Claude Code.";
           };
           uvPackage = lib.mkOption {
             type = lib.types.package;
@@ -176,12 +231,12 @@ in
           context = lib.mkOption {
             type = lib.types.str;
             default = "codex";
-            description = "Serena context passed to the MCP server.";
+            description = "Serena context passed to the Codex MCP server.";
           };
           startupTimeoutSec = lib.mkOption {
             type = lib.types.int;
             default = 30;
-            description = "Serena MCP startup timeout in seconds.";
+            description = "Serena MCP startup timeout for Codex, in seconds.";
           };
         };
 
@@ -189,7 +244,7 @@ in
           enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Whether to configure the GitHub Copilot MCP server for Codex.";
+            description = "Whether to configure the GitHub Copilot MCP server for Codex and Claude Code.";
           };
           url = lib.mkOption {
             type = lib.types.str;
@@ -211,8 +266,9 @@ in
               "github.com"
             ];
             description = ''
-              Command used by the Codex wrapper to populate bearerTokenEnvVar when
-              it is not already set. Null disables automatic token lookup.
+              Command used by the Codex wrapper and Claude Code headers helper to
+              populate bearerTokenEnvVar when it is not already set. Null disables
+              automatic token lookup.
             '';
           };
         };
@@ -227,7 +283,10 @@ in
       })
 
       (lib.mkIf cfg.claudeCode.enable {
-        programs.claude-code.enable = true;
+        programs.claude-code = {
+          enable = true;
+          mcpServers = claudeMcpServers;
+        };
       })
 
       (lib.mkIf cfg.codex.enable {

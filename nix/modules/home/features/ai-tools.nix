@@ -107,6 +107,12 @@ in
       };
     };
 
+    claudeCode.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to install Claude Code.";
+    };
+
     codex = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -218,6 +224,10 @@ in
     lib.mkMerge [
       (lib.mkIf cfg.agentSkills.enable {
         home.file.${cfg.agentSkills.target}.source = cfg.agentSkills.source;
+      })
+
+      (lib.mkIf cfg.claudeCode.enable {
+        programs.claude-code.enable = true;
       })
 
       (lib.mkIf cfg.codex.enable {

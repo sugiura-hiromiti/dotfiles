@@ -385,6 +385,11 @@ window-rule {
 }
 
 window-rule {
+	match app-id="^mpv$"
+	opacity 1.0
+}
+
+window-rule {
 @terminalStartupWindowMatch@
     match at-startup=true app-id=r#"firefox$"#
 }
@@ -440,7 +445,7 @@ blur {
 }
 
 layer-rule{
-    match namespace="^noctalia-overview"
+    match namespace="^noctalia-backdrop"
     place-within-backdrop true
 }
 

@@ -22,6 +22,12 @@ let
       clipboard_auto_paste = if cfg.clipboard.enable then "auto" else "off";
     };
 
+    backdrop = {
+      enabled = true;
+      blur_intensity = 0.5;
+      tint_intensity = 0.3;
+    };
+
     bar.main = {
       position = "right";
       background_opacity = 0.3;

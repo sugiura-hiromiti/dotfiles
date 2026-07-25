@@ -25,9 +25,8 @@
 	:vc (:url "https://github.com/kn66/vertico-buffer-frame"
 			 :rev :newest)
 	:custom
-	(vertico-buffer-frame-preview t)
-	(vertico-buffer-frame-preview-layout 'side-by-side)
-	(vertico-buffer-frame-alpha-background 80)
+	(vertico-buffer-frame-consult-preview t)
+	(vertico-buffer-frame-parameters '((alpha-background . 80)))
 	:config
 	(vertico-buffer-frame-mode 1))
 

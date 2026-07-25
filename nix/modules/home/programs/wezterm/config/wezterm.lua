@@ -169,6 +169,6 @@ conf.window_padding = { left = 0, right = 0, top = 0, bottom = 0 }
 conf.window_decorations = conf_per_os { aarch64_linux = 'NONE', aarch64_darwin = 'RESIZE' }
 conf.window_close_confirmation = 'NeverPrompt'
 conf.macos_window_background_blur = 128
-conf.kde_window_background_blur = true
+conf.wayland_window_background_blur = true
 
 return conf

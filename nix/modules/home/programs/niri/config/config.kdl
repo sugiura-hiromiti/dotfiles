@@ -456,6 +456,14 @@ layer-rule {
 	}
 }
 
+layer-rule {
+	match namespace="^noctalia-bar-.+$"
+	background-effect {
+		blur false
+		xray false
+	}
+}
+
 recent-windows {
     highlight {
         active-color "#74c7ecaa"

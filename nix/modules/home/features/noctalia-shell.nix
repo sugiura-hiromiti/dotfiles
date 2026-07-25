@@ -30,32 +30,76 @@ let
 
     bar.main = {
       position = "right";
-      background_opacity = 0.7;
+
+      # transparent bar container
+      background_opacity = 0.0;
+      border_width = 0.0;
+      shadow = false;
+
+      # opaque backgrounds around individual widgets
+      capsule = true;
+      capsu_fill = "surface_variant";
+      capsule_opacity = 0.7;
+      capsule_thickness = 1.0;
+      capsule_padding = 6;
+      capsule_radius = 5;
+
       margin_ends = 10;
       margin_edge = 10;
-      auto_hide = true;
-      reserve_space = false;
+      widget_spacing = 10;
+
+      auto_hide = false;
+      reserve_space = true;
       scale = 1.0;
       start = [
         "launcher"
         "workspaces"
         "sysmon"
-        "media"
-        "audio_visualizer"
+        # "media"
+        # "audio_visualizer"
       ];
       center = [
-        "clock"
       ];
       end = [
-        "notifications"
+        "clock"
+        # "notifications"
         "battery"
-        "clipboard"
+        # "clipboard"
         "volume"
         "wallpaper"
       ]
       ++ optionals cfg.ddc.enable [
         "brightness"
       ];
+    };
+
+    widget = {
+      # launcher = { };
+      # workspaces ={};
+      sysmon = {
+        capsule_foreground = "on_primary";
+        capsule_border = "on_primary";
+      };
+      clock = {
+        capsule_foreground = "on_secondary";
+        capsule_border = "on_secondary";
+      };
+      battery = {
+        capsule_foreground = "on_tertiary";
+        capsule_border = "on_teritary";
+      };
+      volume = {
+        capsule_foreground = "on_error";
+        capsule_border = "on_error";
+      };
+      wallpaper = {
+        capsule_foreground = "on_surface";
+        capsule_border = "on_surface";
+      };
+      brightness = {
+        capsule_foreground = "on_surface_variant";
+        capsule_border = "on_surface_variant";
+      };
     };
 
     shell.panel = {
@@ -96,7 +140,8 @@ let
 
     calendar = {
       enabled = true;
-      refresh_minutes = 1;
+      # minimum amount is 5
+      refresh_minutes = 5;
       account.my_google = {
         type = "google";
         name = "google";

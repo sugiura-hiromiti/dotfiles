@@ -25,12 +25,12 @@ let
     backdrop = {
       enabled = true;
       blur_intensity = 0.5;
-      tint_intensity = 0.3;
+      tint_intensity = 0.2;
     };
 
     bar.main = {
       position = "right";
-      background_opacity = 0.3;
+      background_opacity = 0.7;
       margin_ends = 10;
       margin_edge = 10;
       auto_hide = true;
@@ -82,6 +82,7 @@ let
     brightness = {
       enable_ddcutil = cfg.ddc.enable;
     };
+
     wallpaper = {
       enabled = true;
       directory = "${config.dotfiles.paths.wallpaperDirectory}/";
@@ -90,6 +91,15 @@ let
         interval_seconds = 60;
         order = "random";
         recursive = true;
+      };
+    };
+
+    calendar = {
+      enabled = true;
+      refresh_minutes = 1;
+      account.my_google = {
+        type = "google";
+        name = "google";
       };
     };
   };

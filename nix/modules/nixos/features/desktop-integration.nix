@@ -52,6 +52,8 @@ in
       }
     ];
 
+    services.gnome.gnome-keyring.enable = lib.mkDefault true;
+
     xdg.portal = lib.mkIf cfg.portal.enable {
       enable = lib.mkDefault true;
       extraPortals = lib.mkIf cfg.termfilechooser.enable [

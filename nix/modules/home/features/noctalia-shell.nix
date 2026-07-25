@@ -67,8 +67,8 @@ let
 
     theme = {
       mode = theme;
-      source = "builtin";
-      builtin = "Catppuccin";
+      source = "wallpaper";
+      builtin = "m3-content";
     };
 
     notification = {

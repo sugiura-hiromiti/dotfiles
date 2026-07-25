@@ -18,7 +18,7 @@ in
     wallpaper.enable = mkEnableOption "Noctalia wallpaper integration";
   };
 
-  config = mkIf cfg.enable {
-    services.gnome.evolution-data-server.enable = mkIf cfg.calendar.enable true;
-  };
+  # config = mkIf cfg.enable {
+  #   services.gnome.evolution-data-server.enable = mkIf cfg.calendar.enable true;
+  # };
 }

@@ -18,8 +18,8 @@ let
   settings = {
     shell = {
       settings_show_advanced = true;
-      clipboard_enabled = cfg.clipboard.enable;
-      clipboard_auto_paste = if cfg.clipboard.enable then "auto" else "off";
+      clipboard_enabled = true;
+      clipboard_auto_paste = "auto";
     };
 
     backdrop = {
@@ -41,32 +41,28 @@ let
         "workspaces"
         "sysmon"
         "media"
-      ]
-      ++ optionals cfg.visualizer.enable [ "audio_visualizer" ];
+        "audio_visualizer"
+      ];
       center = [
         "clock"
       ];
       end = [
         "notifications"
         "battery"
+        "clipboard"
         "volume"
+        "wallpaper"
       ]
       ++ optionals cfg.ddc.enable [
         "brightness"
-      ]
-      ++ optionals cfg.clipboard.enable [
-        "clipboard"
-      ]
-      ++ optionals cfg.wallpaper.enable [
-        "wallpaper"
       ];
     };
 
     shell.panel = {
       launcher_placement = "floating";
       clipboard_placement = "floating";
-      wallpaper_placement = "attached";
-      session_placement = "attached";
+      wallpaper_placement = "floating";
+      session_placement = "floating";
     };
 
     theme = {
@@ -76,7 +72,7 @@ let
     };
 
     notification = {
-      background_opacity = 0.3;
+      background_opacity = 0.7;
     };
 
     audio = {
@@ -86,8 +82,6 @@ let
     brightness = {
       enable_ddcutil = cfg.ddc.enable;
     };
-  }
-  // optionalAttrs cfg.wallpaper.enable {
     wallpaper = {
       enabled = true;
       directory = "${config.dotfiles.paths.wallpaperDirectory}/";
@@ -110,12 +104,12 @@ in
       description = "Noctalia package. Null delegates to the upstream Home Manager module default.";
     };
 
-    calendar.enable = mkEnableOption "Noctalia calendar integration";
-    clipboard.enable = mkEnableOption "Noctalia clipboard history integration";
+    # calendar.enable = mkEnableOption "Noctalia calendar integration";
+    # clipboard.enable = mkEnableOption "Noctalia clipboard history integration";
     ddc.enable = mkEnableOption "Noctalia DDC brightness integration";
-    screenToolkit.enable = mkEnableOption "Noctalia screen toolkit helpers";
+    # screenToolkit.enable = mkEnableOption "Noctalia screen toolkit helpers";
     visualizer.enable = mkEnableOption "Noctalia audio visualizer integration";
-    wallpaper.enable = mkEnableOption "Noctalia wallpaper integration";
+    # wallpaper.enable = mkEnableOption "Noctalia wallpaper integration";
   };
 
   config = mkIf cfg.enable {
@@ -127,26 +121,22 @@ in
     ];
 
     home.packages =
-      optionals cfg.calendar.enable [
-        pkgs.evolution-data-server
-      ]
-      ++ optionals cfg.clipboard.enable [
-        pkgs.wl-clipboard-rs
-      ]
-      ++ optionals cfg.ddc.enable [
+      # optionals cfg.calendar.enable [
+      #   pkgs.evolution-data-server
+      # ]
+      # ++
+      # optionals cfg.clipboard.enable [
+      #   pkgs.wl-clipboard-rs
+      # ]
+      # ++
+      optionals cfg.ddc.enable [
         pkgs.ddcutil
       ]
-      ++ optionals cfg.screenToolkit.enable [
-        pkgs.grim
-        pkgs.slurp
-      ];
-
-    # dotfiles.programs.cava.enable = mkIf cfg.visualizer.enable true;
-
-    # services.cliphist = mkIf cfg.clipboard.enable {
-    #   enable = true;
-    #   clipboardPackage = pkgs.wl-clipboard-rs;
-    # };
+    # ++ optionals cfg.screenToolkit.enable [
+    #   pkgs.grim
+    #   pkgs.slurp
+    # ];
+    ;
 
     programs.noctalia = {
       enable = true;

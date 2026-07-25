@@ -39,9 +39,10 @@ let
       start = [
         "launcher"
         "workspaces"
-        "system-monitor"
+        "sysmon"
         "media"
-      ];
+      ]
+      ++ optionals cfg.visualizer.enable [ "audio_visualizer" ];
       center = [
         "clock"
       ];
@@ -140,12 +141,12 @@ in
         pkgs.slurp
       ];
 
-    dotfiles.programs.cava.enable = mkIf cfg.visualizer.enable true;
+    # dotfiles.programs.cava.enable = mkIf cfg.visualizer.enable true;
 
-    services.cliphist = mkIf cfg.clipboard.enable {
-      enable = true;
-      clipboardPackage = pkgs.wl-clipboard-rs;
-    };
+    # services.cliphist = mkIf cfg.clipboard.enable {
+    #   enable = true;
+    #   clipboardPackage = pkgs.wl-clipboard-rs;
+    # };
 
     programs.noctalia = {
       enable = true;

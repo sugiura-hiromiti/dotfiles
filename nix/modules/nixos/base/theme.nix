@@ -17,6 +17,9 @@ in
     catppuccin = {
       enable = lib.mkDefault true;
       autoEnable = lib.mkDefault true;
+      cache = {
+        enable = lib.mkDefault true;
+      };
       fcitx5 = {
         accent = lib.mkDefault "yellow";
         enableRounded = lib.mkDefault true;

@@ -12,7 +12,8 @@
 (use-package ghostel
 	:commands (ghostel ghostel-compile)
 	:custom
-	(ghostel-module-auto-install 'download))
+	(ghostel-module-auto-install 'download)
+	(ghostel-max-scrollback (* 10 1024 1024)))
 
 (use-package diff-hl
 	:config
@@ -54,12 +55,12 @@
 		(unless enclosures
 			(user-error "no enclosure in this entry"))
 		(let* ((idx (or enclosure-index
-							 (if (= 1 (length enclosures))
-								 1
-								 (read-number
-									 (format "Enclosure 1-%d: " (length enclosures))
-									 1))))
-					 (url (car (elt enclosures (1- idx)))))
+							(if (= 1 (length enclosures))
+								1
+								(read-number
+									(format "Enclosure 1-%d: " (length enclosures))
+									1))))
+					(url (car (elt enclosures (1- idx)))))
 			(start-process "elfeed-mpv" "*elfeed-mpv*" "mpv" "--no-video" url)
 			(message "Playing: %s" url))))
 

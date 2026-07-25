@@ -104,12 +104,8 @@ in
       description = "Noctalia package. Null delegates to the upstream Home Manager module default.";
     };
 
-    # calendar.enable = mkEnableOption "Noctalia calendar integration";
-    # clipboard.enable = mkEnableOption "Noctalia clipboard history integration";
     ddc.enable = mkEnableOption "Noctalia DDC brightness integration";
-    # screenToolkit.enable = mkEnableOption "Noctalia screen toolkit helpers";
     visualizer.enable = mkEnableOption "Noctalia audio visualizer integration";
-    # wallpaper.enable = mkEnableOption "Noctalia wallpaper integration";
   };
 
   config = mkIf cfg.enable {
@@ -120,23 +116,9 @@ in
       }
     ];
 
-    home.packages =
-      # optionals cfg.calendar.enable [
-      #   pkgs.evolution-data-server
-      # ]
-      # ++
-      # optionals cfg.clipboard.enable [
-      #   pkgs.wl-clipboard-rs
-      # ]
-      # ++
-      optionals cfg.ddc.enable [
-        pkgs.ddcutil
-      ]
-    # ++ optionals cfg.screenToolkit.enable [
-    #   pkgs.grim
-    #   pkgs.slurp
-    # ];
-    ;
+    home.packages = optionals cfg.ddc.enable [
+      pkgs.ddcutil
+    ];
 
     programs.noctalia = {
       enable = true;

@@ -8,5 +8,4 @@ with pkgs;
   sqlite
   jq
   bat
-  wl-clipboard-rs
 ]

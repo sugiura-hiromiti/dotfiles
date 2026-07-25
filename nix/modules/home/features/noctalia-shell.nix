@@ -105,7 +105,6 @@ in
     };
 
     ddc.enable = mkEnableOption "Noctalia DDC brightness integration";
-    visualizer.enable = mkEnableOption "Noctalia audio visualizer integration";
   };
 
   config = mkIf cfg.enable {

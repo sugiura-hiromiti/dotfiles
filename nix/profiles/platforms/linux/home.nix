@@ -2,6 +2,7 @@
   accountName,
   account ? { },
   lib,
+  pkgs,
   ...
 }:
 let
@@ -11,4 +12,5 @@ let
 in
 {
   home.homeDirectory = lib.mkDefault homeDir;
+  home.packages = with pkgs; [ wl-clipboard-rs ];
 }

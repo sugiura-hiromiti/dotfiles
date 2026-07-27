@@ -38,8 +38,8 @@ let
 
       # opaque backgrounds around individual widgets
       capsule = true;
-      capsu_fill = "surface_variant";
-      capsule_opacity = 0.7;
+      capsule_fill = "surface_variant";
+      capsule_opacity = 1.0;
       capsule_thickness = 1.0;
       capsule_padding = 6;
       capsule_radius = 5;
@@ -77,26 +77,32 @@ let
       # launcher = { };
       # workspaces ={};
       sysmon = {
+        capsule_fill = "primary";
         capsule_foreground = "on_primary";
         capsule_border = "on_primary";
       };
       clock = {
+        capsule_fill = "secondary";
         capsule_foreground = "on_secondary";
         capsule_border = "on_secondary";
       };
       battery = {
+        capsule_fill = "tertiary";
         capsule_foreground = "on_tertiary";
-        capsule_border = "on_teritary";
+        capsule_border = "on_tertiary";
       };
       volume = {
+        capsule_fill = "error";
         capsule_foreground = "on_error";
         capsule_border = "on_error";
       };
       wallpaper = {
+        capsule_fill = "surface";
         capsule_foreground = "on_surface";
         capsule_border = "on_surface";
       };
       brightness = {
+        capsule_fill = "surface_variant";
         capsule_foreground = "on_surface_variant";
         capsule_border = "on_surface_variant";
       };

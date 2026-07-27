@@ -121,7 +121,7 @@ conf.cell_width = 0.9
 conf.color_scheme = scheme_for_appearance(get_appearance())
 conf.disable_default_key_bindings = true
 conf.font = wz.font { family = 'Maple Mono NF CN' }
-conf.font_size = conf_per_os { aarch64_linux = 11, aarch64_darwin = 15 }
+conf.font_size = 22
 conf.foreground_text_hsb = { saturation = 1.1, brightness = 1.1 }
 conf.freetype_load_target = 'Light'
 conf.front_end = 'WebGpu'

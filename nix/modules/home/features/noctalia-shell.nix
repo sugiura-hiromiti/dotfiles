@@ -16,6 +16,11 @@ let
     ;
   cfg = config.dotfiles.features.noctaliaShell;
   settings = {
+
+    accessibility = {
+      ui_scale = 1.5;
+    };
+
     shell = {
       settings_show_advanced = true;
       clipboard_enabled = true;
@@ -29,6 +34,7 @@ let
     };
 
     bar.main = {
+      scale = 1.25;
       position = "right";
 
       # transparent bar container
@@ -50,7 +56,6 @@ let
 
       auto_hide = false;
       reserve_space = true;
-      scale = 1.0;
       start = [
         "launcher"
         "workspaces"

@@ -23,7 +23,7 @@
 
 (set-face-attribute 'default nil
 	:family "Maple Mono NF CN"
-	:height 220
+	:height 300
 	:weight 'extra-light)
 (set-face-attribute 'bold nil
 	:weight 'light)

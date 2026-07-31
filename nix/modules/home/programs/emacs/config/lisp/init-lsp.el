@@ -12,7 +12,7 @@
 		 :cargo
 		 (:targetDir t
           :buildScripts (:enable t))
-		 :check (:command "clippy")
+		 ;; :check (:command "clippy")
 		 :checkOnSave t
 		 :completion
 		 (:fullFunctionSignatures (:enable t))
@@ -77,12 +77,12 @@
 (defconst my/eglot-workspace-configuration
 	'(:Lua
 		 (:runtime (:version "LuaJIT")
-		 :diagnostics (:globals ["vim" "hs"])
-		 :workspace
-		 ( ;; :library ["/absolute/path/one" "/absolute/path/two"]
-			 ;; :checkThirdParty "Apply"
-			 )
-		 :format (:enable :json-false)))
+			 :diagnostics (:globals ["vim" "hs"])
+			 :workspace
+			 ( ;; :library ["/absolute/path/one" "/absolute/path/two"]
+				 ;; :checkThirdParty "Apply"
+				 )
+			 :format (:enable :json-false)))
 	"Eglotに渡すworkspace/configuration。")
 
 (defun my/eglot-configure-server-programs ()
@@ -107,10 +107,10 @@
 (defun my/rust-ts-disable-built-in-flymake ()
 	"rust-ts-mode組み込みのFlymake checkerをmode hookの前に外す。"
 	(when (and (eq major-mode 'rust-ts-mode)
-	           (boundp 'flymake-diagnostic-functions)
-	           (memq 'rust-ts-flymake flymake-diagnostic-functions))
+	         (boundp 'flymake-diagnostic-functions)
+	         (memq 'rust-ts-flymake flymake-diagnostic-functions))
 		(setq-local flymake-diagnostic-functions
-		            (remq 'rust-ts-flymake flymake-diagnostic-functions))))
+		   (remq 'rust-ts-flymake flymake-diagnostic-functions))))
 
 (use-package
 	eglot

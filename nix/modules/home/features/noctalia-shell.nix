@@ -18,7 +18,7 @@ let
   settings = {
 
     accessibility = {
-      ui_scale = 1.5;
+      ui_scale = 2.5;
     };
 
     shell = {
@@ -34,7 +34,7 @@ let
     };
 
     bar.main = {
-      scale = 1.25;
+      scale = 2.5;
       position = "right";
 
       # transparent bar container
@@ -51,8 +51,9 @@ let
       capsule_radius = 5;
 
       margin_ends = 10;
-      margin_edge = 10;
+      margin_edge = 1;
       widget_spacing = 10;
+      thickness = 61;
 
       auto_hide = false;
       reserve_space = true;

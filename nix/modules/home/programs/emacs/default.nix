@@ -58,6 +58,7 @@ let
   configuredEmacsPackage = config.programs.emacs.package;
   emacsApp = "${configuredEmacsPackage}/Applications/Emacs.app";
   emacsAppExecutable = "${emacsApp}/Contents/MacOS/Emacs";
+  emacsInitDirectory = "${config.xdg.configHome}/emacs";
   emacsClientLauncher = pkgs.writeShellScript "emacs-client-launcher" ''
     args=()
     for arg in "$@"; do
@@ -68,7 +69,7 @@ let
     done
 
     if ! ${configuredEmacsPackage}/bin/emacsclient --eval '(emacs-pid)' >/dev/null 2>&1; then
-      /usr/bin/nohup "${emacsAppExecutable}" --fg-daemon >/dev/null 2>&1 &
+      /usr/bin/nohup "${emacsAppExecutable}" "--init-directory=${emacsInitDirectory}" --fg-daemon >/dev/null 2>&1 &
       for _ in 1 2 3 4 5 6 7 8 9 10; do
         ${configuredEmacsPackage}/bin/emacsclient --eval '(emacs-pid)' >/dev/null 2>&1 && break
         sleep 0.2
@@ -185,6 +186,7 @@ in
             Label = "org.nix-community.home.emacs-app-daemon";
             ProgramArguments = [
               emacsAppExecutable
+              "--init-directory=${emacsInitDirectory}"
               "--fg-daemon"
             ];
             RunAtLoad = true;

@@ -212,7 +212,7 @@ layout {
         // off
 
         // How many logical pixels the ring extends out from the windows.
-        width 4
+        width 7
 
         // Colors can be set in a variety of ways:
         // - CSS named colors: "red"
@@ -332,7 +332,7 @@ hotkey-overlay {
 }
 
 cursor {
-    xcursor-size 22
+    xcursor-size 40
 }
 
 // Uncomment this line to ask the clients to omit their client-side decorations if possible.

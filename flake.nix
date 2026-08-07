@@ -288,7 +288,7 @@
             formatters.editorTools
             deadnix
             fish
-            nil
+            nixd
             statix
           ];
           nvimMaintenancePackages = with pkgs; [

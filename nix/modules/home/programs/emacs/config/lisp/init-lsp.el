@@ -82,12 +82,17 @@
 			 ( ;; :library ["/absolute/path/one" "/absolute/path/two"]
 				 ;; :checkThirdParty "Apply"
 				 )
-			 :format (:enable :json-false)))
+			 :format (:enable :json-false))
+		 :nixd
+		 (:nixpkgs
+			 (:expr "import (builtins.getFlake (builtins.toString ./.)).inputs.nixpkgs { }")
+			 :formatting
+			 (:command ["nixfmt"])))
 	"Eglotに渡すworkspace/configuration。")
 
 (defun my/eglot-configure-server-programs ()
 	"Eglot用のlanguage server設定を登録する。"
-	(add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil")))
+	(add-to-list 'eglot-server-programs '(nix-ts-mode . ("nixd")))
 	(add-to-list
 		'eglot-server-programs
 		`((rust-mode rust-ts-mode)

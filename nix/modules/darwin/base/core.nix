@@ -28,8 +28,12 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    nix.enable = lib.mkDefault false;
-
+    nix = {
+      enable = lib.mkDefault true;
+      linux-builder = {
+        enable = true;
+      };
+    };
     system = {
       inherit (cfg) stateVersion;
     }

@@ -435,7 +435,8 @@ in
 
       case "$system_switch" in
         darwin)
-          sudo nix run nix-darwin -- switch --flake "$flake_ref#$system_target"
+          sudo -H nix --extra-experimental-features "nix-command flakes" \
+            run nix-darwin -- switch --flake "$flake_ref#$system_target"
           ;;
         nixos)
           sudo nixos-rebuild switch --flake "$flake_ref#$system_target"

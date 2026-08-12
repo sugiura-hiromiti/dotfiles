@@ -23,7 +23,7 @@
 #      <targetHost>[--theme-<theme>][--session-<session>]
 #    - Home Manager: nix run nixpkgs#home-manager -- switch --flake path:.#<target>
 #    - NixOS: sudo nixos-rebuild switch --flake path:.#<target>
-#    - macOS: sudo nix run nix-darwin -- switch --flake path:.#<target>
+#    - macOS: sudo -H nix --extra-experimental-features "nix-command flakes" run nix-darwin -- switch --flake path:.#<target>
 # -----------------------------------------------------------------------------
 {
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";

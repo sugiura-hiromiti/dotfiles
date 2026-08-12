@@ -33,6 +33,10 @@ in
       linux-builder = {
         enable = true;
       };
+      settings.experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
     };
     system = {
       inherit (cfg) stateVersion;

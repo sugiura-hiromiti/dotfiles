@@ -58,7 +58,7 @@ sudo nixos-rebuild switch --flake path:.#<system-target>
 macOS with nix-darwin:
 
 #+begin_src sh
-sudo nix run nix-darwin -- switch --flake path:.#<system-target>
+sudo -H nix --extra-experimental-features "nix-command flakes" run nix-darwin -- switch --flake path:.#<system-target>
 #+end_src
 
 After Home Manager installs the shell functions, use =u= for normal updates:

@@ -24,8 +24,8 @@
 (set-face-attribute 'default nil
 	:family "Maple Mono NF CN"
 	:height (pcase system-type
-				  ('darwin 200)
-				  ('gnu/linux 300)
+				  ('darwin 160)
+				  ('gnu/linux 250)
 				  (_ 250))
 	:weight 'extra-light)
 (set-face-attribute 'bold nil

@@ -26,7 +26,9 @@
 #    - macOS: sudo -H nix --extra-experimental-features "nix-command flakes" run nix-darwin -- switch --flake path:.#<target>
 # -----------------------------------------------------------------------------
 {
+
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
+
   inputs = {
     nixpkgs = {
       url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -85,6 +87,14 @@
     noctalia = {
       url = "github:noctalia-dev/noctalia/cachix";
     };
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
+    };
     # zen-browser = {
     #   url = "github:0xc000022070/zen-browser-flake";
     #   inputs = {
@@ -97,6 +107,7 @@
     #   };
     # };
   };
+
   outputs =
     inputs@{
       self,
@@ -112,6 +123,7 @@
       # paneru,
       # niri-flake,
       noctalia,
+      nix-index-database,
       # zen-browser,
     }:
     let
@@ -207,6 +219,7 @@
             catppuccin.homeModules.catppuccin
             # paneru.homeModules.paneru
             noctalia.homeModules.default
+            nix-index-database.homeModules.default
             # zen-browser.homeModules.twilight
           ];
         };

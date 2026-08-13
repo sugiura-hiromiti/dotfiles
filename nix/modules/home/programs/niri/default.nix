@@ -25,7 +25,7 @@ let
           "window-rule {"
           "    match app-id=${kdlString (regexFor terminalCfg.appId)}"
           "    open-floating true"
-          "    default-column-width { fixed 0.8; }"
+          "    default-column-width { proportion 0.8; }"
           "    default-window-height { proportion 0.6; }"
           "}"
         ]

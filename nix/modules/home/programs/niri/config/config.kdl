@@ -332,7 +332,7 @@ hotkey-overlay {
 }
 
 cursor {
-    xcursor-size 40
+    xcursor-size 60
 }
 
 // Uncomment this line to ask the clients to omit their client-side decorations if possible.

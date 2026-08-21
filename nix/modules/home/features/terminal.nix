@@ -83,13 +83,26 @@ in
       defaultText = lib.literalExpression "config.dotfiles.features.terminal.command";
       description = "Terminal command used by desktop integrations that open a terminal from a key binding.";
     };
+
+    provider = lib.mkOption {
+      type = lib.types.str;
+      description = "terminal provider to use";
+    };
   };
 
-  config = lib.mkIf cfg.enable {
-    dotfiles.programs = lib.genAttrs cfg.programs (_: {
-      enable = lib.mkDefault true;
-    });
+  config =
+    let
+      providers = config.dotfiles.terminalProviders;
+    in
+    lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = builtins.hasAttr cfg.provider providers;
+          message = "unknown terminal provider: ${cfg.provider}";
+        }
+      ];
+      dotfiles.programs = lib.setAttrByPath [ cfg.provider "enable" ] true;
 
-    home.packages = [ cfg.package ];
-  };
+      home.packages = [ cfg.package ];
+    };
 }

@@ -60,6 +60,12 @@ in
         DOTFILES_WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
         LIBSQLITE = lib.mkDefault cfg.sqliteLibrary;
         WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
+      }
+      // lib.optionalAttrs (config.home.sessionVariables ? EDITOR) {
+        EDITOR = lib.mkDefault config.home.sessionVariables.EDITOR;
+      }
+      // lib.optionalAttrs (config.home.sessionVariables ? VISUAL) {
+        VISUAL = lib.mkDefault config.home.sessionVariables.VISUAL;
       };
       configFile.source = ./config/config.nu;
     };

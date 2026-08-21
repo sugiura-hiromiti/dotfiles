@@ -204,20 +204,6 @@
 					(throw 'found name))))
 		nil))
 
-(defun my/ensure-popup-tab ()
-	(unless (my/tab-exists-p my/popup-tab-name)
-		(let ((origin-tab (my/current-tab-name)))
-			(tab-new)
-			(tab-rename my/popup-tab-name)
-			(set-window-buffer
-				(selected-window)
-				(get-buffer-create "*Messages*"))
-			;; Create Popper tab, then return to original tab.
-			(when (and origin-tab
-						(my/tab-exists-p origin-tab)
-						(not (equal origin-tab my/popup-tab-name)))
-				(my/switch-tab-by-name origin-tab)))))
-
 (defun my/delete-popup-tab ()
 	"Delete `my/popup-tab-name' tab if it exists."
 	(let ((n (my/tab-number-by-name my/popup-tab-name)))
@@ -225,10 +211,11 @@
 			(tab-bar-close-tab n))))
 
 (defun my/toggle-popup-tab ()
-	"Toggle transient popup tab.
+	"Toggle the transient popup tab when it exists.
 
-When called from a normal tab, create/switch to popup tab.
-When called from popup tab, return to previous tab and delete popup tab."
+When called from a normal tab, switch to popup tab if it exists.
+When called from popup tab, return to previous tab and delete popup tab.
+When no popup tab exists, do nothing."
 	(interactive)
 	(if (equal (my/current-tab-name) my/popup-tab-name)
       ;; Inside popup tab: return, then delete popup tab.
@@ -243,20 +230,28 @@ When called from popup tab, return to previous tab and delete popup tab."
 			(my/delete-popup-tab)
 			(setq my/popup-return-tab nil))
 
-		;; Outside popup tab: remember current tab, create/switch to popup tab.
-		(setq my/popup-return-tab (my/current-tab-name))
-		(my/ensure-popup-tab)
-		(my/switch-tab-by-name my/popup-tab-name)))
+		;; Outside popup tab: switch only when the popup tab already exists.
+		(when (my/tab-exists-p my/popup-tab-name)
+			(setq my/popup-return-tab (my/current-tab-name))
+			(my/switch-tab-by-name my/popup-tab-name))))
 
 (defun my/popper-display-in-tab (buffer alist)
-	"Display Popper BUFFER in `my/popup-tab-name' tab."
-	(my/ensure-popup-tab)
-	(display-buffer-in-tab
-		buffer
-		(append
-			`((tab-name . ,my/popup-tab-name)
-				 (inhibit-same-window . t))
-			alist)))
+	"Display Popper BUFFER in `my/popup-tab-name' tab.
+
+Create the tab with BUFFER when needed.  Otherwise, replace the buffer
+in the selected window of the existing tab.  ALIST is the display action
+alist used when creating the tab."
+	(if (my/tab-exists-p my/popup-tab-name)
+		(progn
+			(my/switch-tab-by-name my/popup-tab-name)
+			(set-window-buffer (selected-window) buffer)
+			(selected-window))
+		(display-buffer-in-tab
+			buffer
+			(append
+				`((tab-name . ,my/popup-tab-name)
+					 (inhibit-same-window . t))
+				alist))))
 
 (use-package popper
 	:ensure t

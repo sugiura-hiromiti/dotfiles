@@ -61,7 +61,10 @@ in
       defaultApplications = lib.mkOption {
         type = lib.types.attrsOf (lib.types.either lib.types.str (lib.types.listOf lib.types.str));
         default =
-          lib.optionalAttrs cfg.orgProtocol.enable {
+          lib.optionalAttrs (config.services.emacs.enable && config.services.emacs.client.enable) {
+            "text/plain" = "emacsclient.desktop";
+          }
+          // lib.optionalAttrs cfg.orgProtocol.enable {
             "x-scheme-handler/org-protocol" = "org-protocol.desktop";
           }
           // {

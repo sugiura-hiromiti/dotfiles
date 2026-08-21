@@ -1,5 +1,17 @@
 ;;; -*- lexical-binding: t; -*-
 
+(declare-function meow-bounds-of-thing "meow-command")
+(declare-function meow-cancel-selection "meow-command")
+(declare-function meow-grab "meow-command")
+(declare-function meow-pop-selection "meow-command")
+(declare-function meow-thing-register "meow-thing")
+(declare-function my/treesit-treewalk-available-p "init-ts")
+(declare-function my/treesit-treewalk-node-bounds "init-ts")
+(declare-function my/treesit-treewalk-down "init-ts")
+(declare-function my/treesit-treewalk-in "init-ts")
+(declare-function my/treesit-treewalk-out "init-ts")
+(declare-function my/treesit-treewalk-up "init-ts")
+
 (use-package puni :init (puni-global-mode))
 
 (use-package embrace)
@@ -55,6 +67,10 @@
 			'("RET" . my/meow-ret-dispatch)
 			'("TAB" . meta-navigation/body)
 			'("DEL" . tree-sitter-operations/body)
+			'("<up>" . my/meow-treesit-up)
+			'("<down>" . my/meow-treesit-down)
+			'("<right>" . my/meow-treesit-in)
+			'("<left>" . my/meow-treesit-out)
 			'("<escape>" . ignore)
 			'("a" . meow-append)
 			'("A" . embrace-add)
@@ -67,8 +83,8 @@
 			'("e" . meow-next-word)
 			'("E" . meow-next-symbol)
 			'("f" . meow-find)
-			'("g" . puni-expand-region)
-			'("G" . meow-grab) ;; ?
+			'("g" . my/meow-treesit-expand)
+			'("G" . my/meow-treesit-contract)
 			'("h" . meow-left)
 			'("H" . meow-left-expand)
 			'("i" . meow-insert)
@@ -97,6 +113,11 @@
 			'("y" . meow-save)
 													 ; '("z" . meow-pop-selection)
 			))
+	(meow-thing-register
+		'my/treesit-node
+		(lambda () (my/treesit-treewalk-node-bounds))
+		(lambda () (my/treesit-treewalk-node-bounds)))
+	(setf (alist-get ?n meow-char-thing-table) 'my/treesit-node)
 	(my/meow-setup) (meow-global-mode 1)
 
 	(defun my/save-some-buffers-when-meow-insert-exit (&rest _)
@@ -110,6 +131,50 @@ Runs when leaving Meow insert mode."
 		:before
 		#'my/save-some-buffers-when-meow-insert-exit)
 	:custom (meow-use-clipboard t))
+
+(defun my/meow-treesit-expand ()
+	"Tree-sitter nodeを選択し、parserがなければPuniへfallbackする。"
+	(interactive)
+	(if (my/treesit-treewalk-available-p)
+			(meow-bounds-of-thing ?n)
+		(call-interactively #'puni-expand-region)))
+
+(defun my/meow-treesit-contract ()
+	"Tree-sitter選択を1段戻し、選択がなければMeow Grabを使う。"
+	(interactive)
+	(if (and (my/treesit-treewalk-available-p) (use-region-p))
+			(call-interactively #'meow-pop-selection)
+		(call-interactively #'meow-grab)))
+
+(defun my/meow-treesit--move (command count)
+	"構造移動COMMAND後、既存のMeow選択を移動先へ同期する。"
+	(let ((had-selection (use-region-p))
+		  (has-parser (my/treesit-treewalk-available-p)))
+		(when had-selection
+			(meow-cancel-selection))
+		(funcall command (or count 1))
+		(when (and had-selection has-parser)
+			(my/meow-treesit-expand))))
+
+(defun my/meow-treesit-up (&optional count)
+	"構造的に上へ移動し、選択があれば移動先を選択する。"
+	(interactive "p")
+	(my/meow-treesit--move #'my/treesit-treewalk-up count))
+
+(defun my/meow-treesit-down (&optional count)
+	"構造的に下へ移動し、選択があれば移動先を選択する。"
+	(interactive "p")
+	(my/meow-treesit--move #'my/treesit-treewalk-down count))
+
+(defun my/meow-treesit-in (&optional count)
+	"構造の内側へ移動し、選択があれば移動先を選択する。"
+	(interactive "p")
+	(my/meow-treesit--move #'my/treesit-treewalk-in count))
+
+(defun my/meow-treesit-out (&optional count)
+	"構造の外側へ移動し、選択があれば移動先を選択する。"
+	(interactive "p")
+	(my/meow-treesit--move #'my/treesit-treewalk-out count))
 
 (defun my/meow-ret-dispatch ()
 	(interactive)

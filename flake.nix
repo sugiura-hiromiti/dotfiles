@@ -95,6 +95,18 @@
         };
       };
     };
+    i-have-adhd = {
+      url = "github:ayghri/i-have-adhd?ref=main";
+      flake = false;
+    };
+    interview-me = {
+      url = "github:addyosmani/agent-skills?ref=main";
+      flake = false;
+    };
+    urd = {
+      url = "github:krzysztofdudek/UrdSkill?ref=main";
+      flake = false;
+    };
     # zen-browser = {
     #   url = "github:0xc000022070/zen-browser-flake";
     #   inputs = {
@@ -124,6 +136,9 @@
       # niri-flake,
       noctalia,
       nix-index-database,
+      i-have-adhd,
+      interview-me,
+      urd,
       # zen-browser,
     }:
     let
@@ -213,7 +228,11 @@
         config:
         home-manager.lib.homeManagerConfiguration {
           pkgs = pkgsFor config.system;
-          extraSpecialArgs = commonSpecialArgs config;
+          extraSpecialArgs = commonSpecialArgs config // {
+            iHaveAdhdSkill = i-have-adhd.outPath;
+            interviewMeSkill = interview-me.outPath;
+            urdSkill = urd.outPath;
+          };
           modules = [
             ./nix/home
             catppuccin.homeModules.catppuccin

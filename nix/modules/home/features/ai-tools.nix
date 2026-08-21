@@ -193,6 +193,7 @@ in
         type = lib.types.lines;
         default = ''
           if command execution failed and repository contains flake.nix at root, retry with nix's devshell or execute via `direnv exec`.
+          if the repository is managed with Jujutsu(jj), prefer using jj over git for version-control operations.
           use serena if possible. if anything is unclear, please make sure to ask for clarification.
         '';
         description = "AGENTS.md-style context injected into Codex.";

@@ -3,6 +3,12 @@
 (declare-function eglot-code-actions "eglot")
 (declare-function eglot-rename "eglot")
 (declare-function flymake-show-project-diagnostics "flymake")
+(declare-function my/meow-treesit-contract "init-edit")
+(declare-function my/meow-treesit-expand "init-edit")
+(declare-function my/meow-treesit-down "init-edit")
+(declare-function my/meow-treesit-in "init-edit")
+(declare-function my/meow-treesit-out "init-edit")
+(declare-function my/meow-treesit-up "init-edit")
 
 (winner-mode 1)
 
@@ -97,16 +103,14 @@
 
 	(pretty-hydra-define tree-sitter-operations
 		(:color pink :quit-key "<escape>")
-		("tsm/move"
-			(("b" tsm/node-prev "prev")
-				("f" tsm/node-next "next")
-				("p" tsm/node-parent "parent")
-				("n" tsm/node-child "child")
-				("a" tsm/node-start "start")
-				("e" tsm/node-end "end"))
-			"tsm/overlay"
-			(("d" tsm/clear-overlays "clear")
-				("m" tsm/node-mark "mark")))))
+		("move"
+			(("b" my/meow-treesit-up "previous")
+				("f" my/meow-treesit-down "next")
+				("p" my/meow-treesit-out "out")
+				("n" my/meow-treesit-in "in"))
+			"select"
+			(("g" my/meow-treesit-expand "expand")
+				("G" my/meow-treesit-contract "contract")))))
 
 (defun my/consult-ripgrep-current-dir ()
 	"現在のバッファのディレクトリ配下をrgする"

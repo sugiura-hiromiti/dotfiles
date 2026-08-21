@@ -47,8 +47,8 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.wezterm;
-      defaultText = lib.literalExpression "pkgs.wezterm";
+      default = pkgs.kitty;
+      defaultText = lib.literalExpression "pkgs.kitty";
       description = "Terminal package used by desktop features.";
     };
 

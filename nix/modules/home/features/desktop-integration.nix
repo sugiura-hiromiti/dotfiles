@@ -15,7 +15,7 @@ let
     pkgs.gnused
   ];
   termfilechooserWrapper = pkgs.writeShellScript "termfilechooser-yazi-wrapper" ''
-    export TERMCMD=${lib.escapeShellArg terminal.fileChooserCmmand}
+    export TERMCMD=${lib.escapeShellArg terminal.fileChooserCommand}
     export PATH=${lib.escapeShellArg termfilechooserRuntimePath}
     exec ${cfg.termfilechooser.package}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
   '';

@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -15,17 +14,29 @@ in
           program = lib.mkOption { type = lib.types.str; };
           package = lib.mkOption { type = lib.types.package; };
           command = lib.mkOption { type = lib.types.str; };
-          appId = lib.mkOption { type = lib.types.nullOr lib.types.str; };
-          startupAppId = lib.mkOption { type = lib.types.nullOr lib.types.str; };
-          startupCommand = lib.mkOption { type = lib.types.nullOr lib.types.str; };
-          keybindCommand = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+          appId = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+          };
+          startupAppId = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+          };
+          startupCommand = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+          };
+          keybindCommand = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+          };
         };
       };
     in
     {
       dotfiles = {
         terminalProviders = lib.mkOption {
-          type = lib.types.attrsOf (terminalProviderModule);
+          type = lib.types.attrsOf terminalProviderModule;
           default = { };
         };
         features = {
@@ -71,7 +82,6 @@ in
             };
             selected = lib.mkOption {
               type = terminalProviderModule;
-              default = { };
               readOnly = true;
             };
           };
@@ -91,12 +101,20 @@ in
           message = "unknown terminal provider: ${cfg.provider}";
         }
       ];
-      dotfiles.programs =
-        lib.genAttrs cfg.programs (_: {
-          enable = lib.mkDefault true;
-        })
-        // lib.setAttrByPath [ selected.program "enable" ] true;
-
-      home.packages = [ selected.package ];
+      dotfiles = {
+        programs =
+          lib.genAttrs cfg.programs (_: {
+            enable = lib.mkDefault true;
+          })
+          // lib.setAttrByPath [ selected.program "enable" ] true;
+        features = {
+          terminal = {
+            selected = selected;
+          };
+        };
+      };
+      home = {
+        packages = [ selected.package ];
+      };
     };
 }

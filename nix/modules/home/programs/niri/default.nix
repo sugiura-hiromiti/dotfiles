@@ -75,28 +75,28 @@ in
       appId = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = terminal.appId;
-        defaultText = lib.literalExpression "config.dotfiles.features.terminal.appId";
+        defaultText = lib.literalExpression "selected.appId";
         description = "Application ID matched by niri terminal window rules.";
       };
 
       startupAppId = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = terminal.startupAppId;
-        defaultText = lib.literalExpression "config.dotfiles.features.terminal.startupAppId";
+        defaultText = lib.literalExpression "selected.startupAppId";
         description = "Application ID matched by niri startup terminal window rules.";
       };
 
       startupCommand = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = terminal.startupCommand;
-        defaultText = lib.literalExpression "config.dotfiles.features.terminal.startupCommand";
+        defaultText = lib.literalExpression "selected.startupCommand";
         description = "Terminal command niri runs at startup.";
       };
 
       keybindCommand = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = terminal.keybindCommand;
-        defaultText = lib.literalExpression "config.dotfiles.features.terminal.keybindCommand";
+        defaultText = lib.literalExpression "selected.keybindCommand";
         description = "Terminal command niri runs from its terminal key binding.";
       };
 

@@ -21,12 +21,13 @@ in
           {
             kitty = {
               package = pkgs.kitty;
-              command = lib.getExe pkgs.kitty;
+              command = kitty;
               appId = "kitty";
               # TODO: 現在の設定ではfloating windowにしないapp idの管理場所が分散している為、統合する
               startupAppId = "custom.term";
               startupCommand = customAppIdCommand;
               keybindCommand = customAppIdCommand;
+              fileChooserCommand = kitty;
             };
           };
       };

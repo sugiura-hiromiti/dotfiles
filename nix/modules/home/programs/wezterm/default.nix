@@ -34,6 +34,7 @@ in
               startupCommand = customAppIdCommand;
               startupAppId = "custom.term";
               keybindCommand = "${customAppIdCommand} --always-new-process";
+              fileChooserCommand = "${wezterm} start --always-new-process";
             };
           };
       };

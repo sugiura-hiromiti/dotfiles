@@ -8,91 +8,81 @@ let
   cfg = config.dotfiles.features.terminal;
 in
 {
-  options.dotfiles.features.terminal = {
-    enable = lib.mkEnableOption "terminal tools";
+  options =
+    let
+      terminalProviderModule = lib.types.submodule {
+        options = {
+          program = lib.mkOption { type = lib.types.str; };
+          package = lib.mkOption { type = lib.types.package; };
+          command = lib.mkOption { type = lib.types.str; };
+          appId = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+          startupAppId = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+          startupCommand = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+          keybindCommand = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+        };
+      };
+    in
+    {
+      dotfiles = {
+        terminalProviders = lib.mkOption {
+          type = lib.types.attrsOf (terminalProviderModule);
+          default = { };
+        };
+        features = {
+          terminal = {
+            enable = lib.mkEnableOption "terminal tools";
 
-    programs = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [
-        "alacritty"
-        "aria2"
-        "bottom"
-        "carapace"
-        "cargo"
-        "direnv"
-        "emacs"
-        "eza"
-        "fd"
-        "fish"
-        "fzf"
-        "gh"
-        "ghostty"
-        "git"
-        "jujutsu"
-        "kitty"
-        "lazygit"
-        "nh"
-        "nushell"
-        "nvim"
-        "ripgrep"
-        "ssh"
-        "starship"
-        "translate-shell"
-        "wezterm"
-        "yazi"
-        "zoxide"
-      ];
-      description = "Repository program modules enabled with the terminal tools feature.";
+            programs = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [
+                # "alacritty"
+                "aria2"
+                "bottom"
+                "carapace"
+                "cargo"
+                "direnv"
+                "emacs"
+                "eza"
+                "fd"
+                "fish"
+                "fzf"
+                "gh"
+                # "ghostty"
+                "git"
+                "jujutsu"
+                # "kitty"
+                "lazygit"
+                "nh"
+                "nushell"
+                "nvim"
+                "ripgrep"
+                "ssh"
+                "starship"
+                "translate-shell"
+                # "wezterm"
+                "yazi"
+                "zoxide"
+              ];
+              description = "Repository program modules enabled with the terminal tools feature.";
+            };
+            provider = lib.mkOption {
+              type = lib.types.str;
+              description = "terminal provider to use";
+            };
+            selected = lib.mkOption {
+              type = terminalProviderModule;
+              default = { };
+              readOnly = true;
+            };
+          };
+        };
+      };
     };
-
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.kitty;
-      defaultText = lib.literalExpression "pkgs.kitty";
-      description = "Terminal package used by desktop features.";
-    };
-
-    command = lib.mkOption {
-      type = lib.types.str;
-      default = "${lib.getExe cfg.package} start";
-      defaultText = lib.literalExpression ''"${lib.getExe config.dotfiles.features.terminal.package} start"'';
-      description = "Terminal command used by features that need to launch a terminal.";
-    };
-
-    appId = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Application ID used by desktop integrations to identify terminal windows.";
-    };
-
-    startupAppId = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Application ID used by desktop integrations to identify startup terminal windows.";
-    };
-
-    startupCommand = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = cfg.command;
-      description = "Terminal command used by desktop integrations that open a terminal at startup.";
-    };
-
-    keybindCommand = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = cfg.command;
-      defaultText = lib.literalExpression "config.dotfiles.features.terminal.command";
-      description = "Terminal command used by desktop integrations that open a terminal from a key binding.";
-    };
-
-    provider = lib.mkOption {
-      type = lib.types.str;
-      description = "terminal provider to use";
-    };
-  };
 
   config =
     let
       providers = config.dotfiles.terminalProviders;
+      selected = providers.${cfg.provider};
     in
     lib.mkIf cfg.enable {
       assertions = [
@@ -101,8 +91,12 @@ in
           message = "unknown terminal provider: ${cfg.provider}";
         }
       ];
-      dotfiles.programs = lib.setAttrByPath [ cfg.provider "enable" ] true;
+      dotfiles.programs =
+        lib.genAttrs cfg.programs (_: {
+          enable = lib.mkDefault true;
+        })
+        // lib.setAttrByPath [ selected.program "enable" ] true;
 
-      home.packages = [ cfg.package ];
+      home.packages = [ selected.package ];
     };
 }

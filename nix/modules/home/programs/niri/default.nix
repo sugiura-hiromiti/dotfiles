@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.dotfiles.programs.niri;
+  terminal = config.dotfiles.features.terminal.selected;
   paths = config.dotfiles.paths;
   terminalCfg = cfg.terminal;
   kdlString = builtins.toJSON;
@@ -73,28 +74,28 @@ in
 
       appId = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        default = config.dotfiles.features.terminal.appId;
+        default = terminal.appId;
         defaultText = lib.literalExpression "config.dotfiles.features.terminal.appId";
         description = "Application ID matched by niri terminal window rules.";
       };
 
       startupAppId = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        default = config.dotfiles.features.terminal.startupAppId;
+        default = terminal.startupAppId;
         defaultText = lib.literalExpression "config.dotfiles.features.terminal.startupAppId";
         description = "Application ID matched by niri startup terminal window rules.";
       };
 
       startupCommand = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        default = config.dotfiles.features.terminal.startupCommand;
+        default = terminal.startupCommand;
         defaultText = lib.literalExpression "config.dotfiles.features.terminal.startupCommand";
         description = "Terminal command niri runs at startup.";
       };
 
       keybindCommand = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        default = config.dotfiles.features.terminal.keybindCommand;
+        default = terminal.keybindCommand;
         defaultText = lib.literalExpression "config.dotfiles.features.terminal.keybindCommand";
         description = "Terminal command niri runs from its terminal key binding.";
       };

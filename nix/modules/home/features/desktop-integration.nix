@@ -6,20 +6,16 @@
 }:
 let
   cfg = config.dotfiles.features.desktopIntegration;
-  terminalCommand =
-    if cfg.termfilechooser.terminal.command != null then
-      cfg.termfilechooser.terminal.command
-    else
-      "${lib.getExe cfg.termfilechooser.terminal.package} start --always-new-process";
+  terminal = config.dotfiles.features.terminal.selected;
   termfilechooserRuntimePath = lib.makeBinPath [
     cfg.termfilechooser.fileManager.package
-    cfg.termfilechooser.terminal.package
+    terminal.package
     pkgs.bash
     pkgs.coreutils
     pkgs.gnused
   ];
   termfilechooserWrapper = pkgs.writeShellScript "termfilechooser-yazi-wrapper" ''
-    export TERMCMD=${lib.escapeShellArg terminalCommand}
+    export TERMCMD=${lib.escapeShellArg terminal.fileChooserCmmand}
     export PATH=${lib.escapeShellArg termfilechooserRuntimePath}
     exec ${cfg.termfilechooser.package}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
   '';
@@ -92,19 +88,6 @@ in
         default = config.programs.yazi.package;
         defaultText = lib.literalExpression "config.programs.yazi.package";
         description = "File manager package used by the terminal file chooser wrapper.";
-      };
-      terminal = {
-        package = lib.mkOption {
-          type = lib.types.package;
-          default = config.dotfiles.features.terminal.package;
-          defaultText = lib.literalExpression "config.dotfiles.features.terminal.package";
-          description = "Terminal package used by the terminal file chooser.";
-        };
-        command = lib.mkOption {
-          type = lib.types.nullOr lib.types.str;
-          default = null;
-          description = "Terminal command used by termfilechooser. Null derives it from terminal.package.";
-        };
       };
     };
 

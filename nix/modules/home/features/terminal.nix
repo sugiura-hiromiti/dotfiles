@@ -73,7 +73,7 @@ in
 
     startupCommand = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
+      default = cfg.command;
       description = "Terminal command used by desktop integrations that open a terminal at startup.";
     };
 

@@ -7,7 +7,8 @@
 let
   cfg = config.dotfiles.features.aiTools;
   codexBasePackage = if cfg.codex.package == null then pkgs.codex else cfg.codex.package;
-  shouldWrapCodex = cfg.codex.mcp.github.enable && cfg.codex.mcp.github.tokenCommand != null;
+  shouldWrapCodex = cfg.mcp.github.enable && cfg.mcp.github.tokenCommand != null;
+  # TODO: そもそもwrapする必要が在るのか再考
   codexPackage =
     if shouldWrapCodex then
       pkgs.symlinkJoin {
@@ -17,8 +18,8 @@ let
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild =
           let
-            tokenCommand = lib.escapeShellArgs cfg.codex.mcp.github.tokenCommand;
-            tokenEnvVar = lib.escapeShellArg cfg.codex.mcp.github.bearerTokenEnvVar;
+            tokenCommand = lib.escapeShellArgs cfg.mcp.github.tokenCommand;
+            tokenEnvVar = lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar;
           in
           ''
             wrapProgram $out/bin/codex --run ${lib.escapeShellArg ''
@@ -36,12 +37,12 @@ let
       codexBasePackage;
 
   codexMcpServers =
-    lib.optionalAttrs cfg.codex.mcp.serena.enable {
+    lib.optionalAttrs cfg.mcp.serena.enable {
       serena = {
-        command = "${cfg.codex.mcp.serena.uvPackage}/bin/uvx";
+        command = "${cfg.mcp.serena.uvPackage}/bin/uvx";
         args = [
           "--from"
-          cfg.codex.mcp.serena.packageSpec
+          cfg.mcp.serena.packageSpec
           "serena"
           "start-mcp-server"
           "--context"
@@ -50,21 +51,21 @@ let
         startup_timeout_sec = cfg.codex.mcp.serena.startupTimeoutSec;
       };
     }
-    // lib.optionalAttrs cfg.codex.mcp.github.enable {
+    // lib.optionalAttrs cfg.mcp.github.enable {
       github = {
-        url = cfg.codex.mcp.github.url;
-        bearer_token_env_var = cfg.codex.mcp.github.bearerTokenEnvVar;
+        url = cfg.mcp.github.url;
+        bearer_token_env_var = cfg.mcp.github.bearerTokenEnvVar;
       };
     };
 
   claudeGitHubAuth =
-    if cfg.codex.mcp.github.tokenCommand == null then
+    if cfg.mcp.github.tokenCommand == null then
       {
         headers.Authorization = lib.concatStrings [
           "Bearer "
           "$"
           "{"
-          cfg.codex.mcp.github.bearerTokenEnvVar
+          cfg.mcp.github.bearerTokenEnvVar
           "}"
         ];
       }
@@ -73,10 +74,10 @@ let
         headersHelper = "${pkgs.writeShellScript "claude-github-mcp-headers" ''
           set -eu
 
-          token_env_var=${lib.escapeShellArg cfg.codex.mcp.github.bearerTokenEnvVar}
+          token_env_var=${lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar}
           token="$(printenv "$token_env_var" 2>/dev/null || true)"
           if [ -z "$token" ]; then
-            token="$(${lib.escapeShellArgs cfg.codex.mcp.github.tokenCommand})"
+            token="$(${lib.escapeShellArgs cfg.mcp.github.tokenCommand})"
           fi
           if [ -z "$token" ]; then
             echo "GitHub MCP token is empty" >&2
@@ -89,13 +90,13 @@ let
       };
 
   claudeMcpServers =
-    lib.optionalAttrs cfg.codex.mcp.serena.enable {
+    lib.optionalAttrs cfg.mcp.serena.enable {
       serena = {
         type = "stdio";
-        command = "${cfg.codex.mcp.serena.uvPackage}/bin/uvx";
+        command = "${cfg.mcp.serena.uvPackage}/bin/uvx";
         args = [
           "--from"
-          cfg.codex.mcp.serena.packageSpec
+          cfg.mcp.serena.packageSpec
           "serena"
           "start-mcp-server"
           "--context"
@@ -104,10 +105,10 @@ let
         ];
       };
     }
-    // lib.optionalAttrs cfg.codex.mcp.github.enable {
+    // lib.optionalAttrs cfg.mcp.github.enable {
       github = {
         type = "http";
-        url = cfg.codex.mcp.github.url;
+        url = cfg.mcp.github.url;
       }
       // claudeGitHubAuth;
     };
@@ -147,144 +148,150 @@ let
   };
 in
 {
-  options.dotfiles.features.aiTools = {
-    enable = lib.mkEnableOption "AI-assisted development tools";
+  options = {
+    dotfiles = {
+      features = {
+        aiTools = {
+          enable = lib.mkEnableOption "AI-assisted development tools";
 
-    agentSkills = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to install shared agent skills.";
-      };
+          agentSkills = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to install shared agent skills.";
+            };
 
-      source = lib.mkOption {
-        type = lib.types.path;
-        default = ../../../../agents/skills;
-        description = "Repository-managed shared agent skills directory.";
-      };
+            source = lib.mkOption {
+              type = lib.types.path;
+              default = ../../../../agents/skills;
+              description = "Repository-managed shared agent skills directory.";
+            };
 
-      target = lib.mkOption {
-        type = lib.types.str;
-        default = ".agents/skills";
-        description = "Home-relative path where agent skills are exposed.";
-      };
-    };
-
-    claudeCode.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether to install Claude Code.";
-    };
-
-    codex = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to configure Codex.";
-      };
-
-      package = lib.mkOption {
-        type = lib.types.nullOr lib.types.package;
-        default = null;
-        description = "Codex package. Null uses the Home Manager default.";
-      };
-
-      context = lib.mkOption {
-        type = lib.types.lines;
-        default = ''
-          if command execution failed and repository contains flake.nix at root, retry with nix's devshell or execute via `direnv exec`.
-          if the repository is managed with Jujutsu(jj), prefer using jj over git for version-control operations.
-          use serena if possible. if anything is unclear, please make sure to ask for clarification.
-        '';
-        description = "AGENTS.md-style context injected into Codex.";
-      };
-
-      settings = lib.mkOption {
-        type = lib.types.attrsOf lib.types.anything;
-        default = { };
-        description = "Additional Codex settings, recursively merged over the dotfiles defaults.";
-      };
-
-      acp = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether to install the Codex ACP package.";
-        };
-        package = lib.mkOption {
-          type = lib.types.package;
-          default = pkgs.codex-acp;
-          defaultText = lib.literalExpression "pkgs.codex-acp";
-          description = "Codex ACP package.";
-        };
-      };
-
-      mcp = {
-        serena = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to configure the Serena MCP server for Codex and Claude Code.";
+            target = lib.mkOption {
+              type = lib.types.str;
+              default = ".agents/skills";
+              description = "Home-relative path where agent skills are exposed.";
+            };
           };
-          uvPackage = lib.mkOption {
-            type = lib.types.package;
-            default = pkgs.uv;
-            defaultText = lib.literalExpression "pkgs.uv";
-            description = "Package providing uvx for launching Serena.";
-          };
-          packageSpec = lib.mkOption {
-            type = lib.types.str;
-            default = "git+https://github.com/oraios/serena";
-            description = "uv package spec used to launch Serena.";
-          };
-          context = lib.mkOption {
-            type = lib.types.str;
-            default = "codex";
-            description = "Serena context passed to the Codex MCP server.";
-          };
-          startupTimeoutSec = lib.mkOption {
-            type = lib.types.int;
-            default = 30;
-            description = "Serena MCP startup timeout for Codex, in seconds.";
-          };
-        };
 
-        github = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to configure the GitHub Copilot MCP server for Codex and Claude Code.";
+          mcp = {
+            serena = {
+              enable = lib.mkEnableOption "serena mcp";
+              uvPackage = lib.mkOption {
+                type = lib.types.package;
+                default = pkgs.uv;
+                defaultText = lib.literalExpression "pkgs.uv";
+                description = "Package providing uvx for launching Serena.";
+              };
+              packageSpec = lib.mkOption {
+                type = lib.types.str;
+                default = "git+https://github.com/oraios/serena";
+                description = "uv package spec used to launch Serena.";
+              };
+            };
+            github = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether to configure the GitHub Copilot MCP server for Codex and Claude Code.";
+              };
+              url = lib.mkOption {
+                type = lib.types.str;
+                default = "https://api.githubcopilot.com/mcp";
+                description = "GitHub Copilot MCP URL.";
+              };
+              bearerTokenEnvVar = lib.mkOption {
+                type = lib.types.str;
+                default = "GITHUB_PAT_TOKEN";
+                description = "Environment variable containing the GitHub MCP bearer token.";
+              };
+              tokenCommand = lib.mkOption {
+                type = lib.types.nullOr (lib.types.listOf lib.types.str);
+                default = [
+                  "${pkgs.gh}/bin/gh"
+                  "auth"
+                  "token"
+                  "--hostname"
+                  "github.com"
+                ];
+                description = ''
+                  Command used by the Codex wrapper and Claude Code headers helper to
+                  populate bearerTokenEnvVar when it is not already set. Null disables
+                  automatic token lookup.
+                '';
+              };
+            };
           };
-          url = lib.mkOption {
-            type = lib.types.str;
-            default = "https://api.githubcopilot.com/mcp";
-            description = "GitHub Copilot MCP URL.";
+          claudeCode = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to install Claude Code.";
+            };
           };
-          bearerTokenEnvVar = lib.mkOption {
-            type = lib.types.str;
-            default = "GITHUB_PAT_TOKEN";
-            description = "Environment variable containing the GitHub MCP bearer token.";
-          };
-          tokenCommand = lib.mkOption {
-            type = lib.types.nullOr (lib.types.listOf lib.types.str);
-            default = [
-              "${pkgs.gh}/bin/gh"
-              "auth"
-              "token"
-              "--hostname"
-              "github.com"
-            ];
-            description = ''
-              Command used by the Codex wrapper and Claude Code headers helper to
-              populate bearerTokenEnvVar when it is not already set. Null disables
-              automatic token lookup.
-            '';
+
+          codex = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to configure Codex.";
+            };
+
+            package = lib.mkOption {
+              type = lib.types.nullOr lib.types.package;
+              default = null;
+              description = "Codex package. Null uses the Home Manager default.";
+            };
+
+            context = lib.mkOption {
+              type = lib.types.lines;
+              default = ''
+                if command execution failed and repository contains flake.nix at root, retry with nix's devshell or execute via `direnv exec`.
+                if the repository is managed with Jujutsu(jj), prefer using jj over git for version-control operations.
+                use serena if possible. if anything is unclear, please make sure to ask for clarification.
+              '';
+              description = "AGENTS.md-style context injected into Codex.";
+            };
+
+            settings = lib.mkOption {
+              type = lib.types.attrsOf lib.types.anything;
+              default = { };
+              description = "Additional Codex settings, recursively merged over the dotfiles defaults.";
+            };
+
+            acp = {
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether to install the Codex ACP package.";
+              };
+              package = lib.mkOption {
+                type = lib.types.package;
+                default = pkgs.codex-acp;
+                defaultText = lib.literalExpression "pkgs.codex-acp";
+                description = "Codex ACP package.";
+              };
+            };
+
+            mcp = {
+              serena = {
+                # context = lib.mkOption {
+                #   type = lib.types.str;
+                #   default = "codex";
+                #   description = "Serena context passed to the Codex MCP server.";
+                # };
+                startupTimeoutSec = lib.mkOption {
+                  type = lib.types.int;
+                  default = 30;
+                  description = "Serena MCP startup timeout for Codex, in seconds.";
+                };
+              };
+            };
           };
         };
       };
     };
   };
-
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       (lib.mkIf cfg.agentSkills.enable {

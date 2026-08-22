@@ -118,7 +118,7 @@ in
                 appId = "dotfiles.terminal.tiled";
               };
               floating = {
-                appId = selected.appId;
+                inherit (selected) appId;
               };
             };
           };

@@ -39,7 +39,6 @@ let
       inherit (sessionContext) session hasGui;
       inherit themeName sessionName;
       inherit themeProfiles sessionProfiles;
-      has_gui = if sessionContext.hasGui then "true" else "false";
       hostVariants = hostConfig.variants;
       inherit (hostConfig) variants;
       runtime = runtimeConfig;

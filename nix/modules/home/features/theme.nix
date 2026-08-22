@@ -25,8 +25,8 @@ in
 
     autoEnable = lib.mkOption {
       type = lib.types.bool;
-      default = pkgs.stdenv.isLinux;
-      defaultText = lib.literalExpression "pkgs.stdenv.isLinux";
+      default = pkgs.stdenv.hostPlatform.isLinux;
+      defaultText = lib.literalExpression "pkgs.stdenv.hostPlatform.isLinux";
       description = "Whether to automatically enable supported Catppuccin integrations.";
     };
 
@@ -50,7 +50,7 @@ in
       accent = lib.mkDefault cfg.accent;
 
       cursors = {
-        enable = lib.mkDefault pkgs.stdenv.isLinux;
+        enable = lib.mkDefault pkgs.stdenv.hostPlatform.isLinux;
         accent = lib.mkDefault cfg.cursorAccent;
       };
 

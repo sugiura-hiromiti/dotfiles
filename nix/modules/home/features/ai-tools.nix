@@ -137,7 +137,7 @@ let
       "/home/a/dotfiles/" = {
         trust_level = "trusted";
       };
-      "/home/a/Downloads/awa/poison_girl/" = {
+      "${config.dotfiles.paths.workspaceRoot}/poison_girl/" = {
         trust_level = "trusted";
       };
     };

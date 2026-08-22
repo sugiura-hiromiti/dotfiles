@@ -42,8 +42,8 @@ in
 
     geonkick.enable = lib.mkOption {
       type = lib.types.bool;
-      default = pkgs.stdenv.isLinux;
-      defaultText = lib.literalExpression "pkgs.stdenv.isLinux";
+      default = pkgs.stdenv.hostPlatform.isLinux;
+      defaultText = lib.literalExpression "pkgs.stdenv.hostPlatform.isLinux";
       description = "Whether to install the repository-managed Geonkick configuration.";
     };
   };
@@ -53,12 +53,12 @@ in
       {
         assertions = [
           {
-            assertion = !cfg.geonkick.enable || pkgs.stdenv.isLinux;
+            assertion = !cfg.geonkick.enable || pkgs.stdenv.hostPlatform.isLinux;
             message = "dotfiles.features.dtm.geonkick is Linux-only.";
           }
         ];
 
-        home.packages = cfg.packages ++ lib.optionals pkgs.stdenv.isLinux cfg.linuxPackages;
+        home.packages = cfg.packages ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux cfg.linuxPackages;
       }
 
       (lib.mkIf cfg.geonkick.enable {

@@ -78,8 +78,8 @@ in
     mimeApps = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = pkgs.stdenv.isLinux;
-        defaultText = lib.literalExpression "pkgs.stdenv.isLinux";
+        default = pkgs.stdenv.hostPlatform.isLinux;
+        defaultText = lib.literalExpression "pkgs.stdenv.hostPlatform.isLinux";
         description = "Whether to register media MIME defaults.";
       };
       defaultApplications = lib.mkOption {
@@ -129,7 +129,7 @@ in
       (lib.mkIf cfg.mimeApps.enable {
         assertions = [
           {
-            assertion = pkgs.stdenv.isLinux;
+            assertion = pkgs.stdenv.hostPlatform.isLinux;
             message = "dotfiles.features.media.mimeApps is Linux-only.";
           }
         ];

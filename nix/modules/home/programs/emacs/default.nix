@@ -269,7 +269,7 @@ in
         // emacsLispConfigFiles;
       }
 
-      (lib.mkIf pkgs.stdenv.isDarwin {
+      (lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
         services.emacs = {
           enable = lib.mkForce false;
           client.enable = lib.mkForce false;

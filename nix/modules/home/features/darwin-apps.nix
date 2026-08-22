@@ -13,12 +13,12 @@ in
 
     packages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
-      default = lib.optionals pkgs.stdenv.isDarwin [
+      default = lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
         pkgs.betterdisplay
         pkgs.ghostty-bin
       ];
       defaultText = lib.literalExpression ''
-        lib.optionals pkgs.stdenv.isDarwin [
+        lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
           pkgs.betterdisplay
           pkgs.ghostty-bin
         ]

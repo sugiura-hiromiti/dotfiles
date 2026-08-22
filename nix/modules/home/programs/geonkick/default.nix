@@ -40,7 +40,7 @@ in
     };
   };
 
-  config = lib.mkIf (cfg.enable && pkgs.stdenv.isLinux) {
+  config = lib.mkIf (cfg.enable && pkgs.stdenv.hostPlatform.isLinux) {
     xdg.configFile."geonkick/config.json".source = format.generate "geonkick-config.json" cfg.settings;
   };
 }

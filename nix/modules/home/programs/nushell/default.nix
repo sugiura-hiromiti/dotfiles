@@ -7,7 +7,7 @@
 let
   cfg = config.dotfiles.programs.nushell;
   sqliteLibrary = "${pkgs.sqlite.out}/lib/${
-    if pkgs.stdenv.isDarwin then "libsqlite3.dylib" else "libsqlite3.so"
+    if pkgs.stdenv.hostPlatform.isDarwin then "libsqlite3.dylib" else "libsqlite3.so"
   }";
 in
 {
@@ -22,7 +22,7 @@ in
       type = lib.types.str;
       default = sqliteLibrary;
       defaultText = lib.literalExpression ''
-        "''${pkgs.sqlite.out}/lib/''${if pkgs.stdenv.isDarwin then "libsqlite3.dylib" else "libsqlite3.so"}"
+        "''${pkgs.sqlite.out}/lib/''${if pkgs.stdenv.hostPlatform.isDarwin then "libsqlite3.dylib" else "libsqlite3.so"}"
       '';
       description = "SQLite dynamic library path exported for Nushell plugins.";
     };
@@ -36,7 +36,7 @@ in
         LIBSQLITE = lib.mkDefault cfg.sqliteLibrary;
         SHELL = lib.mkDefault "${pkgs.nushell}/bin/nu";
       };
-      file = lib.mkIf pkgs.stdenv.isDarwin {
+      file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
         "nushell_appsupport_config" = {
           target = "Library/Application Support/nushell/config.nu";
           source = ./config/config.nu;

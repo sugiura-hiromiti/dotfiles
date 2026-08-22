@@ -69,25 +69,25 @@ in
     terminal = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = terminal.enable;
         description = "Whether to generate niri integration for the configured terminal provider.";
       };
 
       startup.enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = terminalCfg.enable;
         description = "Whether niri opens the configured terminal at startup.";
       };
 
       transientWindowRule.enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = terminalCfg.enable;
         description = "Whether niri applies terminal-specific window rules.";
       };
 
       keybind.enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = terminalCfg.enable;
         description = "Whether niri binds a key to open the configured terminal.";
       };
     };

@@ -27,7 +27,7 @@ in
             mkCommand =
               {
                 appId ? null,
-                ...
+                wait ? false,
               }:
               lib.escapeShellArgs (
                 [ kitty ]

@@ -19,7 +19,11 @@ let
   ) "spawn-at-startup ${shellSpawnArgs regularCommand}";
   terminalWindowRule =
     lib.optionalString
-      (terminalCfg.enable && terminalCfg.windowRule.enable && terminal.role.transient.appId != null)
+      (
+        terminalCfg.enable
+        && terminalCfg.transientWindowRule.enable
+        && terminal.role.transient.appId != null
+      )
       (
         lib.concatStringsSep "\n" [
           "window-rule {"
@@ -49,7 +53,6 @@ let
         substituteInPlace "$out/config.kdl" \
           --replace-fail "~/Downloads/media/screenshots" "${paths.screenshotDirectory}" \
           --replace-fail "@terminalStartup@" "$terminalStartup" \
-          --replace-fail "@terminalStartupWindowMatch@" "$terminalStartupWindowMatch" \
           --replace-fail "@terminalWindowRule@" "$terminalWindowRule" \
           --replace-fail "@terminalKeybind@" "$terminalKeybind"
       '';
@@ -76,7 +79,7 @@ in
         description = "Whether niri opens the configured terminal at startup.";
       };
 
-      windowRule.enable = lib.mkOption {
+      transientWindowRule.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Whether niri applies terminal-specific window rules.";

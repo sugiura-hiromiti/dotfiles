@@ -17,7 +17,7 @@ in
           };
         };
       };
-      launchOption = lib.types.submodule {
+      roleOption = lib.types.submodule {
         options = {
           appId = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
@@ -78,11 +78,11 @@ in
             };
             role = {
               regular = lib.mkOption {
-                type = launchOption;
+                type = roleOption;
                 readOnly = true;
               };
               transient = lib.mkOption {
-                type = launchOption;
+                type = roleOption;
                 readOnly = true;
               };
             };
@@ -112,7 +112,8 @@ in
         features = {
           terminal = {
             inherit selected;
-            roel = {
+            role = {
+              regular = { };
               transient = {
                 appId = "dotfiles.terminal.transient";
               };

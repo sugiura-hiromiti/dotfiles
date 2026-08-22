@@ -94,6 +94,9 @@
 		'(major-mode vcs check))
 	(doom-modeline-set-modeline 'my-main t))
 
+(use-package vc-jj
+	:demand t)
+
 (use-package breadcrumb
 	:config
 	(breadcrumb-mode -1))
@@ -272,5 +275,16 @@ alist used when creating the tab."
 	:bind (:map agent-shell-mode-map
 				("RET" . newline)
 				("S-<return>" . shell-maker-submit)))
+
+(use-package casual
+	:custom
+	(casual-lib-use-unicode t)
+	(transient-align-variable-pitch t)
+	:config
+	(casual-info-init)
+	(casual-help-init)
+	(casual-re-builder-init)
+	(casual-compile-init)
+	(casual-calc-init))
 
 (provide 'init-ui)

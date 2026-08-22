@@ -1,5 +1,7 @@
 ;;; -*- lexical-binding: t; -*-
 
+(declare-function eldoc-box-focus-frame "eldoc-box")
+(declare-function eldoc-box-help-at-point "eldoc-box")
 (declare-function eglot-code-actions "eglot")
 (declare-function eglot-rename "eglot")
 (declare-function flymake-show-project-diagnostics "flymake")
@@ -82,7 +84,7 @@
 				("d" flymake-show-project-diagnostics "diagnostic")
 				("a" eglot-code-actions "actions")
 				("r" eglot-rename "rename")
-				("h" eldoc "hover")
+				("h" my/eldoc-box-help-at-point "hover")
 				)
 			"buf/file"
 			(("b" consult-buffer "buffer")
@@ -99,18 +101,13 @@
 			"org"
 			(("c" org-capture "capture")
 				("k" org-agenda "agenda")
-				("s" org-store-link "store link"))))
+				("s" org-store-link "store link")))))
 
-	(pretty-hydra-define tree-sitter-operations
-		(:color pink :quit-key "<escape>")
-		("move"
-			(("b" my/meow-treesit-up "previous")
-				("f" my/meow-treesit-down "next")
-				("p" my/meow-treesit-out "out")
-				("n" my/meow-treesit-in "in"))
-			"select"
-			(("g" my/meow-treesit-expand "expand")
-				("G" my/meow-treesit-contract "contract")))))
+(defun my/eldoc-box-help-at-point ()
+	"Show eldoc document and focus its child frame"
+	(interactive)
+	(eldoc-box-help-at-point)
+	(eldoc-box-focus-frame))
 
 (defun my/consult-ripgrep-current-dir ()
 	"現在のバッファのディレクトリ配下をrgする"
@@ -125,5 +122,14 @@
 	(:map flymake-mode-map
 		("<f1>" . flymake-goto-prev-error)
 		("<f2>" . flymake-goto-next-error)))
+
+(use-package pulsar
+	:custom (pulsar-pulse-on-window-change t)
+	:config (pulsar-global-mode 1))
+
+(use-package goggles
+	:hook ((prog-mode text-mode) . goggles-mode)
+	:custom
+	(googles-pulse t))
 
 (provide 'init-navi)

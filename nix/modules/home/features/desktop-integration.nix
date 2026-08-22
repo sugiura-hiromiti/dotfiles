@@ -79,7 +79,7 @@ in
     termfilechooser = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = terminal.enable;
         description = "Whether to configure xdg-desktop-portal-termfilechooser.";
       };
       package = lib.mkOption {

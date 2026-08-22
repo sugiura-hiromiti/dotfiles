@@ -129,6 +129,7 @@ let
 
     notification = {
       background_opacity = 0.7;
+      layer = "overlay";
     };
 
     audio = {

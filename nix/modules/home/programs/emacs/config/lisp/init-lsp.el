@@ -153,4 +153,6 @@
 
 (use-package apheleia :config (apheleia-global-mode +1))
 
+(use-package eldoc-box :after eglot)
+
 (provide 'init-lsp)

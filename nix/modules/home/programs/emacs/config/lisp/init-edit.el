@@ -57,13 +57,8 @@
 			'("9" . meow-expand-9)
 			'("0" . meow-expand-0)
 			'("-" . negative-argument)
-			;; '("'" . repeat)
-			;;'("," . meow-inner-of-thing)
-			;;'("." . meow-bounds-of-thing)
 			'(":" . execute-extended-command)
 			'(";" . eval-expression)
-			'("," . puni-mark-list-around-point)
-			'("." . puni-mark-sexp-around-point)
 			'("RET" . my/meow-ret-dispatch)
 			'("TAB" . meta-navigation/body)
 			'("DEL" . tree-sitter-operations/body)
@@ -136,20 +131,20 @@ Runs when leaving Meow insert mode."
 	"Tree-sitter nodeを選択し、parserがなければPuniへfallbackする。"
 	(interactive)
 	(if (my/treesit-treewalk-available-p)
-			(meow-bounds-of-thing ?n)
+		(meow-bounds-of-thing ?n)
 		(call-interactively #'puni-expand-region)))
 
 (defun my/meow-treesit-contract ()
 	"Tree-sitter選択を1段戻し、選択がなければMeow Grabを使う。"
 	(interactive)
 	(if (and (my/treesit-treewalk-available-p) (use-region-p))
-			(call-interactively #'meow-pop-selection)
+		(call-interactively #'meow-pop-selection)
 		(call-interactively #'meow-grab)))
 
 (defun my/meow-treesit--move (command count)
 	"構造移動COMMAND後、既存のMeow選択を移動先へ同期する。"
 	(let ((had-selection (use-region-p))
-		  (has-parser (my/treesit-treewalk-available-p)))
+			  (has-parser (my/treesit-treewalk-available-p)))
 		(when had-selection
 			(meow-cancel-selection))
 		(funcall command (or count 1))

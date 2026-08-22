@@ -2,6 +2,13 @@
 
 (require 'init-paths)
 
+(use-package org
+	:bind
+	(:map org-mode-map
+		("C-o" . casual-org-tmenu))
+	(:map org-table-fedit-map
+		("C-o" . casual-org-table-fedit-tmenu)))
+
 (setq org-directory my/dotfiles-org-directory)
 
 (setq org-agenda-files

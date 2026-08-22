@@ -1,5 +1,11 @@
 ;;; -*- lexical-binding: t; -*-
 
+(list
+	buffer-file-name
+	diff-hl-mode
+	(and buffer-file-name (vc-backend buffer-file-name))
+	vc-handled-backends)
+
 (require 'init-paths)
 
 (declare-function embark-completing-read-prompter "embark")
@@ -197,18 +203,20 @@
 (use-package
 	embark
 	:bind
-	(("S-<RETURN>" . embark-act)
+	(("S-<return>" . embark-act)
 		("C-;" . embark-dwim)
 		("C-h B" . embark-bindings))
 	:init (setopt prefix-help-command #'embark-prefix-help-command)
 	:config
 	(setq embark-indicators
-		'(embark-minimal-indicator
+		'(;; embark-minimal-indicator
+			 embark-mixed-indicator
 			 embark-highlight-indicator
 			 embark-isearch-highlight-indicator))
-	(setq embark-prompter #'embark-completing-read-prompter)
+	;; (setq embark-prompter #'embark-completing-read-prompter)
 	;;minibufferを閉じない運用にしたい場合
-	(setq embark-quit-after-action nil))
+	;; (setq embark-quit-after-action nil)
+	)
 
 (use-package embark-consult :after (embark consult)
 	:hook

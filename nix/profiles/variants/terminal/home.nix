@@ -4,7 +4,7 @@
     features = {
       terminal = {
         enable = true;
-        provider = lib.mkDefault "kitty";
+        provider = lib.mkDefault "alacritty";
       };
     };
   };

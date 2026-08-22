@@ -176,7 +176,11 @@ in
 
           mcp = {
             serena = {
-              enable = lib.mkEnableOption "serena mcp";
+              enable = lib.mkOption {
+                type = lib.types.bool;
+                default = true;
+                description = "Whether to configure the Serena MCP server.";
+              };
               uvPackage = lib.mkOption {
                 type = lib.types.package;
                 default = pkgs.uv;
@@ -275,11 +279,11 @@ in
 
             mcp = {
               serena = {
-                # context = lib.mkOption {
-                #   type = lib.types.str;
-                #   default = "codex";
-                #   description = "Serena context passed to the Codex MCP server.";
-                # };
+                context = lib.mkOption {
+                  type = lib.types.str;
+                  default = "codex";
+                  description = "Serena context passed to the Codex MCP server.";
+                };
                 startupTimeoutSec = lib.mkOption {
                   type = lib.types.int;
                   default = 30;

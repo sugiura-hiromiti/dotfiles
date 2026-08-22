@@ -191,7 +191,7 @@ in
       inherit settings;
     }
     // optionalAttrs (cfg.package != null) {
-      package = cfg.package;
+      inherit (cfg) package;
     };
   };
 }

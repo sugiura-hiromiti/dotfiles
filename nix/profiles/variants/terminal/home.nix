@@ -1,10 +1,10 @@
-{ ... }:
+{ lib, ... }:
 {
   dotfiles = {
     features = {
       terminal = {
         enable = true;
-        provider = "kitty";
+        provider = lib.mkDefault "kitty";
       };
     };
   };

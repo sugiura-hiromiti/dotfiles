@@ -6,35 +6,38 @@
 }:
 let
   cfg = config.dotfiles.programs.niri;
-  terminal = config.dotfiles.features.terminal.selected;
+  terminal = config.dotfiles.features.terminal;
+  provider = terminal.selected;
+  regularCommand = provider.mkCommand { inherit (terminal.launch.regular) appId; };
+  transientCommand = provider.mkCommand { inherit (terminal.launch.transient) appId; };
+
   paths = config.dotfiles.paths;
   terminalCfg = cfg.terminal;
   kdlString = builtins.toJSON;
   regexFor = value: "^${lib.escapeRegex value}$";
   shellSpawnArgs = command: ''"sh" "-lc" ${kdlString command}'';
   terminalStartup = lib.optionalString (
-    terminalCfg.enable && terminalCfg.startup.enable && terminalCfg.startupCommand != null
-  ) "spawn-at-startup ${shellSpawnArgs terminalCfg.startupCommand}";
+    terminalCfg.enable && terminalCfg.startup.enable
+  ) "spawn-at-startup ${shellSpawnArgs regularCommand}";
   terminalStartupWindowMatch = lib.optionalString (
-    terminalCfg.enable && terminalCfg.startupWindowRule.enable && terminalCfg.startupAppId != null
-  ) "    match at-startup=true app-id=${kdlString (regexFor terminalCfg.startupAppId)}";
+    terminalCfg.enable && terminalCfg.startupWindowRule.enable
+  ) "    match at-startup=true app-id=${kdlString (regexFor regularCommand)}";
   terminalWindowRule =
     lib.optionalString
-      (terminalCfg.enable && terminalCfg.windowRule.enable && terminalCfg.appId != null)
+      (terminalCfg.enable && terminalCfg.windowRule.enable && terminal.launch.transent.appId)
       (
         lib.concatStringsSep "\n" [
           "window-rule {"
-          "    match app-id=${kdlString (regexFor terminalCfg.appId)}"
+          "    match app-id=${kdlString (regexFor terminal.launch.transient.appId)}"
           "    open-floating true"
           "    default-column-width { proportion 0.8; }"
           "    default-window-height { proportion 0.6; }"
           "}"
         ]
       );
-  terminalKeybind =
-    lib.optionalString
-      (terminalCfg.enable && terminalCfg.keybind.enable && terminalCfg.keybindCommand != null)
-      "    Mod+T hotkey-overlay-title=\"Open a Terminal\" { spawn ${shellSpawnArgs terminalCfg.keybindCommand}; }";
+  terminalKeybind = lib.optionalString (
+    terminalCfg.enable && terminalCfg.keybind.enable
+  ) "    Mod+T hotkey-overlay-title=\"Open a Terminal\" { spawn ${shellSpawnArgs regularCommand}; }";
   niriConfig =
     pkgs.runCommandLocal "niri-config"
       {
@@ -65,6 +68,7 @@ in
       description = "Whether to install the repository-managed niri configuration.";
     };
 
+    # TODO: このへん色々なくせそう
     terminal = {
       enable = lib.mkOption {
         type = lib.types.bool;

@@ -12,25 +12,16 @@ in
       terminalProviderModule = lib.types.submodule {
         options = {
           package = lib.mkOption { type = lib.types.package; };
-          command = lib.mkOption { type = lib.types.str; };
+          mkCommand = lib.mOption {
+            type = lib.types.functionTo lib.types.str;
+          };
+        };
+      };
+      launchOption = lib.types.submodule {
+        options = {
           appId = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
-          };
-          startupAppId = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-          };
-          startupCommand = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-          };
-          keybindCommand = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-          };
-          fileChooserCommand = lib.mkOption {
-            type = lib.types.str;
           };
         };
       };
@@ -44,7 +35,6 @@ in
         features = {
           terminal = {
             enable = lib.mkEnableOption "terminal tools";
-
             programs = lib.mkOption {
               type = lib.types.listOf lib.types.str;
               default = [
@@ -85,6 +75,16 @@ in
             selected = lib.mkOption {
               type = terminalProviderModule;
               readOnly = true;
+            };
+            role = {
+              regular = lib.mkOption {
+                type = launchOption;
+                readOnly = true;
+              };
+              transient = lib.mkOption {
+                type = launchOption;
+                readOnly = true;
+              };
             };
           };
         };

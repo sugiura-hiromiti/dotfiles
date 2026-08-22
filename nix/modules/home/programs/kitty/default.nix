@@ -9,31 +9,38 @@ let
   kitty = lib.getExe pkgs.kitty;
 in
 {
-  options.dotfiles.programs.kitty.enable = lib.mkEnableOption "kitty terminal emulator";
-
+  options = {
+    dotfiles = {
+      programs = {
+        kitty = {
+          enable = lib.mkEnableOption "kitty terminal emulator";
+        };
+      };
+    };
+  };
   config = lib.mkMerge [
     {
       dotfiles = {
-        terminalProviders =
-          let
-            customAppIdCommand = "${kitty} --app-id custom.term";
-          in
-          {
-            kitty = {
-              package = pkgs.kitty;
-              command = kitty;
-              appId = "kitty";
-              # TODO: 現在の設定ではfloating windowにしないapp idの管理場所が分散している為、統合する
-              startupAppId = "custom.term";
-              startupCommand = customAppIdCommand;
-              keybindCommand = customAppIdCommand;
-              fileChooserCommand = kitty;
-            };
+        terminalProviders = {
+          kitty = {
+            package = pkgs.kitty;
+            mkCommand =
+              {
+                appId ? null,
+                ...
+              }:
+              lib.escapeShellArgs (
+                [ kitty ]
+                ++ lib.optionals (appId != null) [
+                  "--app-id"
+                  appId
+                ]
+              );
           };
+        };
       };
     }
     (lib.mkIf cfg.enable {
-
       xdg.configFile."kitty" = {
         source = ./config;
         recursive = true;

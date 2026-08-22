@@ -21,26 +21,39 @@ in
   config = lib.mkMerge [
     {
       dotfiles = {
-        terminalProviders =
-          let
-            customAppIdCommand = "${wezterm} start --class custom.term";
-          in
-          {
-            wezterm = {
-              package = pkgs.wezterm;
-              command = "${wezterm} start";
-              # TODO: search whether I really need to configure appId myself
-              appId = "org.wezfurlong.wezterm";
-              startupCommand = customAppIdCommand;
-              startupAppId = "custom.term";
-              keybindCommand = "${customAppIdCommand} --always-new-process";
-              fileChooserCommand = "${wezterm} start --always-new-process";
+        terminalProviders = {
+          wezterm = {
+            package = pkgs.wezterm;
+            mkCommand =
+              {
+                appId ? null,
+                wait ? false,
+              }:
+              lib.escapeShellArgs (
+                [
+                  wezterm
+                  "start"
+                ]
+                ++ lib.optional wait "--always-new-process"
+                ++ lib.optionals (appId != null) [
+                  "--class"
+                  appId
+                ]
+              );
+          };
+        };
+        features = {
+          terminal = {
+            role = {
+              transient = {
+                appId = "dotfiles.terminal.transient";
+              };
             };
           };
+        };
       };
     }
     (lib.mkIf cfg.enable {
-
       xdg = {
         configFile = {
           "wezterm" = {

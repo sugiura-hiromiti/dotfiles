@@ -6,7 +6,12 @@
 }:
 let
   cfg = config.dotfiles.features.desktopIntegration;
-  terminal = config.dotfiles.features.terminal.selected;
+  terminal = config.dotfiles.features.terminal;
+  provider = terminal.selected;
+  termCommand = provider.mkCommand {
+    inherit (terminal.launch.transient) appId;
+    wait = true;
+  };
   termfilechooserRuntimePath = lib.makeBinPath [
     cfg.termfilechooser.fileManager.package
     terminal.package
@@ -15,7 +20,7 @@ let
     pkgs.gnused
   ];
   termfilechooserWrapper = pkgs.writeShellScript "termfilechooser-yazi-wrapper" ''
-    export TERMCMD=${lib.escapeShellArg terminal.fileChooserCommand}
+    export TERMCMD=${lib.escapeShellArg termCommand}
     export PATH=${lib.escapeShellArg termfilechooserRuntimePath}
     exec ${cfg.termfilechooser.package}/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh "$@"
   '';
@@ -142,6 +147,7 @@ in
             message = "dotfiles.features.desktopIntegration is Linux-only.";
           }
           {
+            # TODO: このへんは自動で有効無効にして欲しい
             assertion = !cfg.orgProtocol.enable || config.programs.emacs.enable;
             message = "dotfiles.features.desktopIntegration.orgProtocol requires programs.emacs.enable.";
           }

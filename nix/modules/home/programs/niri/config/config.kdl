@@ -389,7 +389,7 @@ window-rule {
 	opacity 1.0
 }
 
-@terminalWindowRule@
+@floatingTerminalWindowRule@
 
 // Indicate screencasted windows with red colors.
 window-rule {

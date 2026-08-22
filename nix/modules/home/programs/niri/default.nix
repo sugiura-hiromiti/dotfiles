@@ -51,7 +51,7 @@ let
         substituteInPlace "$out/config.kdl" \
           --replace-fail "~/Downloads/media/screenshots" "${paths.screenshotDirectory}" \
           --replace-fail "@terminalStartup@" "$terminalStartup" \
-          --replace-fail "@terminalWindowRule@" "$terminalWindowRule" \
+          --replace-fail "@floatingTerminalWindowRule@" "$floatingTerminalWindowRule" \
           --replace-fail "@terminalKeybind@" "$terminalKeybind"
       '';
 in

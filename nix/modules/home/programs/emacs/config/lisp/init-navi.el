@@ -91,11 +91,10 @@
 				("i" consult-line "line")
 				("g" my/consult-ripgrep-current-dir "rg")
 				("p" consult-ripgrep "prj rg")
-				;; TODO: ghostel-compileに置き換え
 				("m" ghostel-compile "compilation-mode"))
 			"misc"
 			(("e" eval-buffer "eval")
-				("x" ghostel "terminal")
+				("x" ghostel-project "terminal")
 				("j" majutsu "jj")
 				("n" elfeed-update "rss notification"))
 			"org"

@@ -134,7 +134,7 @@ let
       ];
     };
     projects = {
-      "/home/a/dotfiles/" = {
+      "${config.home.homeDirectory}/dotfiles/" = {
         trust_level = "trusted";
       };
       "${config.dotfiles.paths.workspaceRoot}/poison_girl/" = {

@@ -10,7 +10,11 @@
 	(flymake-mode 1))
 
 (use-package ghostel
-	:commands (ghostel ghostel-compile)
+	:commands (ghostel
+					 ghostel-compile
+					 ghostel-project
+					 ghostel-project-list-buffers
+					 ghostel-list-buffers)
 	:custom
 	(ghostel-module-auto-install 'download)
 	(ghostel-max-scrollback (* 10 1024 1024)))

@@ -77,11 +77,11 @@ in
               readOnly = true;
             };
             role = {
-              regular = lib.mkOption {
+              tiled = lib.mkOption {
                 type = roleOption;
                 readOnly = true;
               };
-              transient = lib.mkOption {
+              floating = lib.mkOption {
                 type = roleOption;
                 readOnly = true;
               };
@@ -113,10 +113,10 @@ in
           terminal = {
             inherit selected;
             role = {
-              regular = { };
-              transient = {
-                appId = "dotfiles.terminal.transient";
+              tiled = {
+                appId = "dotfiles.terminal.tiled";
               };
+              floating = { };
             };
           };
         };

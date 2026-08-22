@@ -8,7 +8,7 @@ let
   cfg = config.dotfiles.programs.niri;
   terminal = config.dotfiles.features.terminal;
   provider = terminal.selected;
-  regularCommand = provider.mkCommand { inherit (terminal.role.regular) appId; };
+  regularCommand = provider.mkCommand { inherit (terminal.role.tiled) appId; };
   paths = config.dotfiles.paths;
   terminalCfg = cfg.terminal;
   kdlString = builtins.toJSON;
@@ -20,14 +20,12 @@ let
   terminalWindowRule =
     lib.optionalString
       (
-        terminalCfg.enable
-        && terminalCfg.transientWindowRule.enable
-        && terminal.role.transient.appId != null
+        terminalCfg.enable && terminalCfg.transientWindowRule.enable && terminal.role.floating.appId != null
       )
       (
         lib.concatStringsSep "\n" [
           "window-rule {"
-          "    match app-id=${kdlString (regexFor terminal.role.transient.appId)}"
+          "    match app-id=${kdlString (regexFor terminal.role.floating.appId)}"
           "    open-floating true"
           "    default-column-width { proportion 0.8; }"
           "    default-window-height { proportion 0.6; }"

@@ -39,6 +39,13 @@ in
           };
 
         };
+        terminal = {
+          role = {
+            floating = {
+              appId = "alacritty";
+            };
+          };
+        };
       };
     }
     (lib.mkIf cfg.enable {

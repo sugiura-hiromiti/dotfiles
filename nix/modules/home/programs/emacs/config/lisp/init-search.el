@@ -1,11 +1,5 @@
 ;;; -*- lexical-binding: t; -*-
 
-(list
-	buffer-file-name
-	diff-hl-mode
-	(and buffer-file-name (vc-backend buffer-file-name))
-	vc-handled-backends)
-
 (require 'init-paths)
 
 (declare-function embark-completing-read-prompter "embark")

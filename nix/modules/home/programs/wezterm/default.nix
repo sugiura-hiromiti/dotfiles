@@ -42,6 +42,13 @@ in
               );
           };
         };
+        terminal = {
+          role = {
+            floating = {
+              appId = "org.wezfurlong.wezterm";
+            };
+          };
+        };
       };
     }
     (lib.mkIf cfg.enable {

@@ -17,10 +17,10 @@ let
   terminalStartup = lib.optionalString (
     terminalCfg.enable && terminalCfg.startup.enable
   ) "spawn-at-startup ${shellSpawnArgs tiledCommand}";
-  terminalWindowRule =
+  floatingTerminalWindowRule =
     lib.optionalString
       (
-        terminalCfg.enable && terminalCfg.transientWindowRule.enable && terminal.role.floating.appId != null
+        terminalCfg.enable && terminalCfg.floatingWindowRule.enable && terminal.role.floating.appId != null
       )
       (
         lib.concatStringsSep "\n" [
@@ -41,7 +41,7 @@ let
         inherit
           terminalKeybind
           terminalStartup
-          terminalWindowRule
+          floatingTerminalWindowRule
           ;
       }
       ''
@@ -77,7 +77,7 @@ in
         description = "Whether niri opens the configured terminal at startup.";
       };
 
-      transientWindowRule.enable = lib.mkOption {
+      floatingWindowRule.enable = lib.mkOption {
         type = lib.types.bool;
         default = terminalCfg.enable;
         description = "Whether niri applies terminal-specific window rules.";

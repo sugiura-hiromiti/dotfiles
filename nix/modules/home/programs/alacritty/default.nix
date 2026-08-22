@@ -24,6 +24,7 @@ in
         terminalProviders = {
           alacritty = {
             package = pkgs.alacritty;
+            appId = "Alacritty";
             mkCommand =
               {
                 appId ? null,

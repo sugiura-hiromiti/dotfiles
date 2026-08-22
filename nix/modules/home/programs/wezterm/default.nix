@@ -24,6 +24,7 @@ in
         terminalProviders = {
           wezterm = {
             package = pkgs.wezterm;
+            appId = "org.wezfurlong.wezterm";
             mkCommand =
               {
                 appId ? null,

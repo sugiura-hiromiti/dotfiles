@@ -24,6 +24,7 @@ in
         terminalProviders = {
           kitty = {
             package = pkgs.kitty;
+            appId = "kitty";
             mkCommand =
               {
                 appId ? null,

@@ -11,7 +11,6 @@ in
     let
       terminalProviderModule = lib.types.submodule {
         options = {
-          program = lib.mkOption { type = lib.types.str; };
           package = lib.mkOption { type = lib.types.package; };
           command = lib.mkOption { type = lib.types.str; };
           appId = lib.mkOption {
@@ -29,6 +28,9 @@ in
           keybindCommand = lib.mkOption {
             type = lib.types.nullOr lib.types.str;
             default = null;
+          };
+          fileChooserCommand = lib.mkOption {
+            type = lib.types.str;
           };
         };
       };
@@ -92,12 +94,12 @@ in
   config =
     let
       providers = config.dotfiles.terminalProviders;
-      selected = providers.${cfg.provider};
+      selected = providers.${cfg.provider} or null;
     in
     lib.mkIf cfg.enable {
       assertions = [
         {
-          assertion = builtins.hasAttr cfg.provider providers;
+          assertion = selected != null;
           message = "unknown terminal provider: ${cfg.provider}";
         }
       ];
@@ -106,10 +108,10 @@ in
           lib.genAttrs cfg.programs (_: {
             enable = lib.mkDefault true;
           })
-          // lib.setAttrByPath [ selected.program "enable" ] true;
+          // lib.setAttrByPath [ cfg.provider "enable" ] true;
         features = {
           terminal = {
-            selected = selected;
+            inherit selected;
           };
         };
       };

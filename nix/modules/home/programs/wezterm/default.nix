@@ -42,15 +42,6 @@ in
               );
           };
         };
-        features = {
-          terminal = {
-            role = {
-              transient = {
-                appId = "dotfiles.terminal.transient";
-              };
-            };
-          };
-        };
       };
     }
     (lib.mkIf cfg.enable {

@@ -8,9 +8,7 @@ let
   cfg = config.dotfiles.programs.niri;
   terminal = config.dotfiles.features.terminal;
   provider = terminal.selected;
-  regularCommand = provider.mkCommand { inherit (terminal.launch.regular) appId; };
-  transientCommand = provider.mkCommand { inherit (terminal.launch.transient) appId; };
-
+  regularCommand = provider.mkCommand { inherit (terminal.role.regular) appId; };
   paths = config.dotfiles.paths;
   terminalCfg = cfg.terminal;
   kdlString = builtins.toJSON;
@@ -19,16 +17,13 @@ let
   terminalStartup = lib.optionalString (
     terminalCfg.enable && terminalCfg.startup.enable
   ) "spawn-at-startup ${shellSpawnArgs regularCommand}";
-  terminalStartupWindowMatch = lib.optionalString (
-    terminalCfg.enable && terminalCfg.startupWindowRule.enable
-  ) "    match at-startup=true app-id=${kdlString (regexFor regularCommand)}";
   terminalWindowRule =
     lib.optionalString
-      (terminalCfg.enable && terminalCfg.windowRule.enable && terminal.launch.transent.appId)
+      (terminalCfg.enable && terminalCfg.windowRule.enable && terminal.role.transient.appId != null)
       (
         lib.concatStringsSep "\n" [
           "window-rule {"
-          "    match app-id=${kdlString (regexFor terminal.launch.transient.appId)}"
+          "    match app-id=${kdlString (regexFor terminal.role.transient.appId)}"
           "    open-floating true"
           "    default-column-width { proportion 0.8; }"
           "    default-window-height { proportion 0.6; }"
@@ -44,7 +39,6 @@ let
         inherit
           terminalKeybind
           terminalStartup
-          terminalStartupWindowMatch
           terminalWindowRule
           ;
       }
@@ -76,44 +70,10 @@ in
         description = "Whether to generate niri integration for the configured terminal provider.";
       };
 
-      appId = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = terminal.appId;
-        defaultText = lib.literalExpression "selected.appId";
-        description = "Application ID matched by niri terminal window rules.";
-      };
-
-      startupAppId = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = terminal.startupAppId;
-        defaultText = lib.literalExpression "selected.startupAppId";
-        description = "Application ID matched by niri startup terminal window rules.";
-      };
-
-      startupCommand = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = terminal.startupCommand;
-        defaultText = lib.literalExpression "selected.startupCommand";
-        description = "Terminal command niri runs at startup.";
-      };
-
-      keybindCommand = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = terminal.keybindCommand;
-        defaultText = lib.literalExpression "selected.keybindCommand";
-        description = "Terminal command niri runs from its terminal key binding.";
-      };
-
       startup.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Whether niri opens the configured terminal at startup.";
-      };
-
-      startupWindowRule.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether niri matches startup terminal windows.";
       };
 
       windowRule.enable = lib.mkOption {
@@ -131,28 +91,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion =
-          !terminalCfg.enable || !terminalCfg.startup.enable || terminalCfg.startupCommand != null;
-        message = "dotfiles.programs.niri.terminal.startup.enable requires dotfiles.programs.niri.terminal.startupCommand.";
-      }
-      {
-        assertion =
-          !terminalCfg.enable || !terminalCfg.startupWindowRule.enable || terminalCfg.startupAppId != null;
-        message = "dotfiles.programs.niri.terminal.startupWindowRule.enable requires dotfiles.programs.niri.terminal.startupAppId.";
-      }
-      {
-        assertion = !terminalCfg.enable || !terminalCfg.windowRule.enable || terminalCfg.appId != null;
-        message = "dotfiles.programs.niri.terminal.windowRule.enable requires dotfiles.programs.niri.terminal.appId.";
-      }
-      {
-        assertion =
-          !terminalCfg.enable || !terminalCfg.keybind.enable || terminalCfg.keybindCommand != null;
-        message = "dotfiles.programs.niri.terminal.keybind.enable requires dotfiles.programs.niri.terminal.keybindCommand.";
-      }
-    ];
-
     xdg.configFile."niri" = {
       source = niriConfig;
       recursive = true;

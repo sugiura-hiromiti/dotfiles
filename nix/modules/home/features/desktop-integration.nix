@@ -9,12 +9,12 @@ let
   terminal = config.dotfiles.features.terminal;
   provider = terminal.selected;
   termCommand = provider.mkCommand {
-    inherit (terminal.launch.transient) appId;
+    inherit (terminal.role.transient) appId;
     wait = true;
   };
   termfilechooserRuntimePath = lib.makeBinPath [
     cfg.termfilechooser.fileManager.package
-    terminal.package
+    provider.package
     pkgs.bash
     pkgs.coreutils
     pkgs.gnused

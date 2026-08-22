@@ -12,7 +12,7 @@ in
       terminalProviderModule = lib.types.submodule {
         options = {
           package = lib.mkOption { type = lib.types.package; };
-          mkCommand = lib.mOption {
+          mkCommand = lib.mkOption {
             type = lib.types.functionTo lib.types.str;
           };
         };
@@ -112,6 +112,11 @@ in
         features = {
           terminal = {
             inherit selected;
+            roel = {
+              transient = {
+                appId = "dotfiles.terminal.transient";
+              };
+            };
           };
         };
       };

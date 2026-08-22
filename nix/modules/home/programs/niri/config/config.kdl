@@ -389,11 +389,6 @@ window-rule {
 	opacity 1.0
 }
 
-window-rule {
-@terminalStartupWindowMatch@
-    match at-startup=true app-id=r#"firefox$"#
-}
-
 @terminalWindowRule@
 
 // Indicate screencasted windows with red colors.

@@ -12,6 +12,7 @@ in
       terminalProviderModule = lib.types.submodule {
         options = {
           package = lib.mkOption { type = lib.types.package; };
+          appId = lib.mkOption { type = lib.types.str; };
           mkCommand = lib.mkOption {
             type = lib.types.functionTo lib.types.str;
           };
@@ -116,7 +117,9 @@ in
               tiled = {
                 appId = "dotfiles.terminal.tiled";
               };
-              floating = { };
+              floating = {
+                appId = selected.appId;
+              };
             };
           };
         };

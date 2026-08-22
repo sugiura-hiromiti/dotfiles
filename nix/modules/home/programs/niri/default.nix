@@ -8,7 +8,7 @@ let
   cfg = config.dotfiles.programs.niri;
   terminal = config.dotfiles.features.terminal;
   provider = terminal.selected;
-  regularCommand = provider.mkCommand { inherit (terminal.role.tiled) appId; };
+  tiledCommand = provider.mkCommand { inherit (terminal.role.tiled) appId; };
   paths = config.dotfiles.paths;
   terminalCfg = cfg.terminal;
   kdlString = builtins.toJSON;
@@ -16,7 +16,7 @@ let
   shellSpawnArgs = command: ''"sh" "-lc" ${kdlString command}'';
   terminalStartup = lib.optionalString (
     terminalCfg.enable && terminalCfg.startup.enable
-  ) "spawn-at-startup ${shellSpawnArgs regularCommand}";
+  ) "spawn-at-startup ${shellSpawnArgs tiledCommand}";
   terminalWindowRule =
     lib.optionalString
       (
@@ -34,7 +34,7 @@ let
       );
   terminalKeybind = lib.optionalString (
     terminalCfg.enable && terminalCfg.keybind.enable
-  ) "    Mod+T hotkey-overlay-title=\"Open a Terminal\" { spawn ${shellSpawnArgs regularCommand}; }";
+  ) "    Mod+T hotkey-overlay-title=\"Open a Terminal\" { spawn ${shellSpawnArgs tiledCommand}; }";
   niriConfig =
     pkgs.runCommandLocal "niri-config"
       {

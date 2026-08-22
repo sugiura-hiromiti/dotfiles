@@ -9,7 +9,6 @@ let
   terminal = config.dotfiles.features.terminal;
   provider = terminal.selected;
   termCommand = provider.mkCommand {
-    inherit (terminal.role.floating) appId;
     wait = true;
   };
   termfilechooserRuntimePath = lib.makeBinPath [

@@ -38,13 +38,6 @@ in
               );
           };
         };
-        terminal = {
-          role = {
-            floating = {
-              appId = "kitty";
-            };
-          };
-        };
       };
     }
     (lib.mkIf cfg.enable {

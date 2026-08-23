@@ -6,6 +6,12 @@
 }:
 let
   cfg = config.dotfiles.features.sessionGui;
+  greeterCommand = lib.escapeShellArgs [
+    (lib.getExe cfg.greeter.package)
+    "--remember"
+    "--cmd"
+    cfg.greeter.sessionCommand
+  ];
 in
 {
   options.dotfiles.features.sessionGui = {
@@ -25,21 +31,11 @@ in
         description = "User that runs the greetd default session.";
       };
 
-      command = lib.mkOption {
+      sessionCommand = lib.mkOption {
         type = lib.types.str;
-        default = ''
-          ${pkgs.tuigreet}/bin/tuigreet \
-          --remember \
-          --cmd ${pkgs.niri}/bin/niri-session
-        '';
-        defaultText = lib.literalExpression ''
-          '''
-            ''${pkgs.tuigreet}/bin/tuigreet \
-            --remember \
-            --cmd ''${pkgs.niri}/bin/niri-session
-          '''
-        '';
-        description = "greetd default session command.";
+        default = "${lib.getExe pkgs.niri}/bin/niri-session";
+        defaultText = lib.literalExpression ''"${pkgs.niri}/bin/niri-session"'';
+        description = "Graphical session command launched by the greeter";
       };
     };
 
@@ -72,12 +68,16 @@ in
           }
         ];
 
-        services.greetd = {
-          enable = true;
-          useTextGreeter = true;
-          settings.default_session = {
-            command = cfg.greeter.command;
-            user = cfg.greeter.user;
+        services = {
+          greetd = {
+            enable = true;
+            useTextGreeter = true;
+            settings = {
+              default_session = {
+                command = greeterCommand;
+                user = cfg.greeter.user;
+              };
+            };
           };
         };
 

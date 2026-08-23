@@ -81,34 +81,29 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable (
-    lib.mkMerge [
-      {
-        home.sessionVariables = {
-          EDITOR = lib.mkDefault emacsEditor;
-          VISUAL = lib.mkDefault emacsEditor;
-        };
+  config = lib.mkIf cfg.enable {
+    home.sessionVariables = {
+      EDITOR = lib.mkDefault emacsEditor;
+      VISUAL = lib.mkDefault emacsEditor;
+    };
 
-        programs.emacs = {
-          enable = lib.mkDefault true;
-          package = lib.mkDefault emacsPackage;
-        };
+    programs.emacs = {
+      enable = lib.mkDefault true;
+      package = lib.mkDefault emacsPackage;
+    };
 
-        services.emacs = {
-          enable = lib.mkDefault true;
-          startWithUserSession = lib.mkDefault false;
-          socketActivation.enable = lib.mkDefault true;
-          client.enable = lib.mkDefault true;
-        };
+    services.emacs = lib.mkif (!pkgs.stdenv.hostPlatform.isDarwin) {
+      enable = lib.mkDefault true;
+      startWithUserSession = lib.mkDefault false;
+      socketActivation.enable = lib.mkDefault true;
+      client.enable = lib.mkDefault true;
+    };
 
-        xdg.configFile = {
-          "emacs/init.el".source = ./config/init.el;
-          "emacs/early-init.el".source = ./config/early-init.el;
-          "emacs/lisp/init-paths.el".text = emacsPathsConfig;
-        }
-        // emacsLispConfigFiles;
-      }
-
-    ]
-  );
+    xdg.configFile = {
+      "emacs/init.el".source = ./config/init.el;
+      "emacs/early-init.el".source = ./config/early-init.el;
+      "emacs/lisp/init-paths.el".text = emacsPathsConfig;
+    }
+    // emacsLispConfigFiles;
+  };
 }

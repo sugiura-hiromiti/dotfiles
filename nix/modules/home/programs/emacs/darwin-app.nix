@@ -180,13 +180,6 @@ let
 
 in
 lib.mkIf (cfg.enable && pkgs.stdenv.hostPlatform.isDarwin) {
-  services = {
-    emacs = {
-      enable = lib.mkForce false;
-      client.enable = lib.mkForce false;
-    };
-  };
-
   home = {
     activation = {
       registerEmacsApp = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

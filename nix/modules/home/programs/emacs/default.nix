@@ -18,13 +18,14 @@ let
       value.source = ./config/lisp + "/${name}";
     }) emacsLispFiles
   );
+  emacsLibFiles=lib.attrNames (lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".el" name) (builtins.readDir ./config/lib/));
   emacsLispLibFiles = lib.listToAttrs (
     map (name: {
       name = "emacs/lib/${name}";
       value = {
         source = ./config/lib + "/${name}";
       };
-    }) (lib.attrNames (builtins.readDir ./config/lib/))
+    }) emacsLibFiles
   );
   emacsPathsConfig = ''
     ;;; -*- lexical-binding: t; -*-
@@ -65,7 +66,7 @@ let
     ]))
   ]);
   configuredEmacsPackage = config.programs.emacs.package;
-  emacsEditor = builtins.toString (
+  emacsEditor = toString (
     lib.getBin (
       pkgs.writeShellScript "emacs-editor" ''
         exec ${configuredEmacsPackage}/bin/emacsclient "''${@:---create-frame}"

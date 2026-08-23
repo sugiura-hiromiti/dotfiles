@@ -2,19 +2,40 @@
   lib,
   pkgs,
   system,
-  currentSystemHosts,
-  currentSystemAccounts,
-  currentSystemHostAliases,
-  currentSystemHostDefaultSessions,
-  currentSystemHostRuntimes,
+  hosts,
+  hostNames,
+  mkTargetConfigEntries,
   targetNames,
-  validThemes,
-  validSessions,
-  homeTargets,
-  nixosTargets,
-  darwinTargets,
 }:
 let
+  metadata = import ./metadata.nix {
+    inherit
+      lib
+      system
+      hosts
+      hostNames
+      mkTargetConfigEntries
+      ;
+  };
+  currentSystemHosts = builtins.attrNames metadata.hosts;
+  currentSystemAccounts = lib.unique (
+    lib.concatMap (host: metadata.hosts.${host}.accounts) currentSystemHosts
+  );
+  currentSystemHostAliases = lib.mapAttrs (_: host: host.aliases) metadata.hosts;
+  currentSystemHostDefaultSessions = lib.mapAttrs (
+    _: host: host.runtime.defaultSession
+  ) metadata.hosts;
+  currentSystemHostRuntimes = lib.mapAttrs (_: host: host.runtime) metadata.hosts;
+  validThemes = lib.unique (
+    lib.concatMap (host: metadata.hosts.${host}.runtime.themes) currentSystemHosts
+  );
+  validSessions = lib.unique (
+    lib.concatMap (host: metadata.hosts.${host}.runtime.sessions) currentSystemHosts
+  );
+  homeTargets = map (target: target.name) metadata.targets.home;
+  nixosTargets = map (target: target.name) metadata.targets.nixos;
+  darwinTargets = map (target: target.name) metadata.targets.darwin;
+
   validHostsArgs = lib.escapeShellArgs currentSystemHosts;
   validAccountsArgs = lib.escapeShellArgs currentSystemAccounts;
   validThemesArgs = lib.escapeShellArgs validThemes;

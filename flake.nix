@@ -49,9 +49,6 @@
         };
       };
     };
-    # neovim-nightly-overlay = {
-    #   url = "github:nix-community/neovim-nightly-overlay";
-    # };
     catppuccin = {
       url = "github:catppuccin/nix";
     };
@@ -74,16 +71,6 @@
         };
       };
     };
-    systems = {
-      url = "github:nix-systems/default";
-    };
-    # paneru = {
-    #   url = "github:karinushka/paneru";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
-    # niri-flake = {
-    #   url = "github:sodiboo/niri-flake";
-    # };
     noctalia = {
       url = "github:noctalia-dev/noctalia/cachix";
     };
@@ -107,17 +94,6 @@
       url = "github:krzysztofdudek/UrdSkill?ref=main";
       flake = false;
     };
-    # zen-browser = {
-    #   url = "github:0xc000022070/zen-browser-flake";
-    #   inputs = {
-    #     nixpkgs = {
-    #       follows = "nixpkgs";
-    #     };
-    #     home-manager = {
-    #       follows = "home-manager";
-    #     };
-    #   };
-    # };
   };
 
   outputs =
@@ -126,12 +102,10 @@
       nixpkgs,
       home-manager,
       nix-darwin,
-      # neovim-nightly-overlay,
       catppuccin,
       nur,
       flake-parts,
       treefmt-nix,
-      systems,
       # paneru,
       # niri-flake,
       noctalia,
@@ -262,12 +236,13 @@
             ./nix/nix-darwin
           ];
         };
+      supportedSystems = lib.unique (map (host: hosts.${host}.system) hostNames);
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         treefmt-nix.flakeModule
       ];
-      systems = import systems;
+      systems = supportedSystems;
       flake = {
         #
         nixosConfigurations = mkTargetConfigs "nixos" nixos-conf;
@@ -285,35 +260,6 @@
           homeTargets = targetConfigNamesForSystem "home" system;
           nixosTargets = targetConfigNamesForSystem "nixos" system;
           darwinTargets = targetConfigNamesForSystem "darwin" system;
-          currentSystemProfileHosts = lib.filter (host: hosts.${host}.system == system) hostNames;
-          currentSystemHosts = map (host: hosts.${host}.targetHost) currentSystemProfileHosts;
-          currentSystemAccounts = lib.unique (
-            lib.concatMap (host: hosts.${host}.accountNames) currentSystemProfileHosts
-          );
-          currentSystemHostAliases = lib.listToAttrs (
-            map (host: {
-              name = hosts.${host}.targetHost;
-              value = hosts.${host}.matchNames;
-            }) currentSystemProfileHosts
-          );
-          currentSystemHostDefaultSessions = lib.listToAttrs (
-            map (host: {
-              name = hosts.${host}.targetHost;
-              value = hosts.${host}.runtime.defaultSession;
-            }) currentSystemProfileHosts
-          );
-          currentSystemHostRuntimes = lib.listToAttrs (
-            map (host: {
-              name = hosts.${host}.targetHost;
-              value = hosts.${host}.runtime;
-            }) currentSystemProfileHosts
-          );
-          validThemes = lib.unique (
-            lib.concatMap (host: hosts.${host}.runtime.themes) currentSystemProfileHosts
-          );
-          validSessions = lib.unique (
-            lib.concatMap (host: hosts.${host}.runtime.sessions) currentSystemProfileHosts
-          );
           formatters = import ./nix/formatters { inherit lib pkgs; };
           repoMaintenancePackages = with pkgs; [
             formatters.editorTools
@@ -327,6 +273,7 @@
             luajitPackages.luarocks
             tree-sitter
           ];
+          inherit (targets) mkTargetConfigEntries;
         in
         {
           treefmt = {
@@ -348,22 +295,15 @@
             };
           };
 
-          apps.update = import ./nix/apps/update.nix {
+          apps.update = import ./nix/apps/update {
             inherit
               lib
               pkgs
               system
-              currentSystemHosts
-              currentSystemAccounts
-              currentSystemHostAliases
-              currentSystemHostDefaultSessions
-              currentSystemHostRuntimes
+              hosts
+              hostNames
+              mkTargetConfigEntries
               targetNames
-              validThemes
-              validSessions
-              homeTargets
-              nixosTargets
-              darwinTargets
               ;
           };
 

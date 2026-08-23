@@ -44,6 +44,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    home = {
+      pointerCursor = {
+        enable = true;
+      };
+    };
     catppuccin = {
       inherit (cfg) autoEnable;
       enable = lib.mkDefault true;

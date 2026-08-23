@@ -1,4 +1,4 @@
-;;; init-ts-test.el --- Tests for structural Tree-sitter navigation -*- lexical-binding: t; -*-
+;;; my-treewalk-test.el --- Tests for structural Tree-sitter navigation -*- lexical-binding: t; -*-
 
 (require 'cl-lib)
 (require 'ert)
@@ -20,7 +20,6 @@
          (or load-file-name buffer-file-name))))
 
 (require 'my-treewalk)
-(require 'init-ts)
 (require 'init-edit)
 
 (defconst my/treesit-treewalk-test--rust-source
@@ -275,6 +274,6 @@
 			(my/meow-treesit-up 2))
 		(should (equal calls '(expand (move 2) cancel)))))
 
-(provide 'init-ts-test)
+(provide 'my-treewalk-test)
 
-;;; init-ts-test.el ends here
+;;; my-treewalk-test.el ends here

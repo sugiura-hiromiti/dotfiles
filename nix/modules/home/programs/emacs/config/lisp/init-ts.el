@@ -1,8 +1,5 @@
 ;;; -*- lexical-binding: t; -*-
 
-(require 'cl-lib)
-(require 'pulse)
-(require 'subr-x)
 (require 'treesit)
 
 (declare-function treesit-available-p "treesit")

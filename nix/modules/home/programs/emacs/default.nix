@@ -18,7 +18,6 @@ let
       value.source = ./config/lisp + "/${name}";
     }) emacsLispFiles
   );
-# TODO: test/は展開されてない気がするが大丈夫なのだろうか
   emacsLispLibFiles = lib.listToAttrs (
     map (name: {
       name = "emacs/lib/${name}";

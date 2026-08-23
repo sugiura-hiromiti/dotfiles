@@ -10,6 +10,8 @@ let
     package:
     let
       executable = package.meta.mainProgram;
+      tokenCommand = lib.escapeShellArgs cfg.mcp.github.tokenCommand;
+      tokenEnvVar = lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar;
     in
     pkgs.symlinkJoin {
       pname = "${package.pname or executable}-with-github-token";
@@ -18,12 +20,10 @@ let
       nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
         wrapProgram "$out/bin/${executable}" --run ${lib.escapeShellArg ''
-           token_env_var=${lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar}
+          token_env_var=${tokenEnvVar}
           if [ -z "$(printenv "$token_env_var")" ]; then
-          token="$(${lib.escapeShellArgs cfg.mcp.github.tokenCommand} 2>/dev/null || true)"
-          if [ -n "$token" ]; then
-          export "$token_env_var=$token"
-          fi
+            token="$(${tokenCommand})"
+            export "$token_env_var=$token"
           fi
         ''}
       '';
@@ -169,7 +169,7 @@ in
               tokenCommand = lib.mkOption {
                 type = (lib.types.listOf lib.types.str);
                 default = [
-                  "${pkgs.gh}/bin/gh"
+                  (lib.getExe pkgs.gh)
                   "auth"
                   "token"
                   "--hostname"

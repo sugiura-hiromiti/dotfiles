@@ -6,7 +6,6 @@
 let
   hostNames = builtins.attrNames metadata.hosts;
   mkEntry = path: value: pkgs.writeTextDir path value;
-  # TODO: 何故必要？markerが必要になる設計は美しいといえるだろうか
   mkMarker = path: mkEntry path "";
   aliasPairs = lib.concatMap (
     hostName:
@@ -32,7 +31,7 @@ let
   ) hostNames;
   homeTargetEntries = map (
     target:
-    mkEntry "targets/home/${target.targetHost}/${target.accontName}/${target.themeName}/${target.sessionName}" target.name
+    mkEntry "targets/home/${target.targetHost}/${target.accountName}/${target.themeName}/${target.sessionName}" target.name
   ) metadata.targets.home;
   mkSystemTargetEntry =
     kind: target:

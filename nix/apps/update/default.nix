@@ -40,7 +40,6 @@ let
   validAccountsArgs = lib.escapeShellArgs currentSystemAccounts;
   validThemesArgs = lib.escapeShellArgs validThemes;
   validSessionsArgs = lib.escapeShellArgs validSessions;
-  validHomeTargetsArgs = lib.escapeShellArgs homeTargets;
   validHostsText = lib.concatStringsSep ", " currentSystemHosts;
   validAccountsText = lib.concatStringsSep ", " currentSystemAccounts;
   validThemesText = lib.concatStringsSep ", " validThemes;
@@ -106,7 +105,7 @@ in
 
           if resolved="$(resolve_host "$candidate")"; then
             printf '%s\n' "$resolved"
-
+            return 0
           fi
         done
 
@@ -323,11 +322,6 @@ in
       fi
 
       home_target="$(home_target_for_host "$target_host")"
-
-      if ! is_member "$home_target" ${validHomeTargetsArgs}; then
-        echo "home configuration is not defined: $home_target" >&2
-        exit 2
-      fi
 
       system_switch=""
       system_target=""

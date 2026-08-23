@@ -1,118 +1,8 @@
 {
-  config,
   lib,
   pkgs,
-  ...
+  config,
 }:
-let
-  cfg = config.dotfiles.features.aiTools;
-  mkGitHubAuthWrappedPackage =
-    package:
-    let
-      executable = package.meta.mainProgram;
-      tokenCommand = lib.escapeShellArgs cfg.mcp.github.tokenCommand;
-      tokenEnvVar = lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar;
-    in
-    pkgs.symlinkJoin {
-      pname = "${package.pname or executable}-with-github-token";
-      version = lib.getVersion package;
-      paths = [ package ];
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      postBuild = ''
-        wrapProgram "$out/bin/${executable}" --run ${lib.escapeShellArg ''
-          token_env_var=${tokenEnvVar}
-          if [ -z "$(printenv "$token_env_var")" ]; then
-            token="$(${tokenCommand})"
-            export "$token_env_var=$token"
-          fi
-        ''}
-      '';
-      inherit (package) meta;
-    };
-  codexPackage = mkGitHubAuthWrappedPackage cfg.codex.package;
-  claudePackage = mkGitHubAuthWrappedPackage cfg.claudeCode.package;
-
-  serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
-  mkSerenaArgs =
-    {
-      context,
-      projectFromCwd ? false,
-    }:
-    [
-      "--from"
-      cfg.mcp.serena.packageSpec
-      "serena"
-      "start-mcp-server"
-      "--context"
-      context
-    ]
-    ++ lib.optionals projectFromCwd [ "--project-from-cwd" ];
-
-  codexMcpServers = {
-    serena = {
-      command = serenaCommand;
-      args = mkSerenaArgs {
-        context = cfg.codex.mcp.serena.context;
-        projectFromCwd = true;
-      };
-      startup_timeout_sec = cfg.codex.mcp.serena.startupTimeoutSec;
-    };
-    github = {
-      url = cfg.mcp.github.url;
-      bearer_token_env_var = cfg.mcp.github.bearerTokenEnvVar;
-    };
-  };
-
-  claudeMcpServers = {
-    serena = {
-      type = "stdio";
-      command = serenaCommand;
-      args = mkSerenaArgs {
-        context = cfg.claudeCode.mcp.serena.context;
-        projectFromCwd = true;
-      };
-    };
-    github = {
-      type = "http";
-      url = cfg.mcp.github.url;
-      headers = {
-        Authorization = "Bearer \${${cfg.mcp.github.bearerTokenEnvVar}}";
-      };
-    };
-  };
-
-  defaultCodexSettings = {
-    model = "gpt-5.6-sol";
-    model_reasoning_effort = "ultra";
-    hide_agent_reasoning = true;
-    network_access = true;
-    approval_policy = "never";
-    sandbox_mode = "workspace-write";
-    features = {
-      web_search_requests = true;
-    };
-    sandbox_workspace_write = {
-      network_access = true;
-    };
-    tui = {
-      notifications = true;
-      status_line = [
-        "model-with-reasoning"
-        "context-remaining"
-        "current-dir"
-      ];
-    };
-    projects = {
-      "${config.home.homeDirectory}/dotfiles/" = {
-        trust_level = "trusted";
-      };
-      "${config.dotfiles.paths.workspaceRoot}/poison_girl/" = {
-        trust_level = "trusted";
-      };
-    };
-    mcp_servers = codexMcpServers;
-  };
-in
 {
   options = {
     dotfiles = {
@@ -266,40 +156,44 @@ in
       };
     };
   };
-  config = lib.mkIf cfg.enable (
-    lib.mkMerge [
-      {
-        dotfiles = {
-          programs = {
-            gh = {
-              enable = true;
+  config =
+    let
+      cfg = config.dotfiles.features.aiTools;
+    in
+    lib.mkIf cfg.enable (
+      lib.mkMerge [
+        {
+          dotfiles = {
+            programs = {
+              gh = {
+                enable = true;
+              };
             };
           };
-        };
-      }
+        }
 
-      (lib.mkIf cfg.agentSkills.enable {
-        home.file.${cfg.agentSkills.target}.source = cfg.agentSkills.source;
-      })
+        (lib.mkIf cfg.agentSkills.enable {
+          home.file.${cfg.agentSkills.target}.source = cfg.agentSkills.source;
+        })
 
-      (lib.mkIf cfg.claudeCode.enable {
-        programs.claude-code = {
-          enable = true;
-          mcpServers = claudeMcpServers;
-          package = claudePackage;
-        };
-      })
+        (lib.mkIf cfg.claudeCode.enable {
+          programs.claude-code = {
+            enable = true;
+            mcpServers = claudeMcpServers;
+            package = claudePackage;
+          };
+        })
 
-      (lib.mkIf cfg.codex.enable {
-        home.packages = lib.optional cfg.codex.acp.enable cfg.codex.acp.package;
+        (lib.mkIf cfg.codex.enable {
+          home.packages = lib.optional cfg.codex.acp.enable cfg.codex.acp.package;
 
-        programs.codex = {
-          enable = true;
-          context = cfg.codex.context;
-          settings = lib.recursiveUpdate defaultCodexSettings cfg.codex.settings;
-          package = codexPackage;
-        };
-      })
-    ]
-  );
+          programs.codex = {
+            enable = true;
+            context = cfg.codex.context;
+            settings = lib.recursiveUpdate defaultCodexSettings cfg.codex.settings;
+            package = codexPackage;
+          };
+        })
+      ]
+    );
 }

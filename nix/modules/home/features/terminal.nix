@@ -36,39 +36,6 @@ in
         features = {
           terminal = {
             enable = lib.mkEnableOption "terminal tools";
-            programs = lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              default = [
-                # "alacritty"
-                "aria2"
-                "bottom"
-                "carapace"
-                "cargo"
-                "direnv"
-                "emacs"
-                "eza"
-                "fd"
-                "fish"
-                "fzf"
-                "gh"
-                # "ghostty"
-                "git"
-                "jujutsu"
-                # "kitty"
-                "lazygit"
-                "nh"
-                "nushell"
-                "nvim"
-                "ripgrep"
-                "ssh"
-                "starship"
-                "translate-shell"
-                # "wezterm"
-                "yazi"
-                "zoxide"
-              ];
-              description = "Repository program modules enabled with the terminal tools feature.";
-            };
             provider = lib.mkOption {
               type = lib.types.str;
               description = "terminal provider to use";
@@ -105,11 +72,7 @@ in
         }
       ];
       dotfiles = {
-        programs =
-          lib.genAttrs cfg.programs (_: {
-            enable = lib.mkDefault true;
-          })
-          // lib.setAttrByPath [ cfg.provider "enable" ] true;
+        programs = lib.setAttrByPath [ cfg.provider "enable" ] true;
         features = {
           terminal = {
             inherit selected;

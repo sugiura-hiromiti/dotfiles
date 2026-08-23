@@ -36,18 +36,27 @@ let
     else
       codexBasePackage;
 
+  serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
+  mkSerenaArgs =
+    {
+      context,
+      projectFromCwd ? false,
+    }:
+    [
+      "--from"
+      cfg.mcp.serena.packageSpec
+      "serena"
+      "start-mcp-server"
+      "--context"
+      context
+    ]
+    ++ lib.optionals projectFromCwd [ "--project-from-cwd" ];
+
   codexMcpServers =
     lib.optionalAttrs cfg.mcp.serena.enable {
       serena = {
-        command = "${cfg.mcp.serena.uvPackage}/bin/uvx";
-        args = [
-          "--from"
-          cfg.mcp.serena.packageSpec
-          "serena"
-          "start-mcp-server"
-          "--context"
-          cfg.codex.mcp.serena.context
-        ];
+        command = serenaCommand;
+        args = mkSerenaArgs { context = cfg.codex.mcp.serena.context; };
         startup_timeout_sec = cfg.codex.mcp.serena.startupTimeoutSec;
       };
     }
@@ -93,16 +102,11 @@ let
     lib.optionalAttrs cfg.mcp.serena.enable {
       serena = {
         type = "stdio";
-        command = "${cfg.mcp.serena.uvPackage}/bin/uvx";
-        args = [
-          "--from"
-          cfg.mcp.serena.packageSpec
-          "serena"
-          "start-mcp-server"
-          "--context"
-          "claude-code"
-          "--project-from-cwd"
-        ];
+        command = serenaCommand;
+        args = mkSerenaArgs {
+          context = cfg.claudeCode.mcp.serena.context;
+          projectFromCwd = true;
+        };
       };
     }
     // lib.optionalAttrs cfg.mcp.github.enable {
@@ -231,6 +235,15 @@ in
               type = lib.types.bool;
               default = true;
               description = "Whether to install Claude Code.";
+            };
+            mcp = {
+              serena = {
+                context = lib.mkOption {
+                  type = lib.types.str;
+                  default = "codex";
+                  description = "Serena context passed to the Codex MCP server.";
+                };
+              };
             };
           };
 

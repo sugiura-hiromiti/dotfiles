@@ -4,28 +4,29 @@
   pkgs,
 }:
 let
-  cfg = config.dotfiles.features.aiTools;
-  aiToolsLib = import ./ai-tools/lib.nix { inherit pkgs lib; };
+  aiToolsCfg = config.dotfiles.features.aiTools;
+  cfg = aiToolsCfg.codex;
+  aiToolsLib = import ./lib.nix { inherit pkgs lib; };
   inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
   codexPackage = mkGitHubAuthWrappedPackage {
-    package = cfg.codex.package;
-    tokenCommand = cfg.mcp.github.tokenCommand;
-    tokenEnvVar = cfg.mcp.github.bearerTokenEnvVar;
+    package = cfg.package;
+    tokenCommand = aiToolsCfg.mcp.github.tokenCommand;
+    tokenEnvVar = aiToolsCfg.mcp.github.bearerTokenEnvVar;
   };
-  serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
+  serenaCommand = "${aiToolsCfg.mcp.serena.uvPackage}/bin/uvx";
   codexMcpServers = {
     serena = {
       command = serenaCommand;
       args = mkSerenaArgs {
-        packageSpec = cfg.mcp.serena.packageSpec;
-        context = cfg.codex.mcp.serena.context;
+        packageSpec = aiToolsCfg.mcp.serena.packageSpec;
+        context = cfg.mcp.serena.context;
         projectFromCwd = true;
       };
-      startup_timeout_sec = cfg.codex.mcp.serena.startupTimeoutSec;
+      startup_timeout_sec = cfg.mcp.serena.startupTimeoutSec;
     };
     github = {
-      url = cfg.mcp.github.url;
-      bearer_token_env_var = cfg.mcp.github.bearerTokenEnvVar;
+      url = aiToolsCfg.mcp.github.url;
+      bearer_token_env_var = aiToolsCfg.mcp.github.bearerTokenEnvVar;
     };
   };
   defaultCodexSettings = {
@@ -59,7 +60,6 @@ let
     };
     mcp_servers = codexMcpServers;
   };
-
 in
 {
   options = {
@@ -128,13 +128,13 @@ in
       };
     };
   };
-  config = {
-    home.packages = lib.optional cfg.codex.acp.enable cfg.codex.acp.package;
+  config = lib.mkIf (aiToolsCfg.enable && cfg.enable) {
+    home.packages = lib.optional cfg.acp.enable cfg.acp.package;
 
     programs.codex = {
       enable = true;
-      context = cfg.codex.context;
-      settings = lib.recursiveUpdate defaultCodexSettings cfg.codex.settings;
+      context = cfg.context;
+      settings = lib.recursiveUpdate defaultCodexSettings cfg.settings;
       package = codexPackage;
     };
   };

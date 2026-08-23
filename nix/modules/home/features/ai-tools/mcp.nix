@@ -33,7 +33,7 @@
                 description = "Environment variable containing the GitHub MCP bearer token.";
               };
               tokenCommand = lib.mkOption {
-                type = (lib.types.listOf lib.types.str);
+                type = lib.types.listOf lib.types.str;
                 default = [
                   (lib.getExe pkgs.gh)
                   "auth"
@@ -41,10 +41,7 @@
                   "--hostname"
                   "github.com"
                 ];
-                description = ''
-                  Command used by the codex and Claude Code wrappers to populate
-                  bearerTokenEnvVar when it is not already set
-                '';
+                description = "Command used to resolve the GitHub MCP bearer token.";
               };
             };
           };

@@ -66,10 +66,19 @@ let
   );
 in
 {
-  options.dotfiles.programs.emacs.enable = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-    description = "Whether to install and configure Emacs.";
+  imports = [ ./darwin-app.nix ];
+  options = {
+    dotfiles = {
+      programs = {
+        emacs = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Whether to install and configure Emacs.";
+          };
+        };
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable (

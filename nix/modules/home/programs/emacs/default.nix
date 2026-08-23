@@ -92,7 +92,7 @@ in
       package = lib.mkDefault emacsPackage;
     };
 
-    services.emacs = lib.mkif (!pkgs.stdenv.hostPlatform.isDarwin) {
+    services.emacs = lib.mkIf (!pkgs.stdenv.hostPlatform.isDarwin) {
       enable = lib.mkDefault true;
       startWithUserSession = lib.mkDefault false;
       socketActivation.enable = lib.mkDefault true;

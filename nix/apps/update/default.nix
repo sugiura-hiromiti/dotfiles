@@ -1,3 +1,4 @@
+# TODO: shell scriptをすべて削除する。nixコードの薄いwrapperのようにする(50行ほどにおさえるのが目標)
 {
   lib,
   pkgs,
@@ -5,7 +6,6 @@
   hosts,
   hostNames,
   mkTargetConfigEntries,
-  targetNames,
 }:
 let
   metadata = import ./metadata.nix {
@@ -17,15 +17,15 @@ let
       mkTargetConfigEntries
       ;
   };
+  lookup = import ./lookup.nix { inherit lib pkgs metadata; };
   currentSystemHosts = builtins.attrNames metadata.hosts;
   currentSystemAccounts = lib.unique (
     lib.concatMap (host: metadata.hosts.${host}.accounts) currentSystemHosts
   );
-  currentSystemHostAliases = lib.mapAttrs (_: host: host.aliases) metadata.hosts;
-  currentSystemHostDefaultSessions = lib.mapAttrs (
-    _: host: host.runtime.defaultSession
-  ) metadata.hosts;
-  currentSystemHostRuntimes = lib.mapAttrs (_: host: host.runtime) metadata.hosts;
+  currentSystemAliases = lib.unique (
+    lib.concatMap (host: metadata.hosts.${host}.aliases) currentSystemHosts
+  );
+  validAliasesArgs = lib.escapeShellArgs currentSystemAliases;
   validThemes = lib.unique (
     lib.concatMap (host: metadata.hosts.${host}.runtime.themes) currentSystemHosts
   );
@@ -41,108 +41,19 @@ let
   validThemesArgs = lib.escapeShellArgs validThemes;
   validSessionsArgs = lib.escapeShellArgs validSessions;
   validHomeTargetsArgs = lib.escapeShellArgs homeTargets;
-  validNixosTargetsArgs = lib.escapeShellArgs nixosTargets;
-  validDarwinTargetsArgs = lib.escapeShellArgs darwinTargets;
   validHostsText = lib.concatStringsSep ", " currentSystemHosts;
   validAccountsText = lib.concatStringsSep ", " currentSystemAccounts;
   validThemesText = lib.concatStringsSep ", " validThemes;
   validSessionsText = lib.concatStringsSep ", " validSessions;
-  homeTargetExample = if homeTargets == [ ] then targetNames.examples.home else lib.head homeTargets;
+  # TODO: example達がなんのためにあるのかを調べる
+  homeTargetExample = lib.optionalString (homeTargets != [ ]) "home target: ${lib.head homeTargets}";
   systemTargetExample =
     if nixosTargets != [ ] then
-      lib.head nixosTargets
+      "system target: ${lib.head nixosTargets}"
     else if darwinTargets != [ ] then
-      lib.head darwinTargets
+      "system target: ${lib.head darwinTargets}"
     else
-      targetNames.examples.system;
-  mkHomeTargetShell =
-    host:
-    targetNames.mkHomeTargetName {
-      targetHost = "$target_host";
-      accountName = "$target_account";
-      themeName = "$theme";
-      sessionName = "$session";
-      inherit (currentSystemHostRuntimes.${host}) targetAxes;
-    };
-  mkSystemTargetShell =
-    host:
-    targetNames.mkSystemTargetName {
-      targetHost = "$target_host";
-      themeName = "$theme";
-      sessionName = "$system_session";
-      inherit (currentSystemHostRuntimes.${host}) targetAxes;
-    };
-  hostDefaultSessionCases = lib.concatStringsSep "\n" (
-    map (host: ''
-      ${lib.escapeShellArg host})
-        printf '%s\n' ${lib.escapeShellArg currentSystemHostDefaultSessions.${host}}
-        return 0
-        ;;
-    '') currentSystemHosts
-  );
-  hostSessionAxisCases = lib.concatStringsSep "\n" (
-    map (
-      host:
-      lib.optionalString currentSystemHostRuntimes.${host}.targetAxes.session ''
-        ${lib.escapeShellArg host})
-          return 0
-          ;;
-      ''
-    ) currentSystemHosts
-  );
-  hostThemeSupportCases = lib.concatStringsSep "\n" (
-    lib.flatten (
-      map (
-        host:
-        map (theme: ''
-          ${lib.escapeShellArg "${host}:${theme}"})
-            return 0
-            ;;
-        '') currentSystemHostRuntimes.${host}.themes
-      ) currentSystemHosts
-    )
-  );
-  hostSessionSupportCases = lib.concatStringsSep "\n" (
-    lib.flatten (
-      map (
-        host:
-        map (session: ''
-          ${lib.escapeShellArg "${host}:${session}"})
-            return 0
-            ;;
-        '') currentSystemHostRuntimes.${host}.sessions
-      ) currentSystemHosts
-    )
-  );
-  homeTargetCases = lib.concatStringsSep "\n" (
-    map (host: ''
-      ${lib.escapeShellArg host})
-        printf '%s\n' "${mkHomeTargetShell host}"
-        return 0
-        ;;
-    '') currentSystemHosts
-  );
-  systemTargetCases = lib.concatStringsSep "\n" (
-    map (host: ''
-      ${lib.escapeShellArg host})
-        printf '%s\n' "${mkSystemTargetShell host}"
-        return 0
-        ;;
-    '') currentSystemHosts
-  );
-  hostAliasCases = lib.concatStringsSep "\n" (
-    lib.flatten (
-      map (
-        host:
-        map (alias: ''
-          ${lib.escapeShellArg alias})
-            printf '%s\n' ${lib.escapeShellArg host}
-            return 0
-            ;;
-        '') currentSystemHostAliases.${host}
-      ) currentSystemHosts
-    )
-  );
+      "";
 in
 {
   type = "app";
@@ -174,6 +85,14 @@ in
         return 1
       }
 
+      resolve_host() {
+        candidate="$1"
+        if ! is_member "$candidate" ${validAliasesArgs}; then
+          return 1
+        fi
+        cat "${lookup}/aliases/$candidate"
+      }
+
       detect_host() {
         for candidate in \
           "''${DOTFILES_HOST:-}" \
@@ -185,64 +104,52 @@ in
             continue
           fi
 
-          case "$candidate" in
-      ${hostAliasCases}
-          esac
+          if resolved="$(resolve_host "$candidate")"; then
+            printf '%s\n' "$resolved"
+
+          fi
         done
 
         echo "could not detect host for ${system}; pass --host explicitly" >&2
         return 1
       }
-
       default_session_for_host() {
-        case "$1" in
-      ${hostDefaultSessionCases}
-        esac
+        path="${lookup}/hosts/$1/default-session"
 
+        if [ ! -f "$path" ]; then
         echo "could not find default session for host: $1" >&2
         return 1
+      fi
+
+      cat "$path"
       }
-
       host_has_session_axis() {
-        case "$1" in
-      ${hostSessionAxisCases}
-        esac
-
-        return 1
+        [ -e "${lookup}/hosts/$1/session-axis" ]
       }
 
       host_supports_theme() {
-        case "$1:$2" in
-      ${hostThemeSupportCases}
-        esac
-
-        return 1
+        [ -e "${lookup}/hosts/$1/themes/$2" ]
       }
 
       host_supports_session() {
-        case "$1:$2" in
-      ${hostSessionSupportCases}
-        esac
-
-        return 1
+        [ -e "${lookup}/hosts/$1/sessions/$2" ]
       }
 
       home_target_for_host() {
-        case "$1" in
-      ${homeTargetCases}
-        esac
-
-        echo "could not build home target for host: $1" >&2
-        return 1
+        path="${lookup}/targets/home/$1/$target_account/$theme/$session"
+        if [ ! -f "$path" ]; then
+          echo "home configuration is not defined for $1" >&2
+          return 1
+        fi
+        cat "$path"
       }
 
       system_target_for_host() {
-        case "$1" in
-      ${systemTargetCases}
-        esac
-
-        echo "could not build system target for host: $1" >&2
-        return 1
+        kind="$1"
+        host="$2"
+        path="${lookup}/targets/$kind/$host/$theme/$system_session"
+        [ -f "$path" ] || return 1
+        cat "$path"
       }
 
       target_host=""
@@ -416,7 +323,6 @@ in
       fi
 
       home_target="$(home_target_for_host "$target_host")"
-      system_target="$(system_target_for_host "$target_host")"
 
       if ! is_member "$home_target" ${validHomeTargetsArgs}; then
         echo "home configuration is not defined: $home_target" >&2
@@ -424,12 +330,14 @@ in
       fi
 
       system_switch=""
+      system_target=""
+
       if [ "$(uname)" = "Darwin" ]; then
-        if is_member "$system_target" ${validDarwinTargetsArgs}; then
+        if system_target="$(system_target_for_host darwin "$target_host")"; then
           system_switch="darwin"
         fi
       elif [ -r /etc/os-release ] && grep -qi nixos /etc/os-release; then
-        if is_member "$system_target" ${validNixosTargetsArgs}; then
+        if system_target="$(system_target_for_host nixos "$target_host")"; then
           system_switch="nixos"
         fi
       fi

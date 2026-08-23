@@ -7,6 +7,8 @@
     }:
     let
       executable = package.meta.mainProgram;
+      escapedTokenCommand = lib.escapeShellArgs tokenCommand;
+      escapedTokenEnvVar = lib.escapeShellArg tokenEnvVar;
     in
     pkgs.symlinkJoin {
       pname = "${package.pname or executable}-with-github-token";
@@ -15,9 +17,9 @@
       nativeBuildInputs = [ pkgs.makeWrapper ];
       postBuild = ''
         wrapProgram "$out/bin/${executable}" --run ${lib.escapeShellArg ''
-          token_env_var=${tokenEnvVar}
+          token_env_var=${escapedTokenEnvVar}
           if [ -z "$(printenv "$token_env_var")" ]; then
-            token="$(${tokenCommand})"
+            token="$(${escapedTokenCommand})"
             export "$token_env_var=$token"
           fi
         ''}

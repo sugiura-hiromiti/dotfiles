@@ -6,7 +6,7 @@
 let
   aiToolsConfig = config.dotfiles.features.aiTools;
   cfg = aiToolsConfig.claudeCode;
-  aiToolsLib = import ./ai-tools/lib.nix { inherit pkgs lib; };
+  aiToolsLib = import ./lib.nix { inherit pkgs lib; };
   inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
 
   claudePackage = mkGitHubAuthWrappedPackage {

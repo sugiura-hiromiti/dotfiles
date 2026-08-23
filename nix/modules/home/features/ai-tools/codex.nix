@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  ...
 }:
 let
   aiToolsCfg = config.dotfiles.features.aiTools;
@@ -9,7 +10,7 @@ let
   aiToolsLib = import ./lib.nix { inherit pkgs lib; };
   inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
   codexPackage = mkGitHubAuthWrappedPackage {
-    package = cfg.package;
+    inherit (cfg) package;
     tokenCommand = aiToolsCfg.mcp.github.tokenCommand;
     tokenEnvVar = aiToolsCfg.mcp.github.bearerTokenEnvVar;
   };
@@ -133,7 +134,7 @@ in
 
     programs.codex = {
       enable = true;
-      context = cfg.context;
+      inherit (cfg) context;
       settings = lib.recursiveUpdate defaultCodexSettings cfg.settings;
       package = codexPackage;
     };

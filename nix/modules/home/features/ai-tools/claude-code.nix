@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  ...
 }:
 let
   aiToolsConfig = config.dotfiles.features.aiTools;
@@ -10,7 +11,7 @@ let
   inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
 
   claudePackage = mkGitHubAuthWrappedPackage {
-    package = cfg.package;
+    inherit (cfg) package;
     tokenCommand = aiToolsConfig.mcp.github.tokenCommand;
     tokenEnvVar = aiToolsConfig.mcp.github.bearerTokenEnvVar;
   };

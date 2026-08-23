@@ -65,7 +65,7 @@ in
       };
     };
   };
-  config = {
+  config = lib.mkIf (cfg.enable && cfg.portal.enable) {
     xdg = {
       portal = {
         enable = lib.mkDefault true;

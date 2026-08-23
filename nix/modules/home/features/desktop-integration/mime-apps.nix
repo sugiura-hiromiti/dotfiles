@@ -39,7 +39,7 @@ in
     };
   };
 
-  config = {
+  config = lib.mkIf (cfg.enable && cfg.mimeApps.enable) {
     xdg = {
       mimeApps = {
         enable = true;

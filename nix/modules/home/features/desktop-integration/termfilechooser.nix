@@ -52,7 +52,7 @@ in
       };
     };
   };
-  config = {
+  config = lib.mkIf (cfg.enable && cfg.termfilechooser.enable) {
     xdg = {
       configFile."xdg-desktop-portal-termfilechooser/config".text = ''
         [filechooser]

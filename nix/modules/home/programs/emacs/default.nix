@@ -18,7 +18,11 @@ let
       value.source = ./config/lisp + "/${name}";
     }) emacsLispFiles
   );
-  emacsLibFiles=lib.attrNames (lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".el" name) (builtins.readDir ./config/lib/));
+  emacsLibFiles = lib.attrNames (
+    lib.filterAttrs (name: type: type == "regular" && lib.hasSuffix ".el" name) (
+      builtins.readDir ./config/lib
+    )
+  );
   emacsLispLibFiles = lib.listToAttrs (
     map (name: {
       name = "emacs/lib/${name}";
@@ -113,6 +117,7 @@ in
       "emacs/early-init.el".source = ./config/early-init.el;
       "emacs/lisp/init-paths.el".text = emacsPathsConfig;
     }
-    // emacsLispConfigFiles // emacsLispLibFiles;
+    // emacsLispConfigFiles
+    // emacsLispLibFiles;
   };
 }

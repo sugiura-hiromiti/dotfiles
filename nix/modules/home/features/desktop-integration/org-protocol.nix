@@ -30,7 +30,7 @@ in
       };
     };
   };
-  config = {
+  config = lib.mkIf (cfg.enable && cfg.orgProtocol.enable) {
     xdg = {
       desktopEntries.org-protocol = {
         name = "org-protocol";

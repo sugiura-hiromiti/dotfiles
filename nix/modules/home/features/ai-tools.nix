@@ -6,10 +6,6 @@
 }:
 let
   cfg = config.dotfiles.features.aiTools;
-  codexBasePackage = if cfg.codex.package == null then pkgs.codex else cfg.codex.package;
-  claudeBasePackage =
-    if cfg.claudeCode.pacage == null then pkgs.claude-code else cfg.claudeCode.package;
-  shouldWrapCodex = cfg.mcp.github.enable && cfg.mcp.github.tokenCommand != null;
   mkGitHubAuthWrappedPackage =
     { package }:
     let
@@ -35,10 +31,10 @@ let
     };
   # TODO: そもそもwrapする必要が在るのか再考
   codexPackage = mkGitHubAuthWrappedPackage {
-    package = codexBasePackage;
+    package = cfg.codex.package;
   };
   claudePackage = mkGitHubAuthWrappedPackage {
-    package = claudeBasePackage;
+    package = cfg.claudeCode.package;
   };
 
   serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
@@ -57,45 +53,38 @@ let
     ]
     ++ lib.optionals projectFromCwd [ "--project-from-cwd" ];
 
-  codexMcpServers =
-    lib.optionalAttrs cfg.mcp.serena.enable {
-      serena = {
-        command = serenaCommand;
-        args = mkSerenaArgs {
-          context = cfg.codex.mcp.serena.context;
-          projectFromCwd = true;
-        };
-        startup_timeout_sec = cfg.codex.mcp.serena.startupTimeoutSec;
+  codexMcpServers = {
+    serena = {
+      command = serenaCommand;
+      args = mkSerenaArgs {
+        context = cfg.codex.mcp.serena.context;
+        projectFromCwd = true;
       };
-    }
-    // lib.optionalAttrs cfg.mcp.github.enable {
-      github = {
-        url = cfg.mcp.github.url;
-        bearer_token_env_var = cfg.mcp.github.bearerTokenEnvVar;
+      startup_timeout_sec = cfg.codex.mcp.serena.startupTimeoutSec;
+    };
+    github = {
+      url = cfg.mcp.github.url;
+      bearer_token_env_var = cfg.mcp.github.bearerTokenEnvVar;
+    };
+  };
+
+  claudeMcpServers = {
+    serena = {
+      type = "stdio";
+      command = serenaCommand;
+      args = mkSerenaArgs {
+        context = cfg.claudeCode.mcp.serena.context;
+        projectFromCwd = true;
       };
     };
-
-  claudeMcpServers =
-    lib.optionalAttrs cfg.mcp.serena.enable {
-      serena = {
-        type = "stdio";
-        command = serenaCommand;
-        args = mkSerenaArgs {
-          context = cfg.claudeCode.mcp.serena.context;
-          projectFromCwd = true;
-        };
+    github = {
+      type = "http";
+      url = cfg.mcp.github.url;
+      headers = {
+        Authorization = "Bearer \${${cfg.mcp.github.bearerTokenEnvVar}}";
       };
-    }
-    // lib.optionalAttrs cfg.mcp.github.enable {
-      github = {
-        type = "http";
-        url = cfg.mcp.github.url;
-        headers = {
-          Authorization = "Bearer \${${cfg.mcp.github.bearerTokenEnvVar}}";
-        };
-      };
-
     };
+  };
 
   defaultCodexSettings = {
     model = "gpt-5.6-sol";
@@ -206,6 +195,12 @@ in
               default = true;
               description = "Whether to install Claude Code.";
             };
+            package = lib.mkOption {
+              type = lib.types.package;
+              default = pkgs.claude-code;
+              defaultText = lib.literalExpression "pkgs.claude-code";
+              description = "Claude Code package";
+            };
             mcp = {
               serena = {
                 context = lib.mkOption {
@@ -225,8 +220,8 @@ in
             };
 
             package = lib.mkOption {
-              type = lib.types.nullOr lib.types.package;
-              default = null;
+              type = lib.types.package;
+              default = pkgs.codex;
               description = "Codex package. Null uses the Home Manager default.";
             };
 
@@ -299,6 +294,7 @@ in
         programs.claude-code = {
           enable = true;
           mcpServers = claudeMcpServers;
+          package = claudePackage;
         };
       })
 
@@ -309,8 +305,6 @@ in
           enable = true;
           context = cfg.codex.context;
           settings = lib.recursiveUpdate defaultCodexSettings cfg.codex.settings;
-        }
-        // lib.optionalAttrs (shouldWrapCodex || cfg.codex.package != null) {
           package = codexPackage;
         };
       })

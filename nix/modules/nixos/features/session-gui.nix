@@ -33,8 +33,8 @@ in
 
       sessionCommand = lib.mkOption {
         type = lib.types.str;
-        default = "${lib.getExe pkgs.niri}/bin/niri-session";
-        defaultText = lib.literalExpression ''"${pkgs.niri}/bin/niri-session"'';
+        default = "${lib.getExe' pkgs.niri "niri-session"}";
+        defaultText = lib.literalExpression ''lib.getExe' pkgs.niri "niri-session"'';
         description = "Graphical session command launched by the greeter";
       };
     };

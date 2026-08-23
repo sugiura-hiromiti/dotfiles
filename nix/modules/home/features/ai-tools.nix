@@ -6,47 +6,12 @@
 }:
 let
   cfg = config.dotfiles.features.aiTools;
-  mkGitHubAuthWrappedPackage =
-    package:
-    let
-      executable = package.meta.mainProgram;
-      tokenCommand = lib.escapeShellArgs cfg.mcp.github.tokenCommand;
-      tokenEnvVar = lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar;
-    in
-    pkgs.symlinkJoin {
-      pname = "${package.pname or executable}-with-github-token";
-      version = lib.getVersion package;
-      paths = [ package ];
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      postBuild = ''
-        wrapProgram "$out/bin/${executable}" --run ${lib.escapeShellArg ''
-          token_env_var=${tokenEnvVar}
-          if [ -z "$(printenv "$token_env_var")" ]; then
-            token="$(${tokenCommand})"
-            export "$token_env_var=$token"
-          fi
-        ''}
-      '';
-      inherit (package) meta;
-    };
+  aiToolsLib = import ./ai-tools/lib.nix { inherit pkgs lib; };
+  inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
   codexPackage = mkGitHubAuthWrappedPackage cfg.codex.package;
   claudePackage = mkGitHubAuthWrappedPackage cfg.claudeCode.package;
 
   serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
-  mkSerenaArgs =
-    {
-      context,
-      projectFromCwd ? false,
-    }:
-    [
-      "--from"
-      cfg.mcp.serena.packageSpec
-      "serena"
-      "start-mcp-server"
-      "--context"
-      context
-    ]
-    ++ lib.optionals projectFromCwd [ "--project-from-cwd" ];
 
   codexMcpServers = {
     serena = {

@@ -244,7 +244,7 @@ in
                 context = lib.mkOption {
                   type = lib.types.str;
                   default = "claude-code";
-                  description = "Serena context passed to the Codex MCP server.";
+                  description = "Serena context passed to the ClaudeCode MCP server.";
                 };
               };
             };

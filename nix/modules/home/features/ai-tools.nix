@@ -56,7 +56,10 @@ let
     lib.optionalAttrs cfg.mcp.serena.enable {
       serena = {
         command = serenaCommand;
-        args = mkSerenaArgs { context = cfg.codex.mcp.serena.context; };
+        args = mkSerenaArgs {
+          context = cfg.codex.mcp.serena.context;
+          projectFromCwd = true;
+        };
         startup_timeout_sec = cfg.codex.mcp.serena.startupTimeoutSec;
       };
     }
@@ -240,7 +243,7 @@ in
               serena = {
                 context = lib.mkOption {
                   type = lib.types.str;
-                  default = "codex";
+                  default = "claude-code";
                   description = "Serena context passed to the Codex MCP server.";
                 };
               };

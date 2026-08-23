@@ -8,33 +8,38 @@ let
   cfg = config.dotfiles.features.aiTools;
   codexBasePackage = if cfg.codex.package == null then pkgs.codex else cfg.codex.package;
   shouldWrapCodex = cfg.mcp.github.enable && cfg.mcp.github.tokenCommand != null;
-  # TODO: そもそもwrapする必要が在るのか再考
-  codexPackage =
-    if shouldWrapCodex then
-      pkgs.symlinkJoin {
-        pname = "${codexBasePackage.pname or "codex"}-with-github-token";
-        version = codexBasePackage.version or (lib.getVersion codexBasePackage);
-        paths = [ codexBasePackage ];
-        nativeBuildInputs = [ pkgs.makeWrapper ];
-        postBuild =
-          let
-            tokenCommand = lib.escapeShellArgs cfg.mcp.github.tokenCommand;
-            tokenEnvVar = lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar;
-          in
-          ''
-            wrapProgram $out/bin/codex --run ${lib.escapeShellArg ''
-              token_env_var=${tokenEnvVar}
-              if [ -z "$(printenv "$token_env_var")" ]; then
-                token="$(${tokenCommand} 2>/dev/null || true)"
-                if [ -n "$token" ]; then
-                  export "$token_env_var=$token"
-                fi
-              fi
-            ''}
-          '';
-      }
+  mkGitHubAuthWrappedPackage =
+    { package, executable }:
+    if !cfg.mcp.github.enable || cfg.github.tokenCommand == null then
+      package
     else
-      codexBasePackage;
+      pkgs.symlinkJoin {
+        pname = "${package.pname or executable}-with-github-token";
+        version = lib.getVersion package;
+        paths = [ package ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          wrapProgram "$out/bin/${executable}" --run ${lib.escapeShellArg ''
+             token_env_var=${lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar}
+            if [ -z "$(printenv "$token_env_var")"]; then
+            token="$(${lib.escapeShellArgs github.tokenCommand} 2>/dev/null || true)"
+            if [ -n "$token" ]; then
+            export "$token_env_var=$token"
+            fi
+            fi
+          ''}
+        '';
+        inherit (package) meta;
+      };
+  # TODO: そもそもwrapする必要が在るのか再考
+  codexPackage = mkGitHubAuthWrappedPackage {
+    package = codexBasePackage;
+    executable = "codex";
+  };
+  claudePackage = mkGitHubAuthWrappedPackage {
+    package = claudeBasePackage;
+    executable = "claude";
+  };
 
   serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
   mkSerenaArgs =
@@ -70,37 +75,6 @@ let
       };
     };
 
-  claudeGitHubAuth =
-    if cfg.mcp.github.tokenCommand == null then
-      {
-        headers.Authorization = lib.concatStrings [
-          "Bearer "
-          "$"
-          "{"
-          cfg.mcp.github.bearerTokenEnvVar
-          "}"
-        ];
-      }
-    else
-      {
-        headersHelper = "${pkgs.writeShellScript "claude-github-mcp-headers" ''
-          set -eu
-
-          token_env_var=${lib.escapeShellArg cfg.mcp.github.bearerTokenEnvVar}
-          token="$(printenv "$token_env_var" 2>/dev/null || true)"
-          if [ -z "$token" ]; then
-            token="$(${lib.escapeShellArgs cfg.mcp.github.tokenCommand})"
-          fi
-          if [ -z "$token" ]; then
-            echo "GitHub MCP token is empty" >&2
-            exit 1
-          fi
-
-          exec ${lib.getExe pkgs.jq} -nc --arg token "$token" \
-            '{ Authorization: ("Bearer " + $token) }'
-        ''}";
-      };
-
   claudeMcpServers =
     lib.optionalAttrs cfg.mcp.serena.enable {
       serena = {
@@ -116,8 +90,11 @@ let
       github = {
         type = "http";
         url = cfg.mcp.github.url;
-      }
-      // claudeGitHubAuth;
+        headers = {
+          Authorization = "Bearer \${${cfg.mcp.github.bearerTokenEnvVar}}";
+        };
+      };
+
     };
 
   defaultCodexSettings = {

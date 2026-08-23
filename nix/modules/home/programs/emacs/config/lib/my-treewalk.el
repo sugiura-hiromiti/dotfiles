@@ -1,5 +1,10 @@
 ;;; -*- lexical-binding: t; -*-
 
+(require 'cl-lib)
+(require 'pulse)
+(require 'subr-x)
+(require 'treesit)
+
 (defgroup my/treesit-treewalk nil
 	"Tree-sitterとインデントを使った構造移動。"
 	:group 'editing)

@@ -18,6 +18,15 @@ let
       value.source = ./config/lisp + "/${name}";
     }) emacsLispFiles
   );
+# TODO: test/は展開されてない気がするが大丈夫なのだろうか
+  emacsLispLibFiles = lib.listToAttrs (
+    map (name: {
+      name = "emacs/lib/${name}";
+      value = {
+        source = ./config/lib + "/${name}";
+      };
+    }) (lib.attrNames (builtins.readDir ./config/lib/))
+  );
   emacsPathsConfig = ''
     ;;; -*- lexical-binding: t; -*-
     ;; Generated from dotfiles.paths by Home Manager.
@@ -104,6 +113,6 @@ in
       "emacs/early-init.el".source = ./config/early-init.el;
       "emacs/lisp/init-paths.el".text = emacsPathsConfig;
     }
-    // emacsLispConfigFiles;
+    // emacsLispConfigFiles // emacsLispLibFiles;
   };
 }

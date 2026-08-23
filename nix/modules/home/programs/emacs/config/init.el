@@ -1,11 +1,12 @@
 ;;; -*- lexical-binding: t; -*-
 
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(add-to-list 'load-path (expand-file-name "lib" user-emacs-directory))
 (let* ((state-home (or (getenv "XDG_STATE_HOME")
-                       (expand-file-name ".local/state" (getenv "HOME"))))
-       (custom-dir (expand-file-name "emacs" state-home)))
-  (make-directory custom-dir t)
-  (setq custom-file (expand-file-name "custom.el" custom-dir)))
+                      (expand-file-name ".local/state" (getenv "HOME"))))
+			(custom-dir (expand-file-name "emacs" state-home)))
+	(make-directory custom-dir t)
+	(setq custom-file (expand-file-name "custom.el" custom-dir)))
 (when (file-exists-p custom-file)
 	(load custom-file nil 'nomessage))
 

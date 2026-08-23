@@ -13,6 +13,13 @@
 		"../lisp"
 		(file-name-directory (or load-file-name buffer-file-name))))
 
+(add-to-list 'load-path
+   (expand-file-name
+      "../lib"
+      (file-name-directory
+         (or load-file-name buffer-file-name))))
+
+(require 'my-treewalk)
 (require 'init-ts)
 (require 'init-edit)
 
@@ -33,14 +40,14 @@
 	(declare (indent 0) (debug t))
 	`(progn
 		 (skip-unless
-			(and (treesit-available-p)
-			     (treesit-language-available-p 'rust)))
+			 (and (treesit-available-p)
+			    (treesit-language-available-p 'rust)))
 		 (with-temp-buffer
 			 (insert ,source)
 			 (treesit-parser-create 'rust)
 			 (goto-char (point-min))
 			 (let ((my/treesit-treewalk-pulse nil))
-				,@body))))
+				 ,@body))))
 
 (defmacro my/treesit-treewalk-test--with-rust-buffer (&rest body)
 	"標準fixtureとRust parserを持つ一時bufferでBODYを実行する。"
@@ -66,7 +73,7 @@
 		(my/treesit-treewalk-in)
 		(should (= (line-number-at-pos) 2))
 		(should (equal (my/treesit-treewalk-test--current-node-type)
-		               "let_declaration"))
+		           "let_declaration"))
 
 		(my/treesit-treewalk-down)
 		(should (= (line-number-at-pos) 3))
@@ -89,12 +96,12 @@
 		(my/treesit-treewalk-out)
 		(should (= (line-number-at-pos) 1))
 		(should (equal (my/treesit-treewalk-test--current-node-type)
-		               "function_item"))
+		           "function_item"))
 
 		(my/treesit-treewalk-down)
 		(should (= (line-number-at-pos) 9))
 		(should (equal (my/treesit-treewalk-test--current-node-type)
-		               "function_item"))))
+		           "function_item"))))
 
 (ert-deftest my/treesit-treewalk-test-prefix-count ()
 	(my/treesit-treewalk-test--with-rust-buffer
@@ -143,16 +150,16 @@
 		(my/treesit-treewalk-test--goto-line 4)
 		(search-forward "three")
 		(should (equal (treesit-node-text
-							(my/treesit-treewalk--anchor-node
-							 (my/treesit-treewalk--current-anchor)))
-		               "two"))
+								(my/treesit-treewalk--anchor-node
+									(my/treesit-treewalk--current-anchor)))
+		           "two"))
 
 		(my/treesit-treewalk-down)
 		(should (= (line-number-at-pos) 5))
 		(should (equal (treesit-node-text
-							(my/treesit-treewalk--anchor-node
-							 (my/treesit-treewalk--current-anchor)))
-		               "four"))))
+								(my/treesit-treewalk--anchor-node
+									(my/treesit-treewalk--current-anchor)))
+		           "four"))))
 
 (ert-deftest my/treesit-treewalk-test-falls-back-without-parser ()
 	(with-temp-buffer
@@ -178,11 +185,11 @@
 (ert-deftest my/treesit-treewalk-test-multiple-languages ()
 	(let ((fixtures
 				'((lua
-					 "function outer()\n  local alpha = 1\n  local omega = 2\nend\n"
-					 2 3)
-				  (nix "let\n  alpha = 1;\n  omega = 2;\nin alpha\n" 2 3)
-				  (haskell "module Main where\n\nalpha = 1\nomega = 2\n" 3 4)))
-	      (tested 0))
+					  "function outer()\n  local alpha = 1\n  local omega = 2\nend\n"
+					  2 3)
+					 (nix "let\n  alpha = 1;\n  omega = 2;\nin alpha\n" 2 3)
+					 (haskell "module Main where\n\nalpha = 1\nomega = 2\n" 3 4)))
+	        (tested 0))
 		(dolist (fixture fixtures)
 			(pcase-let ((`(,language ,source ,from ,expected) fixture))
 				(when (treesit-language-available-p language)
@@ -202,69 +209,69 @@
 		(backward-char)
 		(let ((bounds (my/treesit-treewalk-node-bounds)))
 			(should (equal (buffer-substring-no-properties
-								(car bounds) (cdr bounds))
-			               "alpha"))
+									(car bounds) (cdr bounds))
+			           "alpha"))
 			(goto-char (cdr bounds))
 			(set-mark (car bounds))
 			(activate-mark))
 
 		(let ((previous (cons (region-beginning) (region-end)))
-		      bounds)
+		        bounds)
 			(while (setq bounds (my/treesit-treewalk-node-bounds))
 				(should (or (< (car bounds) (car previous))
-				            (> (cdr bounds) (cdr previous))))
+				           (> (cdr bounds) (cdr previous))))
 				(setq previous bounds)
 				(goto-char (cdr bounds))
 				(set-mark (car bounds))
 				(activate-mark))
 			(should (equal (buffer-substring-no-properties
-								(car previous) (cdr previous))
-			               "fn outer() {\n    let alpha = 1;\n    if alpha > 0 {\n        println!(\"yes\");\n    }\n    let omega = 2;\n}")))))
+									(car previous) (cdr previous))
+			           "fn outer() {\n    let alpha = 1;\n    if alpha > 0 {\n        println!(\"yes\");\n    }\n    let omega = 2;\n}")))))
 
 (ert-deftest my/treesit-treewalk-test-meow-selection-dispatch ()
 	(let (calls)
 		(cl-letf (((symbol-function 'my/treesit-treewalk-available-p)
-					 (lambda () t))
-					((symbol-function 'use-region-p) (lambda () t))
-					((symbol-function 'meow-bounds-of-thing)
-					 (lambda (thing) (push (list 'expand thing) calls)))
-					((symbol-function 'meow-pop-selection)
-					 (lambda () (interactive) (push 'contract calls))))
+						 (lambda () t))
+						((symbol-function 'use-region-p) (lambda () t))
+						((symbol-function 'meow-bounds-of-thing)
+							(lambda (thing) (push (list 'expand thing) calls)))
+						((symbol-function 'meow-pop-selection)
+							(lambda () (interactive) (push 'contract calls))))
 			(call-interactively #'my/meow-treesit-expand)
 			(call-interactively #'my/meow-treesit-contract))
 		(should (equal calls '(contract (expand 110)))))
 
 	(let (calls)
 		(cl-letf (((symbol-function 'my/treesit-treewalk-available-p)
-					 (lambda () nil))
-					((symbol-function 'puni-expand-region)
-					 (lambda () (interactive) (push 'puni calls)))
-					((symbol-function 'meow-grab)
-					 (lambda () (interactive) (push 'grab calls))))
+						 (lambda () nil))
+						((symbol-function 'puni-expand-region)
+							(lambda () (interactive) (push 'puni calls)))
+						((symbol-function 'meow-grab)
+							(lambda () (interactive) (push 'grab calls))))
 			(call-interactively #'my/meow-treesit-expand)
 			(call-interactively #'my/meow-treesit-contract))
 		(should (equal calls '(grab puni))))
 
 	(let (calls)
 		(cl-letf (((symbol-function 'my/treesit-treewalk-available-p)
-					 (lambda () t))
-					((symbol-function 'use-region-p) (lambda () nil))
-					((symbol-function 'meow-grab)
-					 (lambda () (interactive) (push 'grab calls))))
+						 (lambda () t))
+						((symbol-function 'use-region-p) (lambda () nil))
+						((symbol-function 'meow-grab)
+							(lambda () (interactive) (push 'grab calls))))
 			(call-interactively #'my/meow-treesit-contract))
 		(should (equal calls '(grab)))))
 
 (ert-deftest my/treesit-treewalk-test-meow-movement-syncs-selection ()
 	(let (calls)
 		(cl-letf (((symbol-function 'use-region-p) (lambda () t))
-					((symbol-function 'my/treesit-treewalk-available-p)
-					 (lambda () t))
-					((symbol-function 'meow-cancel-selection)
-					 (lambda () (push 'cancel calls)))
-					((symbol-function 'my/treesit-treewalk-up)
-					 (lambda (count) (push (list 'move count) calls)))
-					((symbol-function 'my/meow-treesit-expand)
-					 (lambda () (push 'expand calls))))
+						((symbol-function 'my/treesit-treewalk-available-p)
+							(lambda () t))
+						((symbol-function 'meow-cancel-selection)
+							(lambda () (push 'cancel calls)))
+						((symbol-function 'my/treesit-treewalk-up)
+							(lambda (count) (push (list 'move count) calls)))
+						((symbol-function 'my/meow-treesit-expand)
+							(lambda () (push 'expand calls))))
 			(my/meow-treesit-up 2))
 		(should (equal calls '(expand (move 2) cancel)))))
 

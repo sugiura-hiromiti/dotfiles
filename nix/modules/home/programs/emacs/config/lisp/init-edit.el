@@ -5,12 +5,8 @@
 (declare-function meow-grab "meow-command")
 (declare-function meow-pop-selection "meow-command")
 (declare-function meow-thing-register "meow-thing")
-(declare-function my/treesit-treewalk-available-p "init-ts")
-(declare-function my/treesit-treewalk-node-bounds "init-ts")
-(declare-function my/treesit-treewalk-down "init-ts")
-(declare-function my/treesit-treewalk-in "init-ts")
-(declare-function my/treesit-treewalk-out "init-ts")
-(declare-function my/treesit-treewalk-up "init-ts")
+
+(require 'my-treewalk)
 
 (use-package puni :init (puni-global-mode))
 

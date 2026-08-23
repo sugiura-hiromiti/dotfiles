@@ -5,6 +5,8 @@
   ...
 }:
 let
+  cfg = config.dotfiles.programs.emacs;
+  configuredEmacsPackage = config.programs.emacs.package;
   emacsApp = "${configuredEmacsPackage}/Applications/Emacs.app";
   emacsAppExecutable = "${emacsApp}/Contents/MacOS/Emacs";
   emacsInitDirectory = "${config.xdg.configHome}/emacs";
@@ -177,7 +179,7 @@ let
   lsregister = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
 
 in
-{
+lib.mkIf (cfg.enable && pkgs.stdenv.hostPlatform.isDarwin) {
   services = {
     emacs = {
       enable = lib.mkForce false;

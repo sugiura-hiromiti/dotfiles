@@ -35,7 +35,7 @@ in
         };
         features = {
           terminal = {
-            enable = lib.mkEnableOption "terminal tools";
+            enable = lib.mkEnableOption "terminal emulator";
             provider = lib.mkOption {
               type = lib.types.str;
               description = "terminal provider to use";

@@ -1,7 +1,6 @@
 { lib, ... }:
 let
-  programs = [
-    # "alacritty"
+  cliPrograms = [
     "aria2"
     "bottom"
     "carapace"
@@ -13,11 +12,8 @@ let
     "fish"
     "fzf"
     "gh"
-    # "ghostty"
     "git"
     "jujutsu"
-    # "kitty"
-    "lazygit"
     "nh"
     "nushell"
     "nvim"
@@ -25,14 +21,13 @@ let
     "ssh"
     "starship"
     "translate-shell"
-    # "wezterm"
     "yazi"
     "zoxide"
   ];
 in
 {
   dotfiles = {
-    programs = lib.genAttrs programs (_: {
+    programs = lib.genAttrs cliPrograms (_: {
       enable = lib.mkDefault true;
     });
   };

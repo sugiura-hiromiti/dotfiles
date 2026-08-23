@@ -8,8 +8,16 @@ let
   cfg = config.dotfiles.features.aiTools;
   aiToolsLib = import ./ai-tools/lib.nix { inherit pkgs lib; };
   inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
-  codexPackage = mkGitHubAuthWrappedPackage cfg.codex.package;
-  claudePackage = mkGitHubAuthWrappedPackage cfg.claudeCode.package;
+  codexPackage = mkGitHubAuthWrappedPackage {
+    package = cfg.codex.package;
+    tokenCommand = cfg.mcp.github.tokenCommand;
+    tokenEnvVar = cfg.mcp.github.bearerTokenEnvVar;
+  };
+  claudePackage = mkGitHubAuthWrappedPackage {
+    package = cfg.claudeCode.package;
+    tokenCommand = cfg.mcp.github.tokenCommand;
+    tokenEnvVar = cfg.mcp.github.bearerTokenEnvVar;
+  };
 
   serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
 
@@ -17,6 +25,7 @@ let
     serena = {
       command = serenaCommand;
       args = mkSerenaArgs {
+        packageSpec = cfg.mcp.serena.packageSpec;
         context = cfg.codex.mcp.serena.context;
         projectFromCwd = true;
       };
@@ -33,6 +42,7 @@ let
       type = "stdio";
       command = serenaCommand;
       args = mkSerenaArgs {
+        packageSpec = cfg.mcp.serena.packageSpec;
         context = cfg.claudeCode.mcp.serena.context;
         projectFromCwd = true;
       };

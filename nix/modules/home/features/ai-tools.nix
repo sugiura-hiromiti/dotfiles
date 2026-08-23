@@ -7,7 +7,7 @@
 let
   cfg = config.dotfiles.features.aiTools;
   mkGitHubAuthWrappedPackage =
-    { package }:
+    package:
     let
       executable = package.meta.mainProgram;
     in
@@ -30,12 +30,8 @@ let
       inherit (package) meta;
     };
   # TODO: そもそもwrapする必要が在るのか再考
-  codexPackage = mkGitHubAuthWrappedPackage {
-    package = cfg.codex.package;
-  };
-  claudePackage = mkGitHubAuthWrappedPackage {
-    package = cfg.claudeCode.package;
-  };
+  codexPackage = mkGitHubAuthWrappedPackage cfg.codex.package;
+  claudePackage = mkGitHubAuthWrappedPackage cfg.claudeCode.package;
 
   serenaCommand = "${cfg.mcp.serena.uvPackage}/bin/uvx";
   mkSerenaArgs =
@@ -115,8 +111,6 @@ let
         trust_level = "trusted";
       };
     };
-  }
-  // lib.optionalAttrs (codexMcpServers != { }) {
     mcp_servers = codexMcpServers;
   };
 in
@@ -182,9 +176,8 @@ in
                   "github.com"
                 ];
                 description = ''
-                  Command used by the Codex wrapper and Claude Code headers helper to
-                  populate bearerTokenEnvVar when it is not already set. Null disables
-                  automatic token lookup.
+                  Command used by the codex and Claude Code wrappers to populate
+                  bearerTokenEnvVar when it is not already set
                 '';
               };
             };
@@ -206,7 +199,7 @@ in
                 context = lib.mkOption {
                   type = lib.types.str;
                   default = "claude-code";
-                  description = "Serena context passed to the ClaudeCode MCP server.";
+                  description = "Serena context passed to the Claude Code MCP server.";
                 };
               };
             };
@@ -222,7 +215,7 @@ in
             package = lib.mkOption {
               type = lib.types.package;
               default = pkgs.codex;
-              description = "Codex package. Null uses the Home Manager default.";
+              description = "Codex package.";
             };
 
             context = lib.mkOption {
@@ -280,7 +273,7 @@ in
         dotfiles = {
           programs = {
             gh = {
-              enable = lib.mkDefault true;
+              enable = true;
             };
           };
         };

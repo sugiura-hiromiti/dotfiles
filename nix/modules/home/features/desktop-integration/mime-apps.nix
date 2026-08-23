@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   config,
   ...
 }:
@@ -46,7 +45,5 @@ in
         defaultApplications = cfg.mimeApps.defaultApplications;
       };
     };
-  }
-
-  ;
+  };
 }

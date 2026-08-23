@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   config,
   ...
 }:
@@ -31,6 +30,13 @@ in
     };
   };
   config = lib.mkIf (cfg.enable && cfg.orgProtocol.enable) {
+    assertions = [
+      {
+        # TODO: このへんは自動で有効無効にして欲しい
+        assertion = !cfg.orgProtocol.enable || config.programs.emacs.enable;
+        message = "dotfiles.features.desktopIntegration.orgProtocol requires programs.emacs.enable.";
+      }
+    ];
     xdg = {
       desktopEntries.org-protocol = {
         name = "org-protocol";

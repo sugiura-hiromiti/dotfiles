@@ -34,7 +34,7 @@ let
   darwinConfigNames = targetConfigNames.darwin or [ ];
 in
 {
-  deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --no-lambda-pattern-names --fail .";
+  deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --fail .";
   statix = mkLintCheck "statix" pkgs.statix "statix check .";
 }
 // mkBuildChecks "home" homeConfigNames (

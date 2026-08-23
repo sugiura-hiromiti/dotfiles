@@ -29,11 +29,6 @@ in
         assertion = pkgs.stdenv.hostPlatform.isLinux;
         message = "dotfiles.features.desktopIntegration is Linux-only.";
       }
-      {
-        # TODO: このへんは自動で有効無効にして欲しい
-        assertion = !cfg.orgProtocol.enable || config.programs.emacs.enable;
-        message = "dotfiles.features.desktopIntegration.orgProtocol requires programs.emacs.enable.";
-      }
     ];
   };
 }

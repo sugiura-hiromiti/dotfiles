@@ -38,7 +38,7 @@ let
   };
   linuxRunner = "ubuntu-24.04-arm";
   linuxPlatform = "aarch64-linux";
-  darwinRunner = "";
+  darwinRunner = "macos-14";
   darwinPlatform = "aarch64-darwin";
 in
 {
@@ -85,7 +85,7 @@ in
               name = "Build representative darwin targets";
               run = ''
                 nix build \
-                  ".#checks.${darwinPlatform}.build-nixos-${darwinSystemTarget}" \
+                  ".#checks.${darwinPlatform}.build-darwin-${darwinSystemTarget}" \
                   ".#checks.${darwinPlatform}.build-home-${darwinHomeTarget}" \
                   --no-write-lock-file
               '';

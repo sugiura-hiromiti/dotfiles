@@ -12,6 +12,8 @@ in
   # Generated completions are kept as-is; formatter output is not stable.
   settings.global.excludes = [
     "nix/modules/home/programs/fish/config/completions/**"
+    # actions.nix is the sole owner
+    ".github/workflows/**"
   ];
 
   programs = {

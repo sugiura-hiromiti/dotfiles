@@ -87,5 +87,12 @@ in
         };
       };
     };
+    ".github/workflows/drift.yml" = {
+      name = "Check drift on generated workflows";
+      run = ''
+        nix run .#render-workflows
+        git diff --exit-code -- .github/workflows
+      '';
+    };
   };
 }

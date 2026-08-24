@@ -71,9 +71,6 @@
         };
       };
     };
-    noctalia = {
-      url = "github:noctalia-dev/noctalia/cachix";
-    };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs = {
@@ -119,7 +116,6 @@
       treefmt-nix,
       # paneru,
       # niri-flake,
-      noctalia,
       nix-index-database,
       i-have-adhd,
       interview-me,
@@ -222,7 +218,6 @@
             ./nix/home
             catppuccin.homeModules.catppuccin
             # paneru.homeModules.paneru
-            noctalia.homeModules.default
             nix-index-database.homeModules.default
             # zen-browser.homeModules.twilight
           ];
@@ -319,7 +314,6 @@
               hosts
               hostNames
               mkTargetConfigEntries
-              targetNames
               ;
           };
 

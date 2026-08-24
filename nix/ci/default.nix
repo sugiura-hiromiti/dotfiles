@@ -32,6 +32,9 @@ let
 
   checkout = {
     uses = "actions/checkout@v6";
+    "with" = {
+      persist-credentials = false;
+    };
   };
   installNix = {
     uses = "cachix/install-nix-action@v31";
@@ -47,6 +50,9 @@ in
   workflows = {
     ".github/workflows/full-build.yml" = {
       name = "Full build";
+      permissions = {
+        contents = "read";
+      };
 
       on = {
         schedule = [
@@ -95,7 +101,9 @@ in
     };
     ".github/workflows/ci.yml" = {
       name = "CI";
-
+      permissions = {
+        contents = "read";
+      };
       on = {
         push.branches = [ "main" ];
         pull_request = { };

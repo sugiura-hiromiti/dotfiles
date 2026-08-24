@@ -15,9 +15,25 @@ jobs:
           --all-systems \
           --no-build \
           --no-write-lock-file
+  lint:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v6
+    - uses: cachix/install-nix-action@v31
+    - name: Deadnix
+      run: nix build .#checks.aarch64-linux.deadnix --no-write-lock-file
+    - name: Statix
+      run: nix build .#checks.aarch64-linux.statix --no-write-lock-file
+    - name: Treefmt
+      run: nix fmt -- --ci
+    - name: Check generated workflows
+      run: |-
+        nix run .#render-workflows
+        git diff --exit-code -- .github/workflows
   smoke-linux:
     needs:
     - eval
+    - lint
     runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v6

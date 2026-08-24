@@ -40,6 +40,7 @@ let
   linuxPlatform = "aarch64-linux";
 in
 {
+  useJJ = true;
   workflows = {
     ".github/workflows/ci.yml" = {
       name = "CI";

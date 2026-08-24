@@ -36,6 +36,7 @@ let
   installNix = {
     uses = "cachix/install-nix-action@v31";
   };
+
   linuxRunner = "ubuntu-24.04-arm";
   linuxPlatform = "aarch64-linux";
   darwinRunner = "macos-14";
@@ -44,6 +45,54 @@ in
 {
   useJJ = true;
   workflows = {
+    ".github/workflows/full-build.yml" = {
+      name = "Full build";
+
+      on = {
+        schedule = [
+          {
+            # 03:00 JST
+            cron = "0 18 * * *";
+          }
+        ];
+        workflow_dispatch = { };
+      };
+      jobs = {
+        linux = {
+          runs-on = linuxRunner;
+
+          steps = [
+            checkout
+            installNix
+            {
+              name = "Build all Linux targets";
+              run = ''
+                nix flake check \
+                  --no-write-lock-file \
+                  --print-build-logs
+              '';
+            }
+          ];
+        };
+
+        darwin = {
+          runs-on = darwinRunner;
+
+          steps = [
+            checkout
+            installNix
+            {
+              name = "Build all Darwin targets";
+              run = ''
+                nix flake check \
+                  --no-write-lock-file \
+                  --print-build-logs
+              '';
+            }
+          ];
+        };
+      };
+    };
     ".github/workflows/ci.yml" = {
       name = "CI";
 

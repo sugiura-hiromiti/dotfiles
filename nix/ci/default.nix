@@ -44,12 +44,22 @@ let
   linuxPlatform = "aarch64-linux";
   darwinRunner = "macos-14";
   darwinPlatform = "aarch64-darwin";
+  concurrency = {
+    group = "\${{ github.workflow }}-\${{ github.ref }}";
+    cancel-in-progress = true;
+  };
 in
 {
   useJJ = true;
+  defaultValues = {
+    jobs = {
+      timeout-minutes = 45;
+    };
+  };
   workflows = {
     ".github/workflows/full-build.yml" = {
       name = "Full build";
+      inherit concurrency;
       permissions = {
         contents = "read";
       };
@@ -67,6 +77,7 @@ in
         linux = {
           runs-on = linuxRunner;
 
+          timeout-minutes = 120;
           steps = [
             checkout
             installNix
@@ -83,6 +94,7 @@ in
 
         darwin = {
           runs-on = darwinRunner;
+          timeout-minutes = 120;
 
           steps = [
             checkout
@@ -100,6 +112,7 @@ in
       };
     };
     ".github/workflows/ci.yml" = {
+      inherit concurrency;
       name = "CI";
       permissions = {
         contents = "read";

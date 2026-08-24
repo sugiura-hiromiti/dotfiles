@@ -3,11 +3,16 @@
 # (typically under flake.actions-nix.workflows.".github/workflows/ci.yml") and run:
 #   nix run .#render-workflows
 # Or commit to trigger the pre-commit hook if enabled.
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
 jobs:
   eval:
     runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - uses: cachix/install-nix-action@v31
     - name: Evaluate
       run: |-
@@ -15,10 +20,13 @@ jobs:
           --all-systems \
           --no-build \
           --no-write-lock-file
+    timeout-minutes: 45
   lint:
     runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - uses: cachix/install-nix-action@v31
     - name: Deadnix
       run: nix build .#checks.aarch64-linux.deadnix --no-write-lock-file
@@ -30,20 +38,24 @@ jobs:
       run: |-
         nix run .#render-workflows
         git diff --exit-code -- .github/workflows
+    timeout-minutes: 45
   smoke-darwin:
     needs:
     - eval
     - lint
-    runs-on: ''
+    runs-on: macos-14
     steps:
     - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - uses: cachix/install-nix-action@v31
     - name: Build representative darwin targets
       run: |-
         nix build \
-          ".#checks.aarch64-darwin.build-nixos-aarch64-darwin-a--theme-light" \
+          ".#checks.aarch64-darwin.build-darwin-aarch64-darwin-a--theme-light" \
           ".#checks.aarch64-darwin.build-home-aarch64-darwin-a--account-a--theme-light" \
           --no-write-lock-file
+    timeout-minutes: 45
   smoke-linux:
     needs:
     - eval
@@ -51,6 +63,8 @@ jobs:
     runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
     - uses: cachix/install-nix-action@v31
     - name: Build representative Linux targets
       run: |-
@@ -58,6 +72,7 @@ jobs:
           ".#checks.aarch64-linux.build-nixos-aarch64-linux-a--theme-light--session-gui" \
           ".#checks.aarch64-linux.build-home-aarch64-linux-a--account-a--theme-light--session-gui" \
           --no-write-lock-file
+    timeout-minutes: 45
 name: CI
 'on':
   pull_request: {}
@@ -65,3 +80,5 @@ name: CI
     branches:
     - main
   workflow_dispatch: {}
+permissions:
+  contents: read

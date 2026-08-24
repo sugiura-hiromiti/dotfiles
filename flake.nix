@@ -94,6 +94,9 @@
       url = "github:krzysztofdudek/UrdSkill?ref=main";
       flake = false;
     };
+    actions-nix = {
+      url = "github:nialov/actions.nix";
+    };
   };
 
   outputs =
@@ -114,6 +117,7 @@
       interview-me,
       urd,
       # zen-browser,
+      actions-nix,
     }:
     let
       inherit (nixpkgs) lib;
@@ -241,10 +245,14 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         treefmt-nix.flakeModule
+        actions-nix.flakeModules.default
       ];
       systems = supportedSystems;
       flake = {
-        #
+        actions-nix = import ./nix/ci {
+          inherit hosts lib;
+          inherit (targets) mkTargetConfigEntries;
+        };
         nixosConfigurations = mkTargetConfigs "nixos" nixos-conf;
         homeConfigurations = mkTargetConfigs "home" hm-conf;
         darwinConfigurations = mkTargetConfigs "darwin" darwin-conf;

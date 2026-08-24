@@ -38,6 +38,12 @@ let
     mkEntry "targets/${kind}/${target.targetHost}/${target.themeName}/${target.sessionName}" target.name;
   nixosTargetEntries = map (mkSystemTargetEntry "nixos") metadata.targets.nixos;
   darwinTargetEntries = map (mkSystemTargetEntry "darwin") metadata.targets.darwin;
+
+  # TODO: そもそもaliasってなんだ？
+  # TODO: ２重に定義するのではなくすでにある設定から検出できるようにしたい
+  aliases = [ ];
+  hosts = [ ];
+  themes = [ ];
 in
 assert lib.assertMsg (
   builtins.length aliasNames == builtins.length (lib.unique aliasNames)

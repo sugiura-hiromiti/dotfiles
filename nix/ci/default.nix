@@ -38,6 +38,8 @@ let
   };
   linuxRunner = "ubuntu-24.04-arm";
   linuxPlatform = "aarch64-linux";
+  darwinRunner = "";
+  darwinPlatform = "aarch64-darwin";
 in
 {
   useJJ = true;
@@ -69,7 +71,27 @@ in
             }
           ];
         };
+        smoke-darwin = {
+          runs-on = darwinRunner;
+          needs = [
+            "eval"
+            "lint"
+          ];
 
+          steps = [
+            checkout
+            installNix
+            {
+              name = "Build representative darwin targets";
+              run = ''
+                nix build \
+                  ".#checks.${darwinPlatform}.build-nixos-${darwinSystemTarget}" \
+                  ".#checks.${darwinPlatform}.build-home-${darwinHomeTarget}" \
+                  --no-write-lock-file
+              '';
+            }
+          ];
+        };
         smoke-linux = {
           runs-on = linuxRunner;
           needs = [

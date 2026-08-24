@@ -1,1 +1,7 @@
-{ hosts, targetNames, ... }: { }
+{
+  hosts,
+  lib,
+  mkTargetConfigEntries,
+  ...
+}:
+{ }

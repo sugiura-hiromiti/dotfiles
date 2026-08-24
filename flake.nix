@@ -96,6 +96,14 @@
     };
     actions-nix = {
       url = "github:nialov/actions.nix";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+        flake-parts = {
+          follows = "flake-parts";
+        };
+      };
     };
   };
 

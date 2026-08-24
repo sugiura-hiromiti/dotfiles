@@ -36,6 +36,8 @@ let
   installNix = {
     uses = "cachix/install-nix-action@v31";
   };
+  linuxRunner = "ubuntu-24.04-arm";
+  linuxPlatform = "aarch64-linux";
 in
 {
   workflows = {
@@ -50,7 +52,7 @@ in
 
       jobs = {
         eval = {
-          runs-on = "ubuntu-24.04-arm";
+          runs-on = linuxRunner;
 
           steps = [
             checkout
@@ -68,8 +70,11 @@ in
         };
 
         smoke-linux = {
-          runs-on = "ubuntu-24.04-arm";
-          needs = [ "eval" ];
+          runs-on = linuxRunner;
+          needs = [
+            "eval"
+            "lint"
+          ];
 
           steps = [
             checkout
@@ -78,21 +83,42 @@ in
               name = "Build representative Linux targets";
               run = ''
                 nix build \
-                  ".#checks.aarch64-linux.build-nixos-${linuxNixosTarget}" \
-                  ".#checks.aarch64-linux.build-home-${linuxHomeTarget}" \
+                  ".#checks.${linuxPlatform}.build-nixos-${linuxNixosTarget}" \
+                  ".#checks.${linuxPlatform}.build-home-${linuxHomeTarget}" \
                   --no-write-lock-file
               '';
             }
           ];
         };
+        lint = {
+          runs-on = linuxRunner;
+          steps = [
+            checkout
+            installNix
+            {
+              name = "Deadnix";
+              run = "nix build .#checks.${linuxPlatform}.deadnix --no-write-lock-file";
+            }
+
+            {
+              name = "Statix";
+              run = "nix build .#checks.${linuxPlatform}.statix --no-write-lock-file";
+            }
+
+            {
+              name = "Treefmt";
+              run = "nix fmt -- --ci";
+            }
+            {
+              name = "Check generated workflows";
+              run = ''
+                nix run .#render-workflows
+                git diff --exit-code -- .github/workflows
+              '';
+            }
+          ];
+        };
       };
-    };
-    ".github/workflows/drift.yml" = {
-      name = "Check drift on generated workflows";
-      run = ''
-        nix run .#render-workflows
-        git diff --exit-code -- .github/workflows
-      '';
     };
   };
 }

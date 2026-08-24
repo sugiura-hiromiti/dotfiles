@@ -17,8 +17,17 @@ let
       ) (mkTargetConfigEntries target);
     in
     assert lib.assertMsg (
-      builtins.length.matches == 1
+      builtins.length matches == 1
     ) "Expected exactly one default ${target} target for ${hostName}";
     (lib.head matches).name;
+
+  linuxHost = "aarch64-linux-a";
+  darwinHost = "aarch64-darwin-a";
+
+  linuxNisosTarget = defaultTarget "nixos" linuxHost;
+  linuxHomeTarget = defaultTarget "home" linuxHost;
+
+  darwinNisosTarget = defaultTarget "darwin" darwinHost;
+  darwinHomeTarget = defaultTarget "home" darwinHost;
 in
 { }

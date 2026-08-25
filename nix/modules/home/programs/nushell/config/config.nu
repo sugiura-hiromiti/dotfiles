@@ -11,23 +11,30 @@ if (sys host | get name) == "Darwin" {
 }
 
 $env.config.buffer_editor = ($env.EDITOR? | default 'emacsclient')
+
 $env.WALLPAPER_DIR = ($env.DOTFILES_WALLPAPER_DIR? | default $'($env.HOME)/Downloads/media/wallpapers')
+
 $env.XDG_CONFIG_HOME = $'($env.HOME)/.config'
+
 $env.path = ($env.path | prepend $'($env.HOME)/.cargo/bin')
+
 $env.config.hooks.env_change.PWD = ( $env.config.hooks.env_change.PWD? | default [] | append { code: { |_,_|
 	let rslt = s
 	print $rslt
 }} )
+
 $env.config.hooks.pre_prompt = (
 	$env.config.hooks.pre_prompt?
 	| default []
 	| append {|| print -n "\u{1b}]133;A\u{7}"}
 )
+
 $env.config.hooks.pre_execution = (
 	$env.config.hooks.pre_execution?
 	| default []
 	| append {|| print -n "\u{1b}]133;C\u{7}"}
 )
+
 # $env.config.hooks.post_execution = (
 # 	$env.config.hooks.post_execution?
 # 	| default []
@@ -40,10 +47,13 @@ $env.config.completions = {
 	algorithm: 'fuzzy'
 	external: {enable: true, max_results: 200, completer: null}
 }
+
 $env.config.footer_mode = 'always'
 
 alias n = nvim
+
 alias e = emacsclient -n -r
+
 alias wh = which -a
 
 # def fzl_cliphist [] {
@@ -66,11 +76,15 @@ alias wh = which -a
 def hour [] {
 	date now | format date '%H' | into int
 }
+
 def auto_theme [] {
 	hour | if 6 < $in and 18 > $in { set_theme light } else { set_theme dark }
 }
+
 def "set_theme dark" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-dark"' }
+
 def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-light"' }
+
 # def rw [] {
 # 	let files = (ls $env.WALLPAPER_DIR | where type == file | get name)
 # 	let idx = random int ..(($files | length) - 1)
@@ -79,6 +93,7 @@ def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme
 # }
 def --wrapped u [...args: string] {
 	use std/dirs
+
 	let flake_roots = (
 		[
 			$'($env.HOME)/dotfiles'
@@ -87,11 +102,15 @@ def --wrapped u [...args: string] {
 		]
 		| where {|candidate| (($'($candidate)/flake.nix' | path type) == "file") }
 	)
+
 	if ($flake_roots | is-empty) {
 		error make {msg: "could not find dotfiles flake"}
 	}
+
 	let flake_root = $flake_roots | first
+
 	let current_nix_config = $env.NIX_CONFIG? | default ""
+
 	let update_nix_config = (
 		[$current_nix_config "access-tokens ="]
 		| where {|line| $line != "" }
@@ -99,6 +118,7 @@ def --wrapped u [...args: string] {
 	)
 
 	dirs add $flake_root
+
 	try {
 		with-env { NIX_CONFIG: $update_nix_config } {
 			sudo -v
@@ -106,8 +126,10 @@ def --wrapped u [...args: string] {
 		}
 	} catch {|err|
 		dirs drop
+
 		error make $err
 	}
+
 	dirs drop
 }
 
@@ -161,5 +183,6 @@ def --wrapped u [...args: string] {
 
 def s [glob?] {
 	let glob = $glob | default "."
+
 	ls -al $glob | select type name mode size num_links modified
 }

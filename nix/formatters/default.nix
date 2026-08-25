@@ -67,6 +67,8 @@ let
     builtins.toJSON {
       indent = 3;
       indent_char = "tab";
+      line_length = 80;
+      margin = 1;
     }
   );
 in

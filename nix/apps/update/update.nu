@@ -14,7 +14,9 @@ def main [
 	--system-session: string
 ] {
 	let plan = open $PLAN
+
 	let account = $account | default (whoami | str trim)
+
 	let hostname = (sys host).hostname
 
 	let candidates = if $host != null {
@@ -40,16 +42,20 @@ def main [
 	}
 
 	let host_plan = $plan.hosts | key $host
+
 	let theme = $theme | default (
   		$plan.themeByHour | get (date now | format date "%H")
 	)
+
 	let mode = if (
 		 (($env.WAYLAND_DISPLAY? | default "") != "")
 		 or (($env.DISPLAY? | default "") != "")
 		 ) { "gui" } else { "tty" }
 
 	let session = $session | default ($host_plan.autoSession | get $mode)
+
 	let system_session = $system_session | default $host_plan.defaultSession
+
 	let home = (
 		 $plan.targets.home
 		 | key $host $account $theme $session
@@ -73,7 +79,7 @@ def main [
 		null
 	} else {
 		$plan.targets
-		| key $host_plan.systemKind $host $theme $system_session
+		| key $system_kind $host $theme $system_session
 	}
 
 	if $system_kind != null and $system == null {
@@ -82,9 +88,14 @@ def main [
 
 	# TODO: path:修飾やめたい
 	let flake = $"path:(pwd)"
+
 	let lock = pwd | path join "flake.lock"
+
 	let tmp = (mktemp -d)
+
 	let candidate = $tmp | path join "flake.lock"
+
+	let targets = [$home $system] | compact
 
 	try {
 		(exec-plan
@@ -94,28 +105,24 @@ def main [
 			"--output-lock-file"
 			$candidate
 		)
-		(exec-plan
-			$plan.commands.eval
-			"--reference-lock-file"
-			$candidate
-			$"($flake)#($home.eval)"
-		) | ignore
-		if $system != null {
+
+		for target in $targets {
 			(exec-plan
 				$plan.commands.eval
 				"--reference-lock-file"
-				$candidate
-				$"($flake)#($system.eval)"
-			) | ignore
-			if not ($system.authorize | is-empty) {
-				exec-plan $system.authorize
+				$candidate $"($flake)#($target.eval)") | ignore
+		}
+
+		for target in targets {
+			if not ($target.authorize | is-empty) {
+				exec-plan $target.authorize
 			}
 		}
 
 		cp $candidate $lock
-		exec-plan $home.switch $"($flake)#($home.name)"
-		if $system != null {
-			exec-plan $system.switch $"($flake)#($system.name)"
+
+		for target in $targets {
+			exec-plan $target.switch $"($flake)#($target.name)"
 		}
 	} finally {
 		rm -rf $tmp

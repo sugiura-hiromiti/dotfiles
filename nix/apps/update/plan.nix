@@ -128,10 +128,10 @@ let
       ;
     aliases = lib.listToAttrs aliasPairs;
     hosts = lib.mapAttrs (hostName: host: {
-      defaultSession = host.runtime.defaultSession;
+      inherit (host) defaultSession;
       autoSession = {
-        gui = if host.runtime.targetAxes.session then "gui" else host.runtime.defaultSession;
-        tty = if host.runtime.targetAxes.session then "tty" else host.runtime.defaultSession;
+        gui = if host.targetAxes.session then "gui" else host.defaultSession;
+        tty = if host.targetAxes.session then "tty" else host.defaultSession;
       };
       systemKind = systemKindFor hostName;
     }) metadata.hosts;

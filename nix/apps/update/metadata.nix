@@ -26,12 +26,9 @@ in
         name = host.targetHost;
         value = {
           aliases = host.matchNames;
-          runtime = {
-            inherit (host.runtime)
-              defaultSession
-              targetAxes
-              ;
-          };
+          defaultSession = host.runtime.defaultSession;
+          # TODO: targetAxesってそもそも何？
+          hasSessionAxis = host.runtime.targetAxes.session;
         };
       }
     ) currentHostNames

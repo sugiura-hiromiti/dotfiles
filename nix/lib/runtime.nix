@@ -39,8 +39,10 @@ let
       inherit (sessionContext) session hasGui;
       inherit themeName sessionName;
       inherit themeProfiles sessionProfiles;
-      hostVariants = hostConfig.variants;
-      inherit (hostConfig) variants;
+      accountRoles = [ ];
+      accountVariants = [ ];
+      effectiveRoles = hostConfig.hostRoles;
+      effectiveVariants = hostConfig.hostVariants;
       runtime = runtimeConfig;
     };
   mkDefaultRuntimeConfig =

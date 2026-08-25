@@ -27,7 +27,6 @@ in
         value = {
           aliases = host.matchNames;
           defaultSession = host.runtime.defaultSession;
-          # TODO: targetAxesってそもそも何？
           hasSessionAxis = host.runtime.targetAxes.session;
         };
       }

@@ -187,17 +187,21 @@
             hasGui
             host
             hostName
-            roles
             session
             system
             targetHost
             theme
             themeProfiles
-            variants
             sessionProfiles
+
+            hostRoles
+            accountRoles
+            effectiveRoles
+
+            hostVariants
+            accountVariants
+            effectiveVariants
             ;
-          accountVariants = config.accountVariants or [ ];
-          hostVariants = config.hostVariants or config.variants or [ ];
         }
         // lib.optionalAttrs (config ? account) {
           inherit (config) account;

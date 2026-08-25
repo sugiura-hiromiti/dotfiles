@@ -30,8 +30,8 @@ let
       # hostName: OS/network hostname configured inside the target system.
       hostName = meta.hostName or host;
       targetHost = meta.targetHost or host;
-      roles = meta.roles or [ ];
-      variants = meta.variants or [ ];
+      hostRoles = meta.roles or [ ];
+      hostVariants = meta.variants or [ ];
       targets = meta.targets or [ "home" ];
       accountsMeta =
         assert lib.assertMsg (meta ? accounts) "Host '${host}' must define accounts";
@@ -150,8 +150,8 @@ let
         primaryAccountName
         primaryAccount
         matchNames
-        roles
-        variants
+        hostRoles
+        hostVariants
         targets
         runtime
         ;

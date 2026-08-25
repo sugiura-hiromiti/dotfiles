@@ -271,6 +271,7 @@ alist used when creating the tab."
 	;; Global binding
 	(keymap-global-set "C-," #'my/toggle-popup-tab))
 
+;; TODO: 何故か現在動かないので治す
 (use-package agent-shell
 	:bind (:map agent-shell-mode-map
 				("RET" . newline)

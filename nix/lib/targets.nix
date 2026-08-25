@@ -34,10 +34,10 @@ let
         inherit (config.runtime) targetAxes;
       };
       inherit account accountName;
-      roles = config.roles ++ account.roles;
+      accountRoles = account.roles;
+      effectiveRoles = config.hostRoles ++ account.roles;
       accountVariants = account.variants;
-      hostVariants = config.hostVariants or config.variants;
-      variants = config.variants ++ account.variants;
+      effectiveVariants = config.hostVariants ++ account.variants;
     };
   mkHomeTargetConfigEntries = lib.concatMap (
     host:

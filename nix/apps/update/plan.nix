@@ -28,22 +28,17 @@ let
     else
       null;
 
-  # TODO: hourNameは本当にいるのか疑わしい
   hourName = hour: if hour < 10 then "0${toString hour}" else toString hour;
-
-  # TODO: コードの意味がわからないので解説を読む
   themeByHour = lib.listToAttrs (
     map (hour: lib.nameValuePair (hourName hour) (if hour >= 6 && hour < 17 then "light" else "dark")) (
       lib.range 0 23
     )
   );
-
-  # TODO: なんのために必要で何を解決するのか
   targetValue = kind: target: {
     inherit (target) name;
     eval =
       if kind == "home" then
-        "homeconfigurations.${builtins.toJSON target.name}.activationPackage.drvPath"
+        "homeConfigurations.${builtins.toJSON target.name}.activationPackage.drvPath"
       else if kind == "nixos" then
         "nixosConfigurations.${builtins.toJSON target.name}.config.system.build.toplevel.drvPath"
       else
@@ -64,8 +59,6 @@ let
         target.themeName
         target.sessionName
       ];
-
-  # TODO: コード解説を読む
   indexTargets =
     kind:
     lib.foldl' lib.recursiveUpdate { } (
@@ -75,7 +68,7 @@ let
     );
   data = {
     inherit system themeByHour;
-    aliases = lib.listtoAttrs aliasPairs;
+    aliases = lib.listToAttrs aliasPairs;
     hosts = lib.mapAttrs (hostName: host: {
       defaultSession = host.runtime.defaultSession;
       autoSession = {
@@ -115,17 +108,16 @@ let
   nixosTargetEntries = map (mkSystemTargetEntry "nixos") metadata.targets.nixos;
   darwinTargetEntries = map (mkSystemTargetEntry "darwin") metadata.targets.darwin;
 
-  # TODO: ２重に定義するのではなくすでにある設定から検出できるようにしたい
-  aliases = [ ];
-  hosts = [ ];
-  themes = [ ];
 in
 assert lib.assertMsg (
   builtins.length aliasNames == builtins.length (lib.unique aliasNames)
 ) "host aliases must be unique";
 
-pkgs.symlinkJoin {
-  name = "dotfiles-update-lookup";
-  paths =
-    aliasEntries ++ hostEntries ++ homeTargetEntries ++ nixosTargetEntries ++ darwinTargetEntries;
+{
+  inherit data;
+  lookup = pkgs.symlinkJoin {
+    name = "dotfiles-update-lookup";
+    paths =
+      aliasEntries ++ hostEntries ++ homeTargetEntries ++ nixosTargetEntries ++ darwinTargetEntries;
+  };
 }

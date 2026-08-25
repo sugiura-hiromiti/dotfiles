@@ -25,6 +25,7 @@ let
       metadata
       ;
   };
+  lookup = plan.lookup;
   currentSystemHosts = builtins.attrNames metadata.hosts;
   currentSystemAccounts = lib.unique (
     lib.concatMap (host: metadata.hosts.${host}.accounts) currentSystemHosts

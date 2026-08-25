@@ -57,8 +57,8 @@ def main [
 	let system_session = $system_session | default $host_plan.defaultSession
 
 	let home = (
-		 $plan.targets.home
-		 | key $host $account $theme $session
+		 $host_plan.home
+		 | key $account $theme $session
 		 )
 
 	if $home == null {
@@ -71,19 +71,18 @@ def main [
 		"nixos"
 	} else { null }
 
-	let system_kind = if $host_plan.systemKind != null and $runtime_kind == $host_plan.systemKind {
-		$host_plan.systemKind
+	let system_plan = if $host_plan.system != null and $runtime_kind == $host_plan.system.kind {
+		$host_plan.system
 	} else { null }
 
 	let system = if $system_kind == null {
 		null
 	} else {
-		$plan.targets
-		| key $system_kind $host $theme $system_session
+		$system_plan.targets | key  $theme $system_session
 	}
 
-	if $system_kind != null and $system == null {
-		error make $"system configuration is not defined for ($host): kind=($system_kind), theme=($theme), session=($system_session)"
+	if $system_plan != null and $system == null {
+		error make $"system configuration is not defined for ($host): kind=($system_plan.kind), theme=($theme), session=($system_session)"
 	}
 
 	# TODO: path:修飾やめたい

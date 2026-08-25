@@ -30,8 +30,6 @@ let
     name = updateHosts.${hostName}.primaryAccountName;
     value = hostName;
   }) updateHostNames;
-  primaryAccountNames = map (pair: pair.name) primaryHostPairs;
-  defaultHosts = lib.listToAttrs primaryHostPairs;
   updateTargets = {
     home = targetEntriesForSystem "home";
     nixos = targetEntriesForSystem "nixos";

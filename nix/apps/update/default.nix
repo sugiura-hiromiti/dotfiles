@@ -172,14 +172,9 @@ in
       candidate_lock="$lock_tmp/flake.lock"
 
       cleanup() {
-        rm -f "$lock_tmp"
+        rm -rf "$lock_tmp"
       }
       trap cleanup EXIT
-
-      if [ -e "$lock_path" ]; then
-        cp "$lock_path" "$lock_backup"
-        lock_had_file=1
-      fi
 
       while [ "$#" -gt 0 ]; do
         case "$1" in

@@ -77,12 +77,6 @@ def main [
 	let lock = pwd | path join "flake.lock"
 	let tmp = (mktemp -d)
 	let candidate = $tmp | path join "flake.lock"
-	let home_action = $plan.actions | key $home.action
-	let system_action = if $system == null {
-		null
-	} else {
-		$plan.actions | key $system.action
-	}
 
 	try {
 		(exec-plan
@@ -105,15 +99,15 @@ def main [
 				$candidate
 				$"($flake)#($system.eval)"
 			) | ignore
-			if not ($system_action.authorize | is-empty) {
-				exec-plan $system_action.authorize
+			if not ($system.authorize | is-empty) {
+				exec-plan $system.authorize
 			}
 		}
 
 		cp $candidate $lock
-		exec-plan $home_action.switch $"($flake)#($home.name)"
+		exec-plan $home.switch $"($flake)#($home.name)"
 		if $system != null {
-			exec-plan $system_action.switch $"($flake)#($system.name)"
+			exec-plan $system.switch $"($flake)#($system.name)"
 		}
 	} finally {
 		rm -rf $tmp

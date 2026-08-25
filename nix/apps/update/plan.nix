@@ -33,7 +33,7 @@ let
   );
   targetValue = kind: target: {
     inherit (target) name;
-    action = kind;
+    inherit (actions.${kind}) authorize switch;
     eval =
       if kind == "home" then
         "homeConfigurations.${builtins.toJSON target.name}.activationPackage.drvPath"
@@ -124,7 +124,6 @@ let
       system
       themeByHour
       commands
-      actions
       ;
     aliases = lib.listToAttrs aliasPairs;
     hosts = lib.mapAttrs (hostName: host: {

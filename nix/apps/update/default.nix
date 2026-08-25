@@ -168,22 +168,11 @@ in
       system_session=""
       flake_ref="path:$(pwd -P)"
       lock_path="$(pwd -P)/flake.lock"
-      lock_backup="$(mktemp "''${TMPDIR:-/tmp}/dotfiles-flake-lock.XXXXXX")"
-      lock_had_file=0
-      lock_updated=0
-      restore_lock_on_failure=1
+      lock_tmp="$(mktemp -d "''${TMPDIR:-/tmp}/dotfiles-flake-lock.XXXXXX")"
+      candidate_lock="$lock_tmp/flake.lock"
 
       cleanup() {
-        status="$?"
-        if [ "$status" -ne 0 ] && [ "$lock_updated" -eq 1 ] && [ "$restore_lock_on_failure" -eq 1 ]; then
-          if [ "$lock_had_file" -eq 1 ]; then
-            cp "$lock_backup" "$lock_path"
-          else
-            rm -f "$lock_path"
-          fi
-          echo "restored flake.lock because the updated configuration did not pass preflight" >&2
-        fi
-        rm -f "$lock_backup"
+        rm -f "$lock_tmp"
       }
       trap cleanup EXIT
 
@@ -346,16 +335,15 @@ in
         fi
       fi
 
-      lock_updated=1
-      nix flake update --flake "$flake_ref"
+      nix flake update --flake "$flake_ref" --output-lock-file "$candidate_lock"
 
-      nix eval --raw "$flake_ref#homeConfigurations.\"$home_target\".activationPackage.drvPath" >/dev/null
+      nix eval --raw --reference-lock-file "$candidate_lock" "$flake_ref#homeConfigurations.\"$home_target\".activationPackage.drvPath" >/dev/null
       case "$system_switch" in
         darwin)
-          nix eval --raw "$flake_ref#darwinConfigurations.\"$system_target\".system.drvPath" >/dev/null
+          nix eval --raw --reference-lock-file "$candidate_lock" "$flake_ref#darwinConfigurations.\"$system_target\".system.drvPath" >/dev/null
           ;;
         nixos)
-          nix eval --raw "$flake_ref#nixosConfigurations.\"$system_target\".config.system.build.toplevel.drvPath" >/dev/null
+          nix eval --raw --reference-lock-file "$candidate_lock" "$flake_ref#nixosConfigurations.\"$system_target\".config.system.build.toplevel.drvPath" >/dev/null
           ;;
       esac
 
@@ -363,7 +351,7 @@ in
         sudo -v
       fi
 
-      restore_lock_on_failure=0
+      cp "$candidate_lock" "$lock_path"
       nix run nixpkgs#home-manager -- switch --flake "$flake_ref#$home_target"
 
       case "$system_switch" in

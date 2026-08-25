@@ -51,6 +51,10 @@ error make "could not resolve target host"
 		 | key $host $account $theme $session
 		 )
 
+if $home == null {
+error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)"
+}
+
     let system = if $host_plan.systemKind == null {
         null
     } else {

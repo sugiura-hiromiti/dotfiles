@@ -46,10 +46,18 @@ let
   nixosTargets = map (target: target.name) metadata.targets.nixos;
   darwinTargets = map (target: target.name) metadata.targets.darwin;
 
-  updateScript = pkgs.writeText "update.nu" ''
-    const PLAN = "${planFile}"
-    ${builtins.readFile ./update.nu}
-  '';
+  updateScript = pkgs.writeTextFile {
+    name = "update.nu";
+    text = ''
+      const PLAN = "${planFile}"
+      ${builtins.readFile ./update.nu}
+    '';
+    # TODO: ここでいう$targetは何かを調べる
+    checkPhase = ''
+      ${lib.getExe pkgs.nushell} --no-config-file --commands \
+      "if not (nu-check --debug '$target') { exit 1 }"
+    '';
+  };
 
   validHostsArgs = lib.escapeShellArgs currentSystemHosts;
   validAccountsArgs = lib.escapeShellArgs currentSystemAccounts;

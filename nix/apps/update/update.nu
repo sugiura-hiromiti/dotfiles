@@ -86,7 +86,7 @@ let system = if $runtime_kind != $host_plan.systemKind {
 
 		  try {
 		  exec-plan $plan.commands.update "--flake" $flake "--output-lock-file" $candidate
-		  exec-plan $plan.commands.eval "--reference-lock-file" $candidate $"($flake)#($system.eval)" | ignore
+		  exec-plan $plan.commands.eval "--reference-lock-file" $candidate $"($flake)#($home.eval)" | ignore
 		  if $system != null {
 		  exec-plan $plan.commands.eval "--reference-lock-file" $candidate $"($flake)#($system.eval)" | ignore
 		  if not ($system_action.authorize | is-empty) {

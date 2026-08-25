@@ -45,3 +45,4 @@ in
     taplo.enable = true;
   };
 }
+// formatters.settings

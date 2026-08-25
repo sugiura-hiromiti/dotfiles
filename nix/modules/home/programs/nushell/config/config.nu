@@ -18,23 +18,27 @@ $env.config.hooks.env_change.PWD = ( $env.config.hooks.env_change.PWD? | default
 	let rslt = s
 	print $rslt
 }} )
-$env.config.hooks.pre_prompt = ($env.config.hooks.pre_prompt? | default [] | append {|| print -n "\u{1b}]133;A\u{7}"})
-$env.config.hooks.pre_execution = ($env.config.hooks.pre_execution? | default [] | append {|| print -n "\u{1b}]133;C\u{7}"})
+$env.config.hooks.pre_prompt = (
+	$env.config.hooks.pre_prompt?
+	| default []
+	| append {|| print -n "\u{1b}]133;A\u{7}"}
+)
+$env.config.hooks.pre_execution = (
+	$env.config.hooks.pre_execution?
+	| default []
+	| append {|| print -n "\u{1b}]133;C\u{7}"}
+)
 # $env.config.hooks.post_execution = (
 # 	$env.config.hooks.post_execution?
 # 	| default []
 # 	| append {|| print -n $"\u{1b}]133;D;($env.LAST_EXIT_CODE)\u{7}"}
 # )
 $env.config.completions = {
-	case_sensitive: false,
-	quick: true,
-	partial: true,
-	algorithm: 'fuzzy',
-	external: {
-		enable: true,
-		max_results: 200,
-		completer: null,
-	}
+	case_sensitive: false
+	quick: true
+	partial: true
+	algorithm: 'fuzzy'
+	external: {enable: true, max_results: 200, completer: null}
 }
 $env.config.footer_mode = 'always'
 
@@ -84,10 +88,10 @@ def --wrapped u [...args: string] {
 		| where {|candidate| (($'($candidate)/flake.nix' | path type) == "file") }
 	)
 	if ($flake_roots | is-empty) {
-		error make { msg: "could not find dotfiles flake" }
+		error make {msg: "could not find dotfiles flake"}
 	}
-	let flake_root = ($flake_roots | first)
-	let current_nix_config = ($env.NIX_CONFIG? | default "")
+	let flake_root = $flake_roots | first
+	let current_nix_config = $env.NIX_CONFIG? | default ""
 	let update_nix_config = (
 		[$current_nix_config "access-tokens ="]
 		| where {|line| $line != "" }
@@ -106,6 +110,7 @@ def --wrapped u [...args: string] {
 	}
 	dirs drop
 }
+
 # def s [glob?] {
 # 	let glob = $glob | default "."
 # 	let git_state = (try {

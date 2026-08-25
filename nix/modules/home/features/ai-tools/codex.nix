@@ -52,10 +52,10 @@ let
       ];
     };
     projects = {
-      "${config.home.homeDirectory}/dotfiles/" = {
+      "${config.home.homeDirectory}/dotfiles" = {
         trust_level = "trusted";
       };
-      "${config.dotfiles.paths.workspaceRoot}/poison_girl/" = {
+      "${config.dotfiles.paths.workspaceRoot}/poison_girl" = {
         trust_level = "trusted";
       };
     };

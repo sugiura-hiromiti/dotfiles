@@ -26,6 +26,8 @@ let
       ;
   };
   lookup = plan.lookup;
+  # TODO: writeTextにしているのはnushellとnixのコミュニケーション規格としてjsonを使っているという理解であっているか
+  planFile = pkgs.writeText "dotfiles-update-plan.json" (builtins.toJSON plan.data);
   currentSystemHosts = builtins.attrNames metadata.hosts;
   currentSystemAccounts = lib.unique (
     lib.concatMap (host: metadata.hosts.${host}.accounts) currentSystemHosts
@@ -69,6 +71,7 @@ in
     pkgs.writeShellScript "update-script" ''
       set -eu
 
+      plan_file="${planFile}"
       usage() {
         cat <<EOF
       usage: nix run path:.#update -- [--host HOST] [--account ACCOUNT] [--theme THEME] [--session SESSION] [--system-session SESSION]

@@ -26,13 +26,10 @@ in
         name = host.targetHost;
         value = {
           aliases = host.matchNames;
-          accounts = host.accountNames;
           runtime = {
             inherit (host.runtime)
               defaultSession
-              sessions
               targetAxes
-              themes
               ;
           };
         };

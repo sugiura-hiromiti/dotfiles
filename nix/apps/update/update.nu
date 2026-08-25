@@ -1,7 +1,7 @@
 const PLAN = "..."
 
-def key [name: string] {
-	 get -o ([$name] | into cell-path)
+def key [...path: string] {
+	 get -o ($path | into cell-path)
 }
 
 def main [
@@ -22,16 +22,20 @@ let candidates=if $host != null {
 $env.DOTFILES_HOST?
 ($hostname | split row "." | first)
 $hostname
-$"($plan.system)-$account"
+$"($plan.system)-($account)"
 ] | compact
 }
 
     let host = (
-	 	  $candidate
-		| each {|name| $plan.aliases | get -o $name }
+	 	  $candidates
+		| each {|name| $plan.aliases | key $name }
 		| compact
 		| first
   )
+
+if $host == null {
+error make "could not resolve target host"
+}
 
     let host_plan = $plan.hosts | key $host
     let theme = $theme | default (
@@ -46,20 +50,14 @@ $"($plan.system)-$account"
     let system_session = $system_session | default $host_plan.defaultSession
     let home = (
 		 $plan.targets.home
-		 | key $host
-		 | key $account
-		 | key $theme
-		 | key $session
+		 | key $host $account $theme $session
 		 )
 
     let system = if $host_plan.systemKind == null {
         null
     } else {
         $plan.targets
-        | key $host_plan.systemKind
-        | key -o $host
-        | key -o $theme
-        | key -o $system_session
+        | key $host_plan.systemKind $host $theme $system_session
     }
 
     {

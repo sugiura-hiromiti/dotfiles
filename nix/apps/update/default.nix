@@ -1,4 +1,5 @@
-# TODO: shell scriptをすべて削除する。nixコードの薄いwrapperのようにする(50行ほどにおさえるのが目標)
+# TODO: POSIX shellを削除し、policyをNix側へ移す。
+# update.nuはruntime orchestrationのみに限定し、50行以下を目標にする。
 {
   lib,
   pkgs,
@@ -26,7 +27,6 @@ let
       ;
   };
   lookup = plan.lookup;
-  # TODO: writeTextにしているのはnushellとnixのコミュニケーション規格としてjsonを使っているという理解であっているか
   planFile = pkgs.writeText "dotfiles-update-plan.json" (builtins.toJSON plan.data);
   currentSystemHosts = builtins.attrNames metadata.hosts;
   currentSystemAccounts = lib.unique (
@@ -54,7 +54,6 @@ let
   validAccountsText = lib.concatStringsSep ", " currentSystemAccounts;
   validThemesText = lib.concatStringsSep ", " validThemes;
   validSessionsText = lib.concatStringsSep ", " validSessions;
-  # TODO: example達がなんのためにあるのかを調べる
   homeTargetExample = lib.optionalString (homeTargets != [ ]) "home target: ${lib.head homeTargets}";
   systemTargetExample =
     if nixosTargets != [ ] then

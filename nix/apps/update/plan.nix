@@ -110,7 +110,6 @@ let
       ];
     };
   };
-  # TODO: これらのコマンドはどこで実行されているのか
   commands = {
     update = [
       "nix"
@@ -121,12 +120,6 @@ let
       "nix"
       "eval"
       "--raw"
-    ];
-    # TODO: jjに゙移行できないか
-    stage = [
-      "git"
-      "stage"
-      "flake.lock"
     ];
   };
   data = {

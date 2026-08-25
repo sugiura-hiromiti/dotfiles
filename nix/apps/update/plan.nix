@@ -26,15 +26,14 @@ let
       }
     ) currentHostNames
   );
+  # TODO: Treat account -> host as an update-time selection hint, not yet as
+  # a domain invariant. Revisit ambiguity handling after host/account semantics
+  # are formally defined in the host model
   primaryHostPairs = map (hostName: {
     name = updateHosts.${hostName}.primaryAccountName;
     value = hostName;
   }) updateHostNames;
-  updateTargets = {
-    home = targetEntriesForSystem "home";
-    nixos = targetEntriesForSystem "nixos";
-    darwin = targetEntriesForSystem "darwin";
-  };
+  indexedTargets = lib.mapAttrs (kind: _: indexTargets kind) targetPolicies;
 
   updateHostNames = builtins.attrNames updateHosts;
 
@@ -152,17 +151,9 @@ let
     kind:
     lib.foldl' lib.recursiveUpdate { } (
       map (entry: lib.setAttrByPath (targetPath kind entry) (targetValue kind entry)) (
-        assertUniqueTargetPaths kind updateTargets.${kind}
+        assertUniqueTargetPaths kind (targetEntriesForSystem kind)
       )
     );
-
-  homeTargets = indexTargets "home";
-  nixosTargets = indexTargets "nixos";
-  darwinTargets = indexTargets "darwin";
-  systemTargets = {
-    nixos = nixosTargets;
-    darwin = darwinTargets;
-  };
 
   commands = {
     update = [
@@ -183,9 +174,6 @@ let
       commands
       ;
     aliases = lib.listToAttrs aliasPairs;
-    # TODO: Treat account -> host as an update-time selection hint, not yet as
-    # a domain invariant. Revisit ambiguity handling after host/account semantics
-    # are formally defined in the host model
     defaultHosts = lib.listToAttrs primaryHostPairs;
     hosts = lib.mapAttrs (hostName: host: {
       inherit (host) defaultSession;
@@ -193,14 +181,14 @@ let
         gui = if host.hasSessionAxis then "gui" else host.defaultSession;
         tty = if host.hasSessionAxis then "tty" else host.defaultSession;
       };
-      home = lib.attrByPath [ hostName ] { } homeTargets;
+      home = lib.attrByPath [ hostName ] { } indexedTargets.home;
       system =
         if host.systemTargetKind == null then
           null
         else
           {
             kind = host.systemTargetKind;
-            targets = lib.attrByPath [ hostName ] { } systemTargets.${host.systemTargetKind};
+            targets = lib.attrByPath [ hostName ] { } indexedTargets.${host.systemTargetKind};
           };
     }) updateHosts;
   };

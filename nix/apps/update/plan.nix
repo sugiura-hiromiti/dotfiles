@@ -57,12 +57,24 @@ let
         target.themeName
         target.sessionName
       ];
+
+  targetPathKey = kind: target: builtins.toJSON (targetPath kind target);
+  assertUniqueTargetPaths =
+    kind: targets:
+    let
+      paths = map (targetPathKey kind) targets;
+    in
+    assert lib.assertMsg (
+      builtins.length paths == builtins.length (lib.unique paths)
+    ) "duplicate ${kind} update target paths";
+    targets;
+
   indexTargets =
     kind:
     lib.foldl' lib.recursiveUpdate { } (
-      map (
-        target: lib.setAttrByPath (targetPath kind target) (targetValue kind target)
-      ) metadata.targets.${kind}
+      map (target: lib.setAttrByPath (targetPath kind target) (targetValue kind target)) (
+        assertUniqueTargetPaths kind metadata.targets.${kind}
+      )
     );
   actions = {
     home = {

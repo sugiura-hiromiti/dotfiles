@@ -55,7 +55,7 @@ let
     checkPhase = ''
       UPDATE_SCRIPT="$target" \
       ${lib.getExe pkgs.nushell} --no-config-file --commands \
-      'if not (nu-check $env.UPDATE_SCRIPT) { exit 1 }'
+      'if not (nu-check --debug $env.UPDATE_SCRIPT) { exit 1 }'
     '';
   };
 

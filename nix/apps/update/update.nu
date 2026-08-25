@@ -13,7 +13,7 @@ def main [
     let account = $account | default (whoami | str trim)
     let hostname = (sys host).hostname
 
-let candidates=if $host != null {
+let candidates = if $host != null {
 [$host]
 } else {
 [

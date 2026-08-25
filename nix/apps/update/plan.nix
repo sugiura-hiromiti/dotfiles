@@ -20,34 +20,37 @@ let
       lib.range 0 23
     )
   );
-  targetValue = kind: target: {
-    inherit (target) name;
+  targetValue = kind: entry: {
+    inherit (entry) name;
     inherit (actions.${kind}) authorize switch;
     eval =
       if kind == "home" then
-        "homeConfigurations.${builtins.toJSON target.name}.activationPackage.drvPath"
+        "homeConfigurations.${builtins.toJSON entry.name}.activationPackage.drvPath"
       else if kind == "nixos" then
-        "nixosConfigurations.${builtins.toJSON target.name}.config.system.build.toplevel.drvPath"
+        "nixosConfigurations.${builtins.toJSON entry.name}.config.system.build.toplevel.drvPath"
       else
-        "darwinConfigurations.${builtins.toJSON target.name}.system.drvPath";
+        "darwinConfigurations.${builtins.toJSON entry.name}.system.drvPath";
   };
   targetPath =
-    kind: target:
+    kind: entry:
+    let
+      config = entry.config;
+    in
     if kind == "home" then
       [
-        target.targetHost
-        target.accountName
-        target.themeName
-        target.sessionName
+        config.targetHost
+        config.accountName
+        config.themeName
+        config.sessionName
       ]
     else
       [
-        target.targetHost
-        target.themeName
-        target.sessionName
+        config.targetHost
+        config.themeName
+        config.sessionName
       ];
 
-  targetPathKey = kind: target: builtins.toJSON (targetPath kind target);
+  targetPathKey = kind: entry: builtins.toJSON (targetPath kind entry);
   assertUniqueTargetPaths =
     kind: targets:
     let
@@ -61,7 +64,7 @@ let
   indexTargets =
     kind:
     lib.foldl' lib.recursiveUpdate { } (
-      map (target: lib.setAttrByPath (targetPath kind target) (targetValue kind target)) (
+      map (entry: lib.setAttrByPath (targetPath kind entry) (targetValue kind entry)) (
         assertUniqueTargetPaths kind metadata.targets.${kind}
       )
     );

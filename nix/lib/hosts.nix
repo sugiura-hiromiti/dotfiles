@@ -44,7 +44,7 @@ let
       systemTargetKind =
         assert lib.assertMsg (
           builtins.length systemTargetKinds <= 1
-        ) "Host '${host} cannot target both NixOS and Darwin";
+        ) "Host '${host}' cannot target both NixOS and Darwin";
         if systemTargetKinds == [ ] then null else lib.head systemTargetKinds;
 
       accountsMeta =

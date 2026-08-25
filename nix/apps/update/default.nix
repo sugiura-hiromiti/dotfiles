@@ -100,7 +100,7 @@ in
         if ! is_member "$candidate" ${validAliasesArgs}; then
           return 1
         fi
-        cat "${plan}/aliases/$candidate"
+        cat "${lookup}/aliases/$candidate"
       }
 
       detect_host() {
@@ -124,7 +124,7 @@ in
         return 1
       }
       default_session_for_host() {
-        path="${plan}/hosts/$1/default-session"
+        path="${lookup}/hosts/$1/default-session"
 
         if [ ! -f "$path" ]; then
         echo "could not find default session for host: $1" >&2
@@ -134,19 +134,19 @@ in
       cat "$path"
       }
       host_has_session_axis() {
-        [ -e "${plan}/hosts/$1/session-axis" ]
+        [ -e "${lookup}/hosts/$1/session-axis" ]
       }
 
       host_supports_theme() {
-        [ -e "${plan}/hosts/$1/themes/$2" ]
+        [ -e "${lookup}/hosts/$1/themes/$2" ]
       }
 
       host_supports_session() {
-        [ -e "${plan}/hosts/$1/sessions/$2" ]
+        [ -e "${lookup}/hosts/$1/sessions/$2" ]
       }
 
       home_target_for_host() {
-        path="${plan}/targets/home/$1/$target_account/$theme/$session"
+        path="${lookup}/targets/home/$1/$target_account/$theme/$session"
         if [ ! -f "$path" ]; then
           echo "home configuration is not defined for $1" >&2
           return 1
@@ -157,7 +157,7 @@ in
       system_target_for_host() {
         kind="$1"
         host="$2"
-        path="${plan}/targets/$kind/$host/$theme/$system_session"
+        path="${lookup}/targets/$kind/$host/$theme/$system_session"
         [ -f "$path" ] || return 1
         cat "$path"
       }

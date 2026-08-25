@@ -113,7 +113,7 @@ def main [
 				$candidate $"($flake)#($target.eval)") | ignore
 		}
 
-		for target in targets {
+		for target in $targets {
 			if not ($target.authorize | is-empty) {
 				exec-plan $target.authorize
 			}

@@ -65,11 +65,19 @@ def main [
 		"nixos"
 	} else { null }
 
-	let system = if $host_plan.systemKind == null or $runtime_kind != $host_plan.systemKind {
+	let system_kind = if $host_plan.systemKind != null and $runtime_kind == $host_plan.systemKind {
+		$host_plan.systemKind
+	} else { null }
+
+	let system = if $system_kind == null {
 		null
 	} else {
 		$plan.targets
 		| key $host_plan.systemKind $host $theme $system_session
+	}
+
+	if $system_kind != null and $system == null {
+		error make $"system configuration is not defined for ($host): kind=($system_kind), theme=($theme), session=($system_session)"
 	}
 
 	# TODO: path:修飾やめたい

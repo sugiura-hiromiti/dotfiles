@@ -36,6 +36,7 @@ let
   );
   targetValue = kind: target: {
     inherit (target) name;
+    action = kind;
     eval =
       if kind == "home" then
         "homeConfigurations.${builtins.toJSON target.name}.activationPackage.drvPath"
@@ -66,8 +67,51 @@ let
         target: lib.setAttrByPath (targetPath kind target) (targetValue kind target)
       ) metadata.targets.${kind}
     );
+  actions = {
+    home = {
+      authorize = [ ];
+      switch = [
+        "nix"
+        "run"
+        "nixpkgs#home-manager"
+        "--"
+        "switch"
+        "--flake"
+      ];
+    };
+    nixos = {
+      authorize = [
+        "sudo"
+        "-v"
+      ];
+      switch = [
+        "sudo"
+        "nixos-rebuild"
+        "switch"
+        "--flake"
+      ];
+    };
+    darwin = {
+      authorize = [
+        "sudo"
+        "-v"
+      ];
+      switch = [
+        "sudo"
+        "-H"
+        "nix"
+        "--extra-experimental-features"
+        "nix-command flakes"
+        "run"
+        "nix-darwin"
+        "--"
+        "switch"
+        "--flake"
+      ];
+    };
+  };
   data = {
-    inherit system themeByHour;
+    inherit system themeByHour actions;
     aliases = lib.listToAttrs aliasPairs;
     hosts = lib.mapAttrs (hostName: host: {
       defaultSession = host.runtime.defaultSession;

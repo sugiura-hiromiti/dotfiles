@@ -4,6 +4,19 @@
   runtimeContexts,
 }:
 let
+  # TODO: Formalize the dotfiles domain model before adding more invariants.
+  #
+  # Clarify and document the semantics and relationships of:
+  # - host
+  # - account / identity
+  # - target / target kind
+  # - role / variant
+  # - runtime context / runtime axis
+  #
+  # In particular, define ownership, cardinality, composition/inheritance,
+  # and whether each concept contributes to configuration identity.
+  # Once these semantics are explicit, derive assertions from the model
+  # instead of encoding assumptions from the current repository shape.
   defaultRuntime = {
     themes = [ runtimeContexts.defaults.theme ];
     sessions = [ runtimeContexts.defaults.session ];

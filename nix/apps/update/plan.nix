@@ -183,6 +183,9 @@ let
       commands
       ;
     aliases = lib.listToAttrs aliasPairs;
+    # TODO: Treat account -> host as an update-time selection hint, not yet as
+    # a domain invariant. Revisit ambiguity handling after host/account semantics
+    # are formally defined in the host model
     defaultHosts = lib.listToAttrs primaryHostPairs;
     hosts = lib.mapAttrs (hostName: host: {
       inherit (host) defaultSession;

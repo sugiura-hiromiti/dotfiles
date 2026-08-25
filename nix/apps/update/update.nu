@@ -65,7 +65,7 @@ def main [
 		"nixos"
 	} else { null }
 
-	let system = if $runtime_kind != $host_plan.systemKind {
+	let system = if $host_plan.systemKind == null or $runtime_kind != $host_plan.systemKind {
 		null
 	} else {
 		$plan.targets

@@ -21,11 +21,17 @@ let
           aliases = host.matchNames;
           defaultSession = host.runtime.defaultSession;
           hasSessionAxis = host.runtime.targetAxes.session;
-          inherit (host) systemTargetKind;
+          inherit (host) primaryAccountName systemTargetKind;
         };
       }
     ) currentHostNames
   );
+  primaryHostPairs = map (hostName: {
+    name = updateHosts.${hostName}.primaryAccountName;
+    value = hostName;
+  }) updateHostNames;
+  primaryAccountNames = map (pair: pair.name) primaryHostPairs;
+  defaultHosts = lib.listToAttrs primaryHostPairs;
   updateTargets = {
     home = targetEntriesForSystem "home";
     nixos = targetEntriesForSystem "nixos";
@@ -179,6 +185,7 @@ let
       commands
       ;
     aliases = lib.listToAttrs aliasPairs;
+    defaultHosts = lib.listToAttrs primaryHostPairs;
     hosts = lib.mapAttrs (hostName: host: {
       inherit (host) defaultSession;
       autoSession = {

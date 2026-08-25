@@ -18,7 +18,7 @@ def main [
 			$env.DOTFILES_HOST?
 			($hostname | split row "." | first)
 			$hostname
-			$"($plan.system)-($account)"
+			($plan.defaultHosts | key $account)
 		] | compact
 	}
 	let host = (

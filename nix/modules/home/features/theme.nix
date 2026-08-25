@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  stdenv,
   ...
 }:
 let
@@ -46,7 +45,7 @@ in
 
   config = lib.mkIf cfg.enable {
     home = {
-      pointerCursor = lib.mkIf stdenv.hostPlatform.isDarwin {
+      pointerCursor = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
         name = lib.mkDefault "Alice Rolipop";
         enable = true;
       };

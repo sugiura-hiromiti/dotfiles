@@ -2,12 +2,11 @@
   lib,
   system,
   host ? null,
-  roles ? [ ],
-  variants ? [ ],
+  effectiveRoles ? [ ],
+  hostVariants ? [ ],
+  accountVariants ? [ ],
   themeProfiles ? [ ],
   sessionProfiles ? [ ],
-  hostVariants ? variants,
-  accountVariants ? [ ],
   ...
 }:
 let
@@ -26,11 +25,11 @@ in
       platform
       system
       host
-      roles
+      effectiveRoles
+      hostVariants
+      accountVariants
       themeProfiles
       sessionProfiles
-      accountVariants
       ;
-    variants = hostVariants;
   };
 }

@@ -1,17 +1,45 @@
 {
   lib,
   system,
-  metadata,
+  hosts,
+  hostNames,
+  mkTargetConfigEntries,
 }:
 let
-  hostNames = builtins.attrNames metadata.hosts;
+  currentHostNames = lib.filter (hostName: hosts.${hostName}.system == system) hostNames;
+  targetEntriesForSystem =
+    target: lib.filter (entry: entry.config.system == system) (mkTargetConfigEntries target);
+  updateHosts = lib.listToAttrs (
+    map (
+      hostName:
+      let
+        host = hosts.${hostName};
+      in
+      {
+        name = host.targetHost;
+        value = {
+          aliases = host.matchNames;
+          defaultSession = host.runtime.defaultSession;
+          hasSessionAxis = host.runtime.targetAxes.session;
+          inherit (host) systemTargetKind;
+        };
+      }
+    ) currentHostNames
+  );
+  updateTargets = {
+    home = targetEntriesForSystem "home";
+    nixos = targetEntriesForSystem "nixos";
+    darwin = targetEntriesForSystem "darwin";
+  };
+
+  hostNames = builtins.attrNames updateHosts;
 
   aliasPairs = lib.concatMap (
     hostName:
     map (alias: {
       name = alias;
       value = hostName;
-    }) metadata.hosts.${hostName}.aliases
+    }) updateHosts.${hostName}.aliases
   ) hostNames;
   aliasNames = map (alias: alias.name) aliasPairs;
   hourName = hour: if hour < 10 then "0${toString hour}" else toString hour;
@@ -65,7 +93,7 @@ let
     kind:
     lib.foldl' lib.recursiveUpdate { } (
       map (entry: lib.setAttrByPath (targetPath kind entry) (targetValue kind entry)) (
-        assertUniqueTargetPaths kind metadata.targets.${kind}
+        assertUniqueTargetPaths kind updateTargets.${kind}
       )
     );
 
@@ -154,7 +182,7 @@ let
             kind = host.systemTargetKind;
             targets = lib.attrByPath [ hostName ] { } systemTargets.${host.systemTargetKind};
           };
-    }) metadata.hosts;
+    }) updateHosts;
   };
 in
 assert lib.assertMsg (

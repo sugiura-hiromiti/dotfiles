@@ -9,20 +9,13 @@
   mkTargetConfigEntries,
 }:
 let
-  metadata = import ./metadata.nix {
+  plan = import ./plan.nix {
     inherit
       lib
       system
       hosts
       hostNames
       mkTargetConfigEntries
-      ;
-  };
-  plan = import ./plan.nix {
-    inherit
-      lib
-      system
-      metadata
       ;
   };
   planFile = pkgs.writeText "dotfiles-update-plan.json" (builtins.toJSON plan.data);

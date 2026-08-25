@@ -110,8 +110,32 @@ let
       ];
     };
   };
+  # TODO: これらのコマンドはどこで実行されているのか
+  commands = {
+    update = [
+      "nix"
+      "flake"
+      "update"
+    ];
+    eval = [
+      "nix"
+      "eval"
+      "--raw"
+    ];
+    # TODO: jjに゙移行できないか
+    stage = [
+      "git"
+      "stage"
+      "flake.lock"
+    ];
+  };
   data = {
-    inherit system themeByHour actions;
+    inherit
+      system
+      themeByHour
+      commands
+      actions
+      ;
     aliases = lib.listToAttrs aliasPairs;
     hosts = lib.mapAttrs (hostName: host: {
       defaultSession = host.runtime.defaultSession;

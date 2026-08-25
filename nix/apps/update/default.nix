@@ -376,7 +376,6 @@ in
           ;;
       esac
 
-      git stage flake.lock
     ''
   );
 }

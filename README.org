@@ -69,7 +69,7 @@ u --host <host> --account <account> --theme <theme> --session <session>
 
 =u= updates =flake.lock=, evaluates the selected Home Manager and system
 configuration, switches Home Manager, switches the matching system
-configuration on NixOS or macOS, then stages =flake.lock=.
+configuration on NixOS or macOS.
 
 ** Targets
 

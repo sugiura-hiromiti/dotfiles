@@ -75,7 +75,7 @@ def main [
 		$host_plan.system
 	} else { null }
 
-	let system = if $system_kind == null {
+	let system = if $system_plan == null {
 		null
 	} else {
 		$system_plan.targets | key  $theme $system_session

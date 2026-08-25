@@ -170,11 +170,6 @@ let
             };
       }
     ) metadata.hosts;
-    targets = {
-      home = indexTargets "home";
-      nixos = indexTargets "nixos";
-      darwin = indexTargets "darwin";
-    };
   };
 in
 assert lib.assertMsg (

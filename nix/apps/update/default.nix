@@ -83,6 +83,7 @@ in
     pkgs.writeShellScript "update-script" ''
       set -eu
 
+      : "${updateScript}"
       plan_file="${planFile}"
       usage() {
         cat <<EOF

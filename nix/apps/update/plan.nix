@@ -130,8 +130,8 @@ let
     hosts = lib.mapAttrs (hostName: host: {
       inherit (host) defaultSession;
       autoSession = {
-        gui = if host.targetAxes then "gui" else host.defaultSession;
-        tty = if host.targetAxes then "tty" else host.defaultSession;
+        gui = if host.hasSessionAxis then "gui" else host.defaultSession;
+        tty = if host.hasSessionAxis then "tty" else host.defaultSession;
       };
       systemKind = systemKindFor hostName;
     }) metadata.hosts;

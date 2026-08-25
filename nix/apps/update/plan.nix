@@ -16,6 +16,7 @@ let
   aliasNames = map (alias: alias.name) aliasPairs;
   nixosHosts = map (target: target.targetHost) metadata.targets.nixos;
   darwinHosts = map (target: target.targetHost) metadata.targets.darwin;
+  mixedSystemHosts = lib.unique (lib.filter (hostName: lib.elem hostName darwinHosts) nixosHosts);
   systemKindFor =
     hostName:
     if lib.elem hostName nixosHosts then
@@ -156,6 +157,9 @@ in
 assert lib.assertMsg (
   builtins.length aliasNames == builtins.length (lib.unique aliasNames)
 ) "host aliases must be unique";
+
+assert lib.assertMsg (mixedSystemHosts == [ ])
+  "hosts cannot have both nixos and darwin update targets: ${lib.concatStringSep ", " mixedSystemHosts}";
 
 {
   inherit data;

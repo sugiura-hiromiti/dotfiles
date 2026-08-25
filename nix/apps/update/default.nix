@@ -1,5 +1,3 @@
-# TODO: policyをさらにNix側へ寄せ、update.nuをruntime orchestration中心に縮小する。
-# update.nuは50行以下を目標にする。
 {
   lib,
   pkgs,

@@ -155,22 +155,9 @@ let
       )
     );
 
-  commands = {
-    update = [
-      "nix"
-      "flake"
-      "update"
-    ];
-    eval = [
-      "nix"
-      "eval"
-      "--raw"
-    ];
-  };
   data = {
     inherit
       themeByHour
-      commands
       ;
     aliases = lib.listToAttrs aliasPairs;
     defaultHosts = lib.listToAttrs primaryHostPairs;

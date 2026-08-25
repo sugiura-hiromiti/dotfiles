@@ -15,10 +15,16 @@ let
         h = hosts.${host};
       in
       lib.optionals (lib.elem target h.targets) (
-        map (config: {
-          name = config.configName;
-          inherit config;
-        }) (mkRuntimeConfigs h)
+        map (
+          runtimeConfig:
+          let
+            config = mkHostTargetConfig runtimeConfig;
+          in
+          {
+            name = config.configName;
+            inherit config;
+          }
+        ) (mkRuntimeConfigs h)
       )
     ) hostNames;
   mkHomeConfig =
@@ -38,6 +44,19 @@ let
       effectiveRoles = config.hostRoles ++ account.roles;
       accountVariants = account.variants;
       effectiveVariants = config.hostVariants ++ account.variants;
+    };
+  mkHostTargetConfig =
+    config:
+    config
+    // {
+      configName = targetNames.mkSystemTargetName {
+        inherit (config) targetHost themeName sessionName;
+        inherit (config.runtime) targetAxes;
+      };
+      accountRoles = [ ];
+      accountVariants = [ ];
+      effectiveRoles = config.hostRoles;
+      effectiveVariants = config.hostVariants;
     };
   mkHomeTargetConfigEntries = lib.concatMap (
     host:

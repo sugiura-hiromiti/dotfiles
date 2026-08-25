@@ -133,7 +133,7 @@
       };
       inherit (hostRegistry) hosts hostNames;
       runtime = import ./nix/lib/runtime.nix {
-        inherit lib runtimeContexts targetNames;
+        inherit lib runtimeContexts;
       };
       targets = import ./nix/lib/targets.nix {
         inherit

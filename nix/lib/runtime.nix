@@ -1,7 +1,6 @@
 {
   lib,
   runtimeContexts,
-  targetNames,
 }:
 let
   getRuntimeContext =
@@ -30,19 +29,10 @@ let
     in
     hostConfig
     // {
-      configName = targetNames.mkSystemTargetName {
-        inherit themeName sessionName;
-        inherit (hostConfig) targetHost;
-        inherit (hostConfig.runtime) targetAxes;
-      };
       inherit (themeContext) theme;
       inherit (sessionContext) session hasGui;
       inherit themeName sessionName;
       inherit themeProfiles sessionProfiles;
-      accountRoles = [ ];
-      accountVariants = [ ];
-      effectiveRoles = hostConfig.hostRoles;
-      effectiveVariants = hostConfig.hostVariants;
       runtime = runtimeConfig;
     };
   mkDefaultRuntimeConfig =

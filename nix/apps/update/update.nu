@@ -55,16 +55,14 @@ def main [
 	} else if $nu.os-info.name == "linux" and ("/etc/os-release" | path exists) and (open --raw /etc/os-release | str contains "ID=nixos") {
 		"nixos"
 	} else { null }
-	let system_plan = if $host_plan.system != null and $runtime_kind == $host_plan.system.kind {
-		$host_plan.system
-	} else { null }
-	let system = if $system_plan == null {
+	let system = if $host_plan.system == null or $runtime_kind != $host_plan.system.kind {
 		null
 	} else {
-		$system_plan.targets | key $theme $system_session
-	}
-	if $system_plan != null and $system == null {
-		error make $"system configuration is not defined for ($host): kind=($system_plan.kind), theme=($theme), session=($system_session)"
+		let target = $host_plan.system.targets | key $theme $system_session
+		if $target == null {
+			error make $"system configuration is not defined for ($host): kind=($host_plan.system.kind), theme=($theme), session=($system_session)"
+		}
+		$target
 	}
 
 	# TODO: path:修飾やめたい

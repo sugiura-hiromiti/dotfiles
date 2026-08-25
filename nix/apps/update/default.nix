@@ -54,8 +54,9 @@ let
     '';
     # TODO: ここでいう$targetは何かを調べる
     checkPhase = ''
+      UPDATE_SCRIPT="$target" \
       ${lib.getExe pkgs.nushell} --no-config-file --commands \
-      "if not (nu-check --debug '$target') { exit 1 }"
+      "if not (nu-check $env.UPDATE_SCRIPT) { exit 1 }"
     '';
   };
 

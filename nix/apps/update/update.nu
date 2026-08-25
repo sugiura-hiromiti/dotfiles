@@ -1,9 +1,6 @@
 def key [...path: string] {
 	get -o ($path | into cell-path)
 }
-def exec-plan [command: list<string>, ...args: string] {
-	run-external ...$command ...$args
-}
 def main [
 	--host: string
 	--account: string
@@ -25,31 +22,22 @@ def main [
 		] | compact
 	}
 	let host = (
-	 	  $candidates
+		$candidates
 		| each {|name| $plan.aliases | key $name }
 		| compact
 		| first
   )
-	if $host == null {
-		error make "could not resolve target host"
-	}
+	if $host == null { error make "could not resolve target host" }
 	let host_plan = $plan.hosts | key $host
-	let theme = $theme | default (
-  		$plan.themeByHour | get (date now | format date "%H")
-	)
+	let theme = $theme | default ($plan.themeByHour | get (date now | format date "%H"))
 	let mode = if (
 		 (($env.WAYLAND_DISPLAY? | default "") != "")
 		 or (($env.DISPLAY? | default "") != "")
 		 ) { "gui" } else { "tty" }
 	let session = $session | default ($host_plan.autoSession | get $mode)
 	let system_session = $system_session | default $host_plan.defaultSession
-	let home = (
-		 $host_plan.home
-		 | key $account $theme $session
-		 )
-	if $home == null {
-		error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)"
-	}
+	let home = ($host_plan.home | key $account $theme $session)
+	if $home == null { error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)" }
 	let runtime_kind = if $nu.os-info.name == "macos" {
 		"darwin"
 	} else if $nu.os-info.name == "linux" and ("/etc/os-release" | path exists) and (open --raw /etc/os-release | str contains "ID=nixos") {
@@ -72,27 +60,27 @@ def main [
 	let candidate = $tmp | path join "flake.lock"
 	let targets = [$home $system] | compact
 	try {
-		(exec-plan
-			$plan.commands.update
+		(run-external
+			...($plan.commands.update)
 			"--flake"
 			$flake
 			"--output-lock-file"
 			$candidate
 		)
 		for target in $targets {
-			(exec-plan
-				$plan.commands.eval
+			(run-external
+				...($plan.commands.eval)
 				"--reference-lock-file"
 				$candidate $"($flake)#($target.eval)") | ignore
 		}
 		for target in $targets {
 			if not ($target.authorize | is-empty) {
-				exec-plan $target.authorize
+				run-external ...($target.authorize)
 			}
 		}
 		cp $candidate $lock
 		for target in $targets {
-			exec-plan $target.switch $"($flake)#($target.name)"
+			run-external ...($target.switch) $"($flake)#($target.name)"
 		}
 	} finally {
 		rm -rf $tmp

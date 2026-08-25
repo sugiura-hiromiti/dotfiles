@@ -2,6 +2,10 @@ def key [...path: string] {
 	 get -o ($path | into cell-path)
 }
 
+def exec-plan [command: list<string> ...args: string] {
+	 run-external ...$command ...$args
+}
+
 def main [
     --host: string
     --account: string
@@ -55,20 +59,48 @@ if $home == null {
 error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)"
 }
 
-    let system = if $host_plan.systemKind == null {
-        null
-    } else {
-        $plan.targets
-        | key $host_plan.systemKind $host $theme $system_session
-    }
+let runtime_kind = if $nu.os-info.name == "macos" {
+"darwin"
+} else if ($nu.os-info.name == "linux" and ("/etc/os-release" | path exists) and (open --raw /etc/os-release | str contains "ID=nixos")) {
+"nixos"
+} else {null}
 
-    {
-        host: $host
-        account: $account
-        theme: $theme
-        session: $session
-        system_session: $system_session
-        home: $home
-        system: $system
-    }
+let system = if $runtime_kind != $host_plan.systemKind {
+    null
+} else {
+    $plan.targets
+    | key $host_plan.systemKind $host $theme $system_session
+}
+
+    # TODO: path:修飾やめたい
+    let flake = $"path:(pwd)"
+	 let lock = (pwd | path join "flake.lock")
+	 let tmp = (mktemp -d)
+	 let candidate = ($tmp | path join "flake.lock")
+	 let home_action = ($plan.actions | key $home.action)
+	 let system_action = if $system == null {
+	 	  null
+		  } else {
+		  $plan.actions | key $system.action
+		  }
+
+		  try {
+		  exec-plan $plan.commands.update "--flake" $flake "--output-lock-file" $candidate
+		  exec-plan $plan.commands.eval "--reference-lock-file" $candidate $"($flake)#($system.eval)" | ignore
+		  if $system != null {
+		  exec-plan $plan.commands.eval "--reference-lock-file" $candidate $"($flake)#($system.eval)" | ignore
+		  if not ($system_action.authorize | is-empty) {
+		  exec-plan $system_action.authorize
+}
+}
+
+cp $candidate $lock
+exec-plan $home_action.switch $"($flake)#($home.name)"
+if $system != null {
+exec-plan $system_action.switch $"($flake)#($system.name)"
+}
+
+} finally {
+rm -rf $tmp
+}
 }

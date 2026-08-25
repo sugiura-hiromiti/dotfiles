@@ -159,7 +159,7 @@ assert lib.assertMsg (
 ) "host aliases must be unique";
 
 assert lib.assertMsg (mixedSystemHosts == [ ])
-  "hosts cannot have both nixos and darwin update targets: ${lib.concatStringSep ", " mixedSystemHosts}";
+  "hosts cannot have both nixos and darwin update targets: ${lib.concatStringsSep ", " mixedSystemHosts}";
 
 {
   inherit data;

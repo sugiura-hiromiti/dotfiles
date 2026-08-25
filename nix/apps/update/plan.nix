@@ -77,6 +77,15 @@ let
         assertUniqueTargetPaths kind metadata.targets.${kind}
       )
     );
+
+  homeTargets = indexTargets "home";
+  nixosTargets = indexTargets "nixos";
+  darwinTargets = indexTargets "darwin";
+  systemTargets = {
+    nixos = nixosTargets;
+    darwin = darwinTargets;
+  };
+
   actions = {
     home = {
       authorize = [ ];
@@ -139,14 +148,28 @@ let
       commands
       ;
     aliases = lib.listToAttrs aliasPairs;
-    hosts = lib.mapAttrs (hostName: host: {
-      inherit (host) defaultSession;
-      autoSession = {
-        gui = if host.hasSessionAxis then "gui" else host.defaultSession;
-        tty = if host.hasSessionAxis then "tty" else host.defaultSession;
-      };
-      systemKind = systemKindFor hostName;
-    }) metadata.hosts;
+    hosts = lib.mapAttrs (
+      hostName: host:
+      let
+        systemKind = systemKindFor hostName;
+      in
+      {
+        inherit (host) defaultSession;
+        autoSession = {
+          gui = if host.hasSessionAxis then "gui" else host.defaultSession;
+          tty = if host.hasSessionAxis then "tty" else host.defaultSession;
+        };
+        home = lib.attrByPath [ hostName ] { } homeTargets;
+        system =
+          if systemKind == null then
+            null
+          else
+            {
+              kind = systemKind;
+              targets = lib.attrByPath [ hostName ] { } systemTargets.${systemKind};
+            };
+      }
+    ) metadata.hosts;
     targets = {
       home = indexTargets "home";
       nixos = indexTargets "nixos";

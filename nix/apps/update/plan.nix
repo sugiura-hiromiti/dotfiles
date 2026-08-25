@@ -32,7 +32,7 @@ let
     darwin = targetEntriesForSystem "darwin";
   };
 
-  hostNames = builtins.attrNames updateHosts;
+  updateHostNames = builtins.attrNames updateHosts;
 
   aliasPairs = lib.concatMap (
     hostName:
@@ -40,7 +40,7 @@ let
       name = alias;
       value = hostName;
     }) updateHosts.${hostName}.aliases
-  ) hostNames;
+  ) updateHostNames;
   aliasNames = map (alias: alias.name) aliasPairs;
   hourName = hour: if hour < 10 then "0${toString hour}" else toString hour;
   themeByHour = lib.listToAttrs (
@@ -48,35 +48,90 @@ let
       lib.range 0 23
     )
   );
-  targetValue = kind: entry: {
-    inherit (entry) name;
-    inherit (actions.${kind}) authorize switch;
-    eval =
-      if kind == "home" then
-        "homeConfigurations.${builtins.toJSON entry.name}.activationPackage.drvPath"
-      else if kind == "nixos" then
-        "nixosConfigurations.${builtins.toJSON entry.name}.config.system.build.toplevel.drvPath"
-      else
-        "darwinConfigurations.${builtins.toJSON entry.name}.system.drvPath";
-  };
-  targetPath =
-    kind: entry:
-    let
-      config = entry.config;
-    in
-    if kind == "home" then
-      [
+  targetPolicies = {
+    home = {
+      authorize = [ ];
+
+      switch = [
+        "nix"
+        "run"
+        "nixpkgs#home-manager"
+        "--"
+        "switch"
+        "--flake"
+      ];
+
+      eval = name: "homeConfigurations.${builtins.toJSON name}.activationPackage.drvPath";
+
+      path = config: [
         config.targetHost
         config.accountName
         config.themeName
         config.sessionName
-      ]
-    else
-      [
+      ];
+    };
+
+    nixos = {
+      authorize = [
+        "sudo"
+        "-v"
+      ];
+
+      switch = [
+        "sudo"
+        "nixos-rebuild"
+        "switch"
+        "--flake"
+      ];
+
+      eval = name: "nixosConfigurations.${builtins.toJSON name}.config.system.build.toplevel.drvPath";
+
+      path = config: [
         config.targetHost
         config.themeName
         config.sessionName
       ];
+    };
+
+    darwin = {
+      authorize = [
+        "sudo"
+        "-v"
+      ];
+
+      switch = [
+        "sudo"
+        "-H"
+        "nix"
+        "--extra-experimental-features"
+        "nix-command flakes"
+        "run"
+        "nix-darwin"
+        "--"
+        "switch"
+        "--flake"
+      ];
+
+      eval = name: "darwinConfigurations.${builtins.toJSON name}.system.drvPath";
+
+      path = config: [
+        config.targetHost
+        config.themeName
+        config.sessionName
+      ];
+    };
+  };
+  targetValue =
+    kind: entry:
+    let
+      policy = targetPolicies.${kind};
+    in
+    {
+      inherit (entry) name;
+      inherit (policy) authorize switch;
+      eval = policy.eval entry.name;
+    };
+  targetPath = kind: entry: targetPolicies.${kind}.path entry.config;
 
   targetPathKey = kind: entry: builtins.toJSON (targetPath kind entry);
   assertUniqueTargetPaths =
@@ -105,49 +160,6 @@ let
     darwin = darwinTargets;
   };
 
-  actions = {
-    home = {
-      authorize = [ ];
-      switch = [
-        "nix"
-        "run"
-        "nixpkgs#home-manager"
-        "--"
-        "switch"
-        "--flake"
-      ];
-    };
-    nixos = {
-      authorize = [
-        "sudo"
-        "-v"
-      ];
-      switch = [
-        "sudo"
-        "nixos-rebuild"
-        "switch"
-        "--flake"
-      ];
-    };
-    darwin = {
-      authorize = [
-        "sudo"
-        "-v"
-      ];
-      switch = [
-        "sudo"
-        "-H"
-        "nix"
-        "--extra-experimental-features"
-        "nix-command flakes"
-        "run"
-        "nix-darwin"
-        "--"
-        "switch"
-        "--flake"
-      ];
-    };
-  };
   commands = {
     update = [
       "nix"

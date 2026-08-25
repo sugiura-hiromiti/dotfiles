@@ -1,10 +1,12 @@
 {
   lib,
   pkgs,
+  system,
   metadata,
 }:
 let
   hostNames = builtins.attrNames metadata.hosts;
+
   mkEntry = path: value: pkgs.writeTextDir path value;
   mkMarker = path: mkEntry path "";
   aliasPairs = lib.concatMap (
@@ -15,6 +17,80 @@ let
     }) metadata.hosts.${hostName}.aliases
   ) hostNames;
   aliasNames = map (alias: alias.name) aliasPairs;
+  nixosHosts = map (target: target.targetHost) metadata.targets.nixos;
+  darwinHosts = map (target: target.targetHost) metadata.targets.darwin;
+  systemKindFor =
+    hostName:
+    if lib.elem hostName nixosHosts then
+      "nixos"
+    else if lib.elem hostName darwinHosts then
+      "darwin"
+    else
+      null;
+
+  # TODO: hourNameは本当にいるのか疑わしい
+  hourName = hour: if hour < 10 then "0${toString hour}" else toString hour;
+
+  # TODO: コードの意味がわからないので解説を読む
+  themeByHour = lib.listToAttrs (
+    map (hour: lib.nameValuePair (hourName hour) (if hour >= 6 && hour < 17 then "light" else "dark")) (
+      lib.range 0 23
+    )
+  );
+
+  # TODO: なんのために必要で何を解決するのか
+  targetValue = kind: target: {
+    inherit (target) name;
+    eval =
+      if kind == "home" then
+        "homeconfigurations.${builtins.toJSON target.name}.activationPackage.drvPath"
+      else if kind == "nixos" then
+        "nixosConfigurations.${builtins.toJSON target.name}.config.system.build.toplevel.drvPath"
+      else
+        "darwinConfigurations.${builtins.toJSON target.name}.system.drvPath";
+  };
+  targetPath =
+    kind: target:
+    if kind == "home" then
+      [
+        target.targetHost
+        target.accountName
+        target.themeName
+        target.sessionName
+      ]
+    else
+      [
+        target.targetHost
+        target.themeName
+        target.sessionName
+      ];
+
+  # TODO: コード解説を読む
+  indexTargets =
+    kind:
+    lib.foldl' lib.recursiveUpdate { } (
+      map (
+        target: lib.setAttrByPath (targetPath kind target) (targetValue kind target)
+      ) metadata.targets.${kind}
+    );
+  data = {
+    inherit system themeByHour;
+    aliases = lib.listtoAttrs aliasPairs;
+    hosts = lib.mapAttrs (hostName: host: {
+      defaultSession = host.runtime.defaultSession;
+      autoSession = {
+        gui = if host.runtime.targetAxes.session then "gui" else host.runtime.defaultSession;
+        tty = if host.runtime.targetAxes.session then "tty" else host.runtime.defaultSession;
+      };
+      systemKind = systemKindFor hostName;
+    }) metadata.hosts;
+    targets = {
+      home = indexTargets "home";
+      nixos = indexTargets "nixos";
+      darwin = indexTargets "darwin";
+    };
+  };
+
   aliasEntries = map (alias: mkEntry "aliases/${alias.name}" alias.value) aliasPairs;
   hostEntries = lib.concatMap (
     hostName:
@@ -39,7 +115,6 @@ let
   nixosTargetEntries = map (mkSystemTargetEntry "nixos") metadata.targets.nixos;
   darwinTargetEntries = map (mkSystemTargetEntry "darwin") metadata.targets.darwin;
 
-  # TODO: そもそもaliasってなんだ？
   # TODO: ２重に定義するのではなくすでにある設定から検出できるようにしたい
   aliases = [ ];
   hosts = [ ];

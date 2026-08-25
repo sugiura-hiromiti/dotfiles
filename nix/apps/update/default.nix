@@ -17,7 +17,14 @@ let
       mkTargetConfigEntries
       ;
   };
-  lookup = import ./lookup.nix { inherit lib pkgs metadata; };
+  plan = import ./plan.nix {
+    inherit
+      lib
+      pkgs
+      system
+      metadata
+      ;
+  };
   currentSystemHosts = builtins.attrNames metadata.hosts;
   currentSystemAccounts = lib.unique (
     lib.concatMap (host: metadata.hosts.${host}.accounts) currentSystemHosts
@@ -89,7 +96,7 @@ in
         if ! is_member "$candidate" ${validAliasesArgs}; then
           return 1
         fi
-        cat "${lookup}/aliases/$candidate"
+        cat "${plan}/aliases/$candidate"
       }
 
       detect_host() {
@@ -113,7 +120,7 @@ in
         return 1
       }
       default_session_for_host() {
-        path="${lookup}/hosts/$1/default-session"
+        path="${plan}/hosts/$1/default-session"
 
         if [ ! -f "$path" ]; then
         echo "could not find default session for host: $1" >&2
@@ -123,19 +130,19 @@ in
       cat "$path"
       }
       host_has_session_axis() {
-        [ -e "${lookup}/hosts/$1/session-axis" ]
+        [ -e "${plan}/hosts/$1/session-axis" ]
       }
 
       host_supports_theme() {
-        [ -e "${lookup}/hosts/$1/themes/$2" ]
+        [ -e "${plan}/hosts/$1/themes/$2" ]
       }
 
       host_supports_session() {
-        [ -e "${lookup}/hosts/$1/sessions/$2" ]
+        [ -e "${plan}/hosts/$1/sessions/$2" ]
       }
 
       home_target_for_host() {
-        path="${lookup}/targets/home/$1/$target_account/$theme/$session"
+        path="${plan}/targets/home/$1/$target_account/$theme/$session"
         if [ ! -f "$path" ]; then
           echo "home configuration is not defined for $1" >&2
           return 1
@@ -146,7 +153,7 @@ in
       system_target_for_host() {
         kind="$1"
         host="$2"
-        path="${lookup}/targets/$kind/$host/$theme/$system_session"
+        path="${plan}/targets/$kind/$host/$theme/$system_session"
         [ -f "$path" ] || return 1
         cat "$path"
       }

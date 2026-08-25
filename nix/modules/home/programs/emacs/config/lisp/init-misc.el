@@ -31,6 +31,7 @@
 (use-package envrc
 	:hook (after-init . envrc-global-mode))
 
+;; TODO: 現在壊れてる(特にhl-todo-flymake)ので修正する
 (use-package hl-todo
 	:hook (prog-mode . hl-todo-mode)
 	:init

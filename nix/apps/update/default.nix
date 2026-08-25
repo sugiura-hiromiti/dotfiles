@@ -46,6 +46,11 @@ let
   nixosTargets = map (target: target.name) metadata.targets.nixos;
   darwinTargets = map (target: target.name) metadata.targets.darwin;
 
+  updateScript = pkgs.writeText "update.nu" ''
+    const PLAN = "${planFile}"
+    ${builtins.readFile ./update.nu}
+  '';
+
   validHostsArgs = lib.escapeShellArgs currentSystemHosts;
   validAccountsArgs = lib.escapeShellArgs currentSystemAccounts;
   validThemesArgs = lib.escapeShellArgs validThemes;

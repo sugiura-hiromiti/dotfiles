@@ -1,5 +1,3 @@
-const PLAN = "..."
-
 def key [...path: string] {
 	 get -o ($path | into cell-path)
 }

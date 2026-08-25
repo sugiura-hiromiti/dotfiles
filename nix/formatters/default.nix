@@ -62,6 +62,13 @@ let
       exec ${lib.getExe pkgs.stylua} --config-path ${styluaConfig} "$@"
     '';
   };
+
+  nufmtConfig = pkgs.writeText "nufmt.nuon" (
+    builtins.toJSON {
+      indent = 3;
+      indent_char = "tab";
+    }
+  );
 in
 {
   dprint = {
@@ -74,6 +81,19 @@ in
     settings = styluaSettings;
     configFile = styluaConfig;
     package = styluaPackage;
+  };
+
+  settings = {
+    formatter = {
+      nufmt = {
+        command = lib.getExe pkgs.nufmt;
+        options = [
+          "--config"
+          "${nufmtConfig}"
+        ];
+        includes = [ "*.nu" ];
+      };
+    };
   };
 
   editorTools = pkgs.symlinkJoin {

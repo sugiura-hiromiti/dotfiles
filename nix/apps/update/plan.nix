@@ -169,7 +169,6 @@ let
   };
   data = {
     inherit
-      system
       themeByHour
       commands
       ;

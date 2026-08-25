@@ -14,18 +14,6 @@ let
     }) metadata.hosts.${hostName}.aliases
   ) hostNames;
   aliasNames = map (alias: alias.name) aliasPairs;
-  nixosHosts = map (target: target.targetHost) metadata.targets.nixos;
-  darwinHosts = map (target: target.targetHost) metadata.targets.darwin;
-  mixedSystemHosts = lib.unique (lib.filter (hostName: lib.elem hostName darwinHosts) nixosHosts);
-  systemKindFor =
-    hostName:
-    if lib.elem hostName nixosHosts then
-      "nixos"
-    else if lib.elem hostName darwinHosts then
-      "darwin"
-    else
-      null;
-
   hourName = hour: if hour < 10 then "0${toString hour}" else toString hour;
   themeByHour = lib.listToAttrs (
     map (hour: lib.nameValuePair (hourName hour) (if hour >= 6 && hour < 17 then "light" else "dark")) (
@@ -148,36 +136,27 @@ let
       commands
       ;
     aliases = lib.listToAttrs aliasPairs;
-    hosts = lib.mapAttrs (
-      hostName: host:
-      let
-        systemKind = systemKindFor hostName;
-      in
-      {
-        inherit (host) defaultSession;
-        autoSession = {
-          gui = if host.hasSessionAxis then "gui" else host.defaultSession;
-          tty = if host.hasSessionAxis then "tty" else host.defaultSession;
-        };
-        home = lib.attrByPath [ hostName ] { } homeTargets;
-        system =
-          if systemKind == null then
-            null
-          else
-            {
-              kind = systemKind;
-              targets = lib.attrByPath [ hostName ] { } systemTargets.${systemKind};
-            };
-      }
-    ) metadata.hosts;
+    hosts = lib.mapAttrs (hostName: host: {
+      inherit (host) defaultSession;
+      autoSession = {
+        gui = if host.hasSessionAxis then "gui" else host.defaultSession;
+        tty = if host.hasSessionAxis then "tty" else host.defaultSession;
+      };
+      home = lib.attrByPath [ hostName ] { } homeTargets;
+      system =
+        if host.systemTargetKind == null then
+          null
+        else
+          {
+            kind = host.systemTargetKind;
+            targets = lib.attrByPath [ hostName ] { } systemTargets.${host.systemTargetKind};
+          };
+    }) metadata.hosts;
   };
 in
 assert lib.assertMsg (
   builtins.length aliasNames == builtins.length (lib.unique aliasNames)
 ) "host aliases must be unique";
-
-assert lib.assertMsg (mixedSystemHosts == [ ])
-  "hosts cannot have both nixos and darwin update targets: ${lib.concatStringsSep ", " mixedSystemHosts}";
 
 {
   inherit data;

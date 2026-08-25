@@ -33,6 +33,20 @@ let
       hostRoles = meta.roles or [ ];
       hostVariants = meta.variants or [ ];
       targets = meta.targets or [ "home" ];
+
+      systemTargetKinds = lib.filter (
+        target:
+        lib.elem target [
+          "nixos"
+          "darwin"
+        ]
+      ) targets;
+      systemTargetKind =
+        assert lib.assertMsg (
+          builtins.length systemTargetKinds <= 1
+        ) "Host '${host} cannot target both NixOS and Darwin";
+        if systemTargetKinds == [ ] then null else lib.head systemTargetKinds;
+
       accountsMeta =
         assert lib.assertMsg (meta ? accounts) "Host '${host}' must define accounts";
         meta.accounts;
@@ -153,6 +167,7 @@ let
         hostRoles
         hostVariants
         targets
+        systemTargetKind
         runtime
         ;
     };

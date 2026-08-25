@@ -36,7 +36,7 @@ def main [
 		 ) { "gui" } else { "tty" }
 	let session = $session | default ($host_plan.autoSession | get $mode)
 	let system_session = $system_session | default $host_plan.defaultSession
-	let home = ($host_plan.home | key $account $theme $session)
+	let home = $host_plan.home | key $account $theme $session
 	if $home == null { error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)" }
 	let runtime_kind = if $nu.os-info.name == "macos" {
 		"darwin"

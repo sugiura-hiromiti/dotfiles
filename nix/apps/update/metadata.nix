@@ -28,6 +28,7 @@ in
           aliases = host.matchNames;
           defaultSession = host.runtime.defaultSession;
           hasSessionAxis = host.runtime.targetAxes.session;
+          inherit (host) systemTargetKind;
         };
       }
     ) currentHostNames

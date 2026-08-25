@@ -1,14 +1,11 @@
 {
   lib,
-  pkgs,
   system,
   metadata,
 }:
 let
   hostNames = builtins.attrNames metadata.hosts;
 
-  mkEntry = path: value: pkgs.writeTextDir path value;
-  mkMarker = path: mkEntry path "";
   aliasPairs = lib.concatMap (
     hostName:
     map (alias: {
@@ -144,31 +141,6 @@ let
       darwin = indexTargets "darwin";
     };
   };
-
-  aliasEntries = map (alias: mkEntry "aliases/${alias.name}" alias.value) aliasPairs;
-  hostEntries = lib.concatMap (
-    hostName:
-    let
-      host = metadata.hosts.${hostName};
-    in
-    [
-      (mkEntry "hosts/${hostName}/default-session" host.runtime.defaultSession)
-    ]
-    ++ lib.optional host.runtime.targetAxes.session (mkMarker "hosts/${hostName}/session-axis")
-    ++ map (account: mkMarker "hosts/${hostName}/accounts/${account}") host.accounts
-    ++ map (theme: mkMarker "hosts/${hostName}/themes/${theme}") host.runtime.themes
-    ++ map (session: mkMarker "hosts/${hostName}/sessions/${session}") host.runtime.sessions
-  ) hostNames;
-  homeTargetEntries = map (
-    target:
-    mkEntry "targets/home/${target.targetHost}/${target.accountName}/${target.themeName}/${target.sessionName}" target.name
-  ) metadata.targets.home;
-  mkSystemTargetEntry =
-    kind: target:
-    mkEntry "targets/${kind}/${target.targetHost}/${target.themeName}/${target.sessionName}" target.name;
-  nixosTargetEntries = map (mkSystemTargetEntry "nixos") metadata.targets.nixos;
-  darwinTargetEntries = map (mkSystemTargetEntry "darwin") metadata.targets.darwin;
-
 in
 assert lib.assertMsg (
   builtins.length aliasNames == builtins.length (lib.unique aliasNames)
@@ -176,9 +148,4 @@ assert lib.assertMsg (
 
 {
   inherit data;
-  lookup = pkgs.symlinkJoin {
-    name = "dotfiles-update-lookup";
-    paths =
-      aliasEntries ++ hostEntries ++ homeTargetEntries ++ nixosTargetEntries ++ darwinTargetEntries;
-  };
 }

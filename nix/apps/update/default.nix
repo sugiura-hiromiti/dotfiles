@@ -1,5 +1,5 @@
-# TODO: POSIX shellを削除し、policyをNix側へ移す。
-# update.nuはruntime orchestrationのみに限定し、50行以下を目標にする。
+# TODO: policyをさらにNix側へ寄せ、update.nuをruntime orchestration中心に縮小する。
+# update.nuは50行以下を目標にする。
 {
   lib,
   pkgs,
@@ -21,7 +21,6 @@ let
   plan = import ./plan.nix {
     inherit
       lib
-      pkgs
       system
       metadata
       ;

@@ -60,6 +60,7 @@ let
       accountVariants = [ ];
       effectiveRoles = config.hostRoles;
       effectiveVariants = config.hostVariants;
+      variantProfiles = config.hostVariants ++ config.themeProfiles ++ config.sessionProfiles;
     };
   mkHomeTargetConfigEntries = lib.concatMap (
     host:

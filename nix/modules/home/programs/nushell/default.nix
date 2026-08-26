@@ -9,15 +9,17 @@ let
   sqliteLibrary = "${pkgs.sqlite.out}/lib/${
     if pkgs.stdenv.hostPlatform.isDarwin then "libsqlite3.dylib" else "libsqlite3.so"
   }";
-  allNativeCompletions = pkgs.runCommand "nu-scripts-all-completions.nu" { } ''
-    find ${pkgs.nu_scripts}/share/nu_scripts/custom-completions \
-    -type f \
-    -name '*-completions.nu' \
-    | sort \
-    | while read -r file; do
-        printf 'source "%s"\n' "$file"
-      done > "$out"
-  '';
+  natveCompletions = [
+    "jj/jj-completons.nu"
+    "cargo/cargo-completions.nu"
+    "nix/nix-completions.nu"
+    "ripgrep/rg-completions.nu"
+    "bat/bat-completons.nu"
+    "fd/fd-completions.nu"
+  ];
+  nativeCompletionConfig = lib.concatImapStringsSep "\n" (
+    path: "source ${pkgs.nu_scripts}/share/nu_scripts/custom-completions/${path}"
+  ) natveCompletions;
 in
 {
   options.dotfiles.programs.nushell = {
@@ -91,9 +93,7 @@ in
           };
           footer_mode = "always";
         };
-        extraConfig = ''
-          source ${allNativeCompletions}
-        '';
+        extraConfig = nativeCompletionConfig;
         configFile.source = ./config/config.nu;
       };
     };

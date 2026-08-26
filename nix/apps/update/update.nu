@@ -60,10 +60,10 @@ def main [
 	let candidate = $tmp | path join "flake.lock"
 	let targets = [$home $system] | compact
 	try {
-		(run-external nix flake update --flake $flake --output-lock-file $candidate)
+		^nix flake update --flake $flake --output-lock-file $candidate
 		for target in $targets {
 			(
-				run-external nix eval --raw --reference-lock-file $candidate $"($flake)#($target.eval)"
+				^nix eval --raw --reference-lock-file $candidate $"($flake)#($target.eval)"
 			) | ignore
 		}
 		for target in $targets {

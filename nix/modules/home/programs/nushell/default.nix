@@ -9,6 +9,15 @@ let
   sqliteLibrary = "${pkgs.sqlite.out}/lib/${
     if pkgs.stdenv.hostPlatform.isDarwin then "libsqlite3.dylib" else "libsqlite3.so"
   }";
+  allNativeCompletions = pkgs.runCommand "nu-scripts-all-completions.nu" { } ''
+    find ${pkgs.nu_scripts}/share/nu_scripts/custom-completions \
+    -type f \
+    -name '*-completions.nu' \
+    | sort \
+    | while read -r file; do
+        printf 'source "%s"\n' "$file"
+      done > "$out"
+  '';
 in
 {
   options.dotfiles.programs.nushell = {
@@ -68,6 +77,7 @@ in
         // lib.optionalAttrs (config.home.sessionVariables ? VISUAL) {
           VISUAL = lib.mkDefault config.home.sessionVariables.VISUAL;
         };
+        # TODO: nushellのcompletion設定最適化とnixとの責務境界の確定
         settings = {
           completions = {
             case_sensitive = false;
@@ -78,9 +88,12 @@ in
               enable = true;
               max_results = 200;
             };
-            footer_mode = "always";
           };
+          footer_mode = "always";
         };
+        extraConfig = ''
+          source ${allNativeCompletions}
+        '';
         configFile.source = ./config/config.nu;
       };
     };

@@ -1,8 +1,6 @@
 { lib }:
 {
-  baseDir,
   target,
-  platform,
   system,
   host,
 
@@ -13,9 +11,11 @@
   accountVariants ? [ ],
 }:
 let
-  base = toString baseDir;
+  profileRoot = ../profiles;
+  # TODO: そもそもプラットフォーム導出をここでしている時点で二重導出なのではないか
+  platform = lib.last (lib.splitString "-" system);
   optionalFile = path: lib.optionals (builtins.pathExists path) [ path ];
-  profileDir = kind: name: "${base}/profiles/${kind}/${name}";
+  profileDir = kind: name: "${profileRoot}/${kind}/${name}";
   requireProfileDir =
     kind: label: name:
     let

@@ -19,10 +19,8 @@ in
     ./base.nix
   ]
   ++ resolve {
-    baseDir = ../.;
     target = "home";
     inherit
-      platform
       system
       host
       effectiveRoles

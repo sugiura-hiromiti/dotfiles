@@ -18,10 +18,8 @@ in
     ./base.nix
   ]
   ++ resolve {
-    baseDir = ../.;
     target = "darwin";
     inherit
-      platform
       system
       host
       effectiveRoles

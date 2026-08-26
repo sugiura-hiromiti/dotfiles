@@ -3,9 +3,7 @@
   system,
   os,
   host ? null,
-  hostVariants ? [ ],
-  themeProfiles ? [ ],
-  sessionProfiles ? [ ],
+  variantProfiles ? [ ],
   ...
 }:
 let
@@ -21,9 +19,7 @@ in
       system
       os
       host
-      hostVariants
-      themeProfiles
-      sessionProfiles
+      variantProfiles
       ;
   };
 }

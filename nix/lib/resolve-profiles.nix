@@ -8,11 +8,7 @@
   system,
   os,
   host,
-
-  hostVariants ? [ ],
-  themeProfiles ? [ ],
-  sessionProfiles ? [ ],
-  accountVariants ? [ ],
+  variantProfiles ? [ ],
 }:
 let
   profileRoot = ../profiles;
@@ -35,14 +31,10 @@ let
   perKindMaybe =
     kind: label: name:
     if name == null || name == "" then [ ] else perKind kind label name;
-  perVariant = label: name: perKind "variants" label name;
 in
 lib.unique (
   perKindMaybe "os" "OS" os
   ++ perKindMaybe "systems" "system" system
   ++ perKindMaybe "hosts" "host" host
-  ++ lib.concatMap (variant: perVariant "host variant" variant) hostVariants
-  ++ lib.concatMap (profile: perVariant "theme runtime" profile) themeProfiles
-  ++ lib.concatMap (profile: perVariant "session runtime" profile) sessionProfiles
-  ++ lib.concatMap (variant: perVariant "account variant" variant) accountVariants
+  ++ lib.concatMap (profile: perKind "variants" "variant" profile) variantProfiles
 )

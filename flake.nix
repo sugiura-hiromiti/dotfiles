@@ -193,6 +193,7 @@
             targetHost
             theme
             themeProfiles
+            variantProfiles
             sessionProfiles
 
             hostRoles

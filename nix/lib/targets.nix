@@ -7,18 +7,7 @@
 }:
 let
   inherit (runtime) mkRuntimeContexts;
-  applyRuntimeContext =
-    hostConfig: runtimeContext:
-    hostConfig
-    // runtimeContext
-    // {
-      runtime = hostConfig.runtime // {
-        profiles = {
-          theme = runtimeContext.themeProfiles;
-          session = runtimeContext.sessionProfiles;
-        };
-      };
-    };
+  applyRuntimeContext = hostConfig: runtimeContext: hostConfig // runtimeContext;
   mkHostTargetConfigEntries =
     target:
     lib.concatMap (
@@ -38,7 +27,7 @@ let
           }
         ) (mkRuntimeContexts h.runtime)
       )
-    ) (mkRuntimeContexts h.runtime);
+    ) hostNames;
   mkHomeTargetConfig =
     config: accountName:
     let

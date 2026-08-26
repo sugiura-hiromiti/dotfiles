@@ -13,43 +13,32 @@ let
     assert lib.assertMsg (builtins.isList context.profiles)
       "Runtime ${kind} '${name}' context profiles must be a list";
     context.profiles;
-  mkRuntimeConfig =
-    hostConfig: themeName: sessionName:
+  mkRuntimeContext =
+    themeName: sessionName:
     let
       themeContext = getRuntimeContext "theme" themeName runtimeContexts.themes;
       sessionContext = getRuntimeContext "session" sessionName runtimeContexts.sessions;
       themeProfiles = getRuntimeProfiles "theme" themeName themeContext;
       sessionProfiles = getRuntimeProfiles "session" sessionName sessionContext;
-      runtimeConfig = hostConfig.runtime // {
-        profiles = {
-          theme = themeProfiles;
-          session = sessionProfiles;
-        };
-      };
     in
-    hostConfig
-    // {
+    {
       inherit (themeContext) theme;
       inherit (sessionContext) session hasGui;
-      inherit themeName sessionName;
-      inherit themeProfiles sessionProfiles;
-      runtime = runtimeConfig;
+      inherit
+        themeName
+        sessionName
+        themeProfiles
+        sessionProfiles
+        ;
     };
-  mkDefaultRuntimeConfig =
-    hostConfig:
-    mkRuntimeConfig hostConfig hostConfig.runtime.defaultTheme hostConfig.runtime.defaultSession;
-  mkRuntimeConfigs =
-    hostConfig:
+  mkRuntimeContexts =
+    runtime:
     lib.concatMap (
-      themeName:
-      map (sessionName: mkRuntimeConfig hostConfig themeName sessionName) hostConfig.runtime.sessions
-    ) hostConfig.runtime.themes;
+      themeName: map (sessionName: mkRuntimeContext themeName sessionName) runtime.sessions
+    ) runtime.themes;
 in
 {
   inherit
-    getRuntimeContext
-    mkDefaultRuntimeConfig
-    mkRuntimeConfig
-    mkRuntimeConfigs
+    mkRuntimeContexts
     ;
 }

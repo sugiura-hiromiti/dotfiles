@@ -6,7 +6,19 @@
   targetNames,
 }:
 let
-  inherit (runtime) mkRuntimeConfigs;
+  inherit (runtime) mkRuntimeContexts;
+  applyRuntimeContext =
+    hostConfig: runtimeContext:
+    hostConfig
+    // runtimeContext
+    // {
+      runtime = hostConfig.runtime // {
+        profiles = {
+          theme = runtimeContext.themeProfiles;
+          session = runtimeContext.sessionProfiles;
+        };
+      };
+    };
   mkHostTargetConfigEntries =
     target:
     lib.concatMap (
@@ -16,18 +28,18 @@ let
       in
       lib.optionals (lib.elem target h.targets) (
         map (
-          runtimeConfig:
+          runtimeContext:
           let
-            config = mkHostTargetConfig runtimeConfig;
+            config = mkHostTargetConfig (applyRuntimeContext h runtimeContext);
           in
           {
             name = config.configName;
             inherit config;
           }
-        ) (mkRuntimeConfigs h)
+        ) (mkRuntimeContexts h.runtime)
       )
-    ) hostNames;
-  mkHomeConfig =
+    ) (mkRuntimeContexts h.runtime);
+  mkHomeTargetConfig =
     config: accountName:
     let
       account = config.accounts.users.${accountName};
@@ -71,15 +83,16 @@ let
         in
         lib.optionals (lib.elem "home" account.targets) (
           map (
-            config:
+            runtimeContext:
             let
-              homeConfig = mkHomeConfig config accountName;
+              config = applyRuntimeContext h runtimeContext;
+              homeConfig = mkHomeTargetConfig config accountName;
             in
             {
               name = homeConfig.configName;
               config = homeConfig;
             }
-          ) (mkRuntimeConfigs h)
+          ) (mkRuntimeContexts h.runtime)
         )
       ) h.accountNames
     )

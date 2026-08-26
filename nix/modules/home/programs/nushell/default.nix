@@ -9,17 +9,16 @@ let
   sqliteLibrary = "${pkgs.sqlite.out}/lib/${
     if pkgs.stdenv.hostPlatform.isDarwin then "libsqlite3.dylib" else "libsqlite3.so"
   }";
-  natveCompletions = [
-    "jj/jj-completons.nu"
+  nativeCompletions = [
+    "jj/jj-completions.nu"
     "cargo/cargo-completions.nu"
     "nix/nix-completions.nu"
-    "ripgrep/rg-completions.nu"
-    "bat/bat-completons.nu"
-    "fd/fd-completions.nu"
+    "rg/rg-completions.nu"
+    "bat/bat-completions.nu"
   ];
-  nativeCompletionConfig = lib.concatImapStringsSep "\n" (
+  nativeCompletionConfig = lib.concatMapStringsSep "\n" (
     path: "source ${pkgs.nu_scripts}/share/nu_scripts/custom-completions/${path}"
-  ) natveCompletions;
+  ) nativeCompletions;
 in
 {
   options.dotfiles.programs.nushell = {

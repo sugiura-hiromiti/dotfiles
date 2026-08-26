@@ -83,6 +83,7 @@ def --wrapped u [...args: string] {
 		error make {msg: "could not find dotfiles flake"}
 	}
 	let flake_root = $flake_roots | first
+	# TODO: 本当に今も必要か
 	let current_nix_config = $env.NIX_CONFIG? | default ""
 	let update_nix_config = (
 		[$current_nix_config "access-tokens ="]

@@ -189,6 +189,7 @@
             hostName
             session
             system
+            os
             targetHost
             theme
             themeProfiles

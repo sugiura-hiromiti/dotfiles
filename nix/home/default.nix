@@ -1,6 +1,7 @@
 {
   lib,
   system,
+  os,
   host ? null,
   effectiveRoles ? [ ],
   hostVariants ? [ ],
@@ -10,7 +11,6 @@
   ...
 }:
 let
-  platform = lib.last (lib.splitString "-" system);
   resolve = import ../lib/resolve-profiles.nix { inherit lib; };
 in
 {
@@ -22,6 +22,7 @@ in
     target = "home";
     inherit
       system
+      os
       host
       effectiveRoles
       hostVariants

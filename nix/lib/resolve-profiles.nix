@@ -1,7 +1,12 @@
 { lib }:
+# NOTE: 将来的に
+# resolveProfiles { inherit target; config = targetConfig; }
+# のようにするかもしれない
+# callerが持っているのは本来target configのみなのだから
 {
   target,
   system,
+  os,
   host,
 
   effectiveRoles ? [ ],
@@ -12,8 +17,6 @@
 }:
 let
   profileRoot = ../profiles;
-  # TODO: そもそもプラットフォーム導出をここでしている時点で二重導出なのではないか
-  platform = lib.last (lib.splitString "-" system);
   optionalFile = path: lib.optionals (builtins.pathExists path) [ path ];
   profileDir = kind: name: "${profileRoot}/${kind}/${name}";
   requireProfileDir =
@@ -36,7 +39,7 @@ let
   perVariant = label: name: perKind "variants" label name;
 in
 lib.unique (
-  perKindMaybe "platforms" "platform" platform
+  perKindMaybe "platforms" "platform" os
   ++ perKindMaybe "systems" "system" system
   ++ perKindMaybe "hosts" "host" host
   ++ lib.concatMap (role: perKind "roles" "role" role) effectiveRoles

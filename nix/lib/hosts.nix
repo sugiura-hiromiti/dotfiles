@@ -38,6 +38,8 @@ let
     let
       meta = import (hostDir + "/${host}/meta.nix");
       inherit (meta) system;
+      systemPlatform = lib.systems.elaborate system;
+      os = systemPlatform.parsed.kernel.name;
       # host: profile registry key, derived from the directory name.
       # targetHost: public flake target prefix used by switch/update commands.
       # hostName: OS/network hostname configured inside the target system.
@@ -169,6 +171,7 @@ let
     {
       inherit
         host
+        os
         system
         hostName
         targetHost

@@ -204,16 +204,6 @@
             os
             targetHost
             theme
-            themeProfiles
-            sessionProfiles
-
-            hostRoles
-            accountRoles
-            effectiveRoles
-
-            hostVariants
-            accountVariants
-            effectiveVariants
             ;
         }
         // lib.optionalAttrs (config ? account) {

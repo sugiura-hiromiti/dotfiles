@@ -4,7 +4,6 @@
   os,
   host ? null,
   hostVariants ? [ ],
-  accountVariants ? [ ],
   themeProfiles ? [ ],
   sessionProfiles ? [ ],
   ...
@@ -23,7 +22,6 @@ in
       os
       host
       hostVariants
-      accountVariants
       themeProfiles
       sessionProfiles
       ;

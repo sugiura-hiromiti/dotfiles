@@ -44,30 +44,45 @@ in
       };
     };
 
-    programs.nushell = {
-      enable = lib.mkDefault true;
-      plugins = with pkgs.nushellPlugins; [
-        # dbus
-        # skim
-        # polars
-        # semver
-        # formats
-        # highlight
-        # desktop_notifications
-      ];
-      environmentVariables = {
-        CLAP_PATH = lib.mkDefault "~/.nix-profile/lib/clap";
-        DOTFILES_WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
-        LIBSQLITE = lib.mkDefault cfg.sqliteLibrary;
-        WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
-      }
-      // lib.optionalAttrs (config.home.sessionVariables ? EDITOR) {
-        EDITOR = lib.mkDefault config.home.sessionVariables.EDITOR;
-      }
-      // lib.optionalAttrs (config.home.sessionVariables ? VISUAL) {
-        VISUAL = lib.mkDefault config.home.sessionVariables.VISUAL;
+    programs = {
+      nushell = {
+        enable = lib.mkDefault true;
+        plugins = with pkgs.nushellPlugins; [
+          # dbus
+          # skim
+          # polars
+          # semver
+          # formats
+          # highlight
+          # desktop_notifications
+        ];
+        environmentVariables = {
+          CLAP_PATH = lib.mkDefault "~/.nix-profile/lib/clap";
+          DOTFILES_WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
+          LIBSQLITE = lib.mkDefault cfg.sqliteLibrary;
+          WALLPAPER_DIR = lib.mkDefault config.dotfiles.paths.wallpaperDirectory;
+        }
+        // lib.optionalAttrs (config.home.sessionVariables ? EDITOR) {
+          EDITOR = lib.mkDefault config.home.sessionVariables.EDITOR;
+        }
+        // lib.optionalAttrs (config.home.sessionVariables ? VISUAL) {
+          VISUAL = lib.mkDefault config.home.sessionVariables.VISUAL;
+        };
+        settings = {
+          completions = {
+            case_sensitive = false;
+            quick = true;
+            partial = true;
+            algorithm = "fuzzy";
+            external = {
+              enable = true;
+              max_results = 200;
+            };
+            footer_mode = "always";
+          };
+        };
+        configFile.source = ./config/config.nu;
       };
-      configFile.source = ./config/config.nu;
     };
   };
 }

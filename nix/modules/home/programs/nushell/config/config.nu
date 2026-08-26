@@ -33,14 +33,6 @@ $env.config.hooks.pre_execution = (
 # 	| default []
 # 	| append {|| print -n $"\u{1b}]133;D;($env.LAST_EXIT_CODE)\u{7}"}
 # )
-$env.config.completions = {
-	case_sensitive: false
-	quick: true
-	partial: true
-	algorithm: 'fuzzy'
-	external: {enable: true, max_results: 200, completer: null}
-}
-$env.config.footer_mode = 'always'
 alias n = nvim
 alias e = emacsclient -n -r
 alias wh = which -a

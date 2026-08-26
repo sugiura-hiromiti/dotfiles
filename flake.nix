@@ -205,7 +205,6 @@
             targetHost
             theme
             themeProfiles
-            variantProfiles
             sessionProfiles
 
             hostRoles
@@ -234,12 +233,12 @@
           };
           modules = [
             ./nix/home
-            catppuccin.homeModules.catppuccin
-            # paneru.homeModules.paneru
-            nix-index-database.homeModules.default
-            # zen-browser.homeModules.twilight
           ]
-          ++ profileModules "home" config;
+          ++ profileModules "home" config
+          ++ [
+            catppuccin.homeModules.catppuccin
+            nix-index-database.homeModules.default
+          ];
         };
       nixos-conf =
         config:
@@ -249,9 +248,11 @@
           modules = [
             (nixosProfileModule config)
             ./nix/nixos/configuration.nix
-            catppuccin.nixosModules.catppuccin
           ]
-          ++ profileModules "nixos" config;
+          ++ profileModules "nixos" config
+          ++ [
+            catppuccin.nixosModules.catppuccin
+          ];
         };
       darwin-conf =
         config:

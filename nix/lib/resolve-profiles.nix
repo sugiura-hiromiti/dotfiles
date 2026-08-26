@@ -39,7 +39,7 @@ let
   perVariant = label: name: perKind "variants" label name;
 in
 lib.unique (
-  perKindMaybe "platforms" "platform" os
+  perKindMaybe "os" "OS" os
   ++ perKindMaybe "systems" "system" system
   ++ perKindMaybe "hosts" "host" host
   ++ lib.concatMap (role: perKind "roles" "role" role) effectiveRoles

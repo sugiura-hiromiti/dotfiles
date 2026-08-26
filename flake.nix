@@ -3,7 +3,7 @@
 # 概要
 # - nix/profiles/hosts/<host>/meta.nix が system/accounts/targets/roles/variants/runtime を定義
 # - nix/home/ が Home Manager、nix/nixos/ が NixOS、nix/nix-darwin/ が macOS 設定の入口
-# - nix/profiles/{platforms,systems,hosts} は各target入口から解決して取り込み
+# - nix/profiles/{os,systems,hosts} は各target入口から解決して取り込み
 # - nix/runtime-contexts.nix が theme/session と runtime profile の対応を定義
 # - nix/lib/target-names.nix が公開 flake target 名の形式を定義
 #

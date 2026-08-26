@@ -1,6 +1,6 @@
 {
   lib,
-  system ? builtins.currentSystem,
+  system,
   os,
   host ? null,
   hostVariants ? [ ],

@@ -101,7 +101,7 @@ def --wrapped u [...args: string] {
 	try {
 		with-env { NIX_CONFIG: $update_nix_config } {
 			sudo -v
-			nix run path:.#update -- ...$args
+			nix run .#update -- ...$args
 		}
 	} catch {|err|
 		dirs drop

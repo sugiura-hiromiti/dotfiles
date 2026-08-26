@@ -1,15 +1,18 @@
 { lib, ... }:
 let
   cliPrograms = [
+    # NOTE: こいつらはnoctaliaの依存だった気がする
+    "translate-shell"
     "aria2"
+
     "bottom"
     "carapace"
     "cargo"
     "direnv"
     "emacs"
+    # NOTE: nushellでは使ってないので消すか？
     "eza"
     "fd"
-    "fish"
     "fzf"
     "gh"
     "git"
@@ -20,7 +23,6 @@ let
     "ripgrep"
     "ssh"
     "starship"
-    "translate-shell"
     "yazi"
     "zoxide"
   ];

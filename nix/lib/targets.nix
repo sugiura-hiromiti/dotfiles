@@ -45,6 +45,8 @@ let
       effectiveRoles = config.hostRoles ++ account.roles;
       accountVariants = account.variants;
       effectiveVariants = config.hostVariants ++ account.variants;
+      variantProfiles =
+        config.hostVariants ++ config.themeProfiles ++ config.sessionProfiles ++ account.variants;
     };
   mkHostTargetConfig =
     config:

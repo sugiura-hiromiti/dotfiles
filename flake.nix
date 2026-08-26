@@ -178,6 +178,18 @@
           }) config.accounts.users
         );
       };
+      resolveProfiles = import ./nix/lib/resolve-profiles.nix { inherit lib; };
+      profileModules =
+        target: config:
+        resolveProfiles {
+          inherit target;
+          inherit (config)
+            system
+            os
+            host
+            variantProfiles
+            ;
+        };
       commonSpecialArgs =
         config:
         {
@@ -226,7 +238,8 @@
             # paneru.homeModules.paneru
             nix-index-database.homeModules.default
             # zen-browser.homeModules.twilight
-          ];
+          ]
+          ++ profileModules "home" config;
         };
       nixos-conf =
         config:
@@ -237,7 +250,8 @@
             (nixosProfileModule config)
             ./nix/nixos/configuration.nix
             catppuccin.nixosModules.catppuccin
-          ];
+          ]
+          ++ profileModules "nixos" config;
         };
       darwin-conf =
         config:
@@ -247,7 +261,8 @@
           modules = [
             (darwinProfileModule config)
             ./nix/nix-darwin
-          ];
+          ]
+          ++ profileModules "darwin" config;
         };
       supportedSystems = lib.unique (map (host: hosts.${host}.system) hostNames);
     in

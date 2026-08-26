@@ -9,7 +9,6 @@
   os,
   host,
 
-  effectiveRoles ? [ ],
   hostVariants ? [ ],
   themeProfiles ? [ ],
   sessionProfiles ? [ ],
@@ -42,7 +41,6 @@ lib.unique (
   perKindMaybe "os" "OS" os
   ++ perKindMaybe "systems" "system" system
   ++ perKindMaybe "hosts" "host" host
-  ++ lib.concatMap (role: perKind "roles" "role" role) effectiveRoles
   ++ lib.concatMap (variant: perVariant "host variant" variant) hostVariants
   ++ lib.concatMap (profile: perVariant "theme runtime" profile) themeProfiles
   ++ lib.concatMap (profile: perVariant "session runtime" profile) sessionProfiles

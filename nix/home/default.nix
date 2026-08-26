@@ -3,7 +3,6 @@
   system,
   os,
   host ? null,
-  effectiveRoles ? [ ],
   hostVariants ? [ ],
   accountVariants ? [ ],
   themeProfiles ? [ ],
@@ -24,7 +23,6 @@ in
       system
       os
       host
-      effectiveRoles
       hostVariants
       accountVariants
       themeProfiles

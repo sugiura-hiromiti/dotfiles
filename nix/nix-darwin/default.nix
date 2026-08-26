@@ -3,7 +3,6 @@
   system ? builtins.currentSystem,
   os,
   host ? null,
-  effectiveRoles ? [ ],
   hostVariants ? [ ],
   accountVariants ? [ ],
   themeProfiles ? [ ],
@@ -23,7 +22,6 @@ in
       system
       os
       host
-      effectiveRoles
       hostVariants
       accountVariants
       themeProfiles

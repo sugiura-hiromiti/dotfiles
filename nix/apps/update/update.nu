@@ -53,8 +53,7 @@ def main [
 		$target
 	}
 
-	# TODO: path:修飾やめたい
-	let flake = $"path:(pwd)"
+	let flake = (pwd)
 	let lock = pwd | path join "flake.lock"
 	let tmp = (mktemp -d)
 	let candidate = $tmp | path join "flake.lock"

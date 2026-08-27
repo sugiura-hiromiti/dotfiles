@@ -94,7 +94,7 @@ def --wrapped u [...args: string] {
 	try {
 		with-env { NIX_CONFIG: $update_nix_config } {
 			sudo -v
-			nix run .#update -- ...$args
+			nix run --no-write-lock-file .#update -- ...$args
 		}
 	} catch {|err|
 		dirs drop

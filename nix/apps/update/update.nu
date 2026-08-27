@@ -52,29 +52,7 @@ def main [
 		}
 		$target
 	}
-
-	let flake = (pwd)
-	let lock = pwd | path join "flake.lock"
-	let tmp = (mktemp -d)
-	let candidate = $tmp | path join "flake.lock"
+	let repository = pwd | path expand --strict
 	let targets = [$home $system] | compact
-	try {
-		^nix flake update --flake $flake --output-lock-file $candidate
-		for target in $targets {
-			(
-				^nix eval --raw --reference-lock-file $candidate $"($flake)#($target.eval)"
-			) | ignore
-		}
-		for target in $targets {
-			if not ($target.authorize | is-empty) {
-				run-external ...($target.authorize)
-			}
-		}
-		cp $candidate $lock
-		for target in $targets {
-			run-external ...($target.switch) $"($flake)#($target.name)"
-		}
-	} finally {
-		rm -rf $tmp
-	}
+	run-operation $repository $SOURCE $targets
 }

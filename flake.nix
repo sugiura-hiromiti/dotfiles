@@ -12,7 +12,7 @@
 #    nix/profiles/hosts/<host>/meta.nix を作成し system/accounts/targets を指定
 #    (必要なら同ディレクトリに nixos.nix / hardware-configuration.nix)
 # 2) まとめて更新/反映:
-#    nix run path:.#update -- --host <host> --account <account> --theme <theme> --session <session>
+#    nix run --no-write-lock-file path:.#update -- --host <host> --account <account> --theme <theme> --session <session>
 #    - account は未指定なら current user を使う
 #    - theme/session は未指定なら実行時に検出する
 #    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
@@ -327,6 +327,7 @@
               hostNames
               mkTargetConfigEntries
               ;
+            source = self.outPath;
           };
 
           devShells.default = pkgs.mkShell {

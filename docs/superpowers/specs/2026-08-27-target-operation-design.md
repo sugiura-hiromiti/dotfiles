@@ -195,12 +195,12 @@ Broader validation is policy-dependent.
 
 Possible policies include:
 
-| Policy | Protected scope |
-|---|---|
-| `local` | selected activation Targets |
-| `host` | Targets for the selected Host |
-| `system` | Targets for the current Nix system |
-| `catalog` | all published Targets |
+| Policy       | Protected scope                          |
+| ------------ | ---------------------------------------- |
+| `local`      | selected activation Targets              |
+| `host`       | Targets for the selected Host            |
+| `system`     | Targets for the current Nix system       |
+| `catalog`    | all published Targets                    |
 | `repository` | a configured repository validation suite |
 
 ### 5.1 Current policy status

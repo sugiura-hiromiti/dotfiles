@@ -71,6 +71,17 @@ u --host <host> --account <account> --theme <theme> --session <session>
 configuration, switches Home Manager, switches the matching system
 configuration on NixOS or macOS.
 
+Each update captures one immutable flake source before dependency mutation.
+Candidate evaluation and Home/NixOS/nix-darwin activation use a private copy of
+that same source and the same candidate lock. Edits made after the update starts
+are therefore applied only by the next invocation.
+
+Only one dependency update may run in a Git repository at a time, including
+linked worktrees. A concurrent invocation fails before generating a candidate
+and reports the lock path; rerun it after the active update finishes. If an
+abrupt process termination leaves the reported lock directory behind, verify
+that no update process is active before removing that directory.
+
 ** Targets
 
 Target names are generated from host metadata in =nix/profiles/hosts/*/meta.nix=.

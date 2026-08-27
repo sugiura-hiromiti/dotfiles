@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  source,
   system,
   hosts,
   hostNames,
@@ -17,19 +18,9 @@ let
       ;
   };
   planFile = pkgs.writeText "dotfiles-update-plan.json" (builtins.toJSON plan.data);
-  updateScript = pkgs.writeTextFile {
-    name = "dotfiles-update";
-    executable = true;
-    text = ''
-      #!${lib.getExe pkgs.nushell} --no-config-file
-      const PLAN = "${planFile}"
-      ${builtins.readFile ./update.nu}
-    '';
-    checkPhase = ''
-      UPDATE_SCRIPT="$target" \
-      ${lib.getExe pkgs.nushell} --no-config-file --commands \
-      'if not (nu-check --debug $env.UPDATE_SCRIPT) { exit 1 }'
-    '';
+  mkUpdateScript = import ./script.nix { inherit lib pkgs; };
+  updateScript = mkUpdateScript {
+    inherit planFile source;
   };
 in
 {

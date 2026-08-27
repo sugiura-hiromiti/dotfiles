@@ -17,13 +17,13 @@ do not become stale.
 
 ## Status
 
-| Slice | Status | Policy dependency |
-|---|---|---|
-| 1. Operation consistency | Ready for execution planning | None |
-| 2. System-only selection | Ready after Slice 1 | None |
-| 3. Host ambiguity | Ready after Slice 2 | None |
-| 4. Candidate Validation policy | Blocked on repository policy choice | Required |
-| 5. Non-Cartesian runtime construction | Deferred extensibility risk | New requirement required |
+| Slice                                 | Status                              | Policy dependency        |
+| ------------------------------------- | ----------------------------------- | ------------------------ |
+| 1. Operation consistency              | Ready for execution planning        | None                     |
+| 2. System-only selection              | Ready after Slice 1                 | None                     |
+| 3. Host ambiguity                     | Ready after Slice 2                 | None                     |
+| 4. Candidate Validation policy        | Blocked on repository policy choice | Required                 |
+| 5. Non-Cartesian runtime construction | Deferred extensibility risk         | New requirement required |
 
 ## Slice 1: Operation consistency
 

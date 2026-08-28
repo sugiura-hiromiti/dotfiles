@@ -39,11 +39,6 @@ let
   installNix = {
     uses = "cachix/install-nix-action@v31";
   };
-  installNixFromMatrix = installNix // {
-    "with" = {
-      install_url = "https://releases.nixos.org/nix/nix-\${{ matrix.nix_version }}/install";
-    };
-  };
 
   linuxRunner = "ubuntu-24.04-arm";
   linuxPlatform = "aarch64-linux";

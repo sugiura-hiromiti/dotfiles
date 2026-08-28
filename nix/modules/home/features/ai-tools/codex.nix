@@ -26,7 +26,6 @@ let
         context = cfg.mcp.serena.context;
         projectFromCwd = true;
       };
-      startup_timeout_sec = cfg.mcp.serena.startupTimeoutSec;
     };
     github = {
       url = aiToolsCfg.mcp.github.url;

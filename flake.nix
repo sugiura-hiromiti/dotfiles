@@ -324,16 +324,22 @@
             };
           };
 
-          apps.update = import ./nix/apps/update {
-            inherit
-              lib
-              pkgs
-              system
-              hosts
-              hostNames
-              mkTargetConfigEntries
-              ;
-            source = self.outPath;
+          apps = {
+            update = import ./nix/apps/update {
+              inherit
+                lib
+                pkgs
+                system
+                hosts
+                hostNames
+                mkTargetConfigEntries
+                ;
+              source = self.outPath;
+            };
+            fix = import ./nix/apps/fix {
+              inherit lib pkgs;
+              formatter = config.treefmt.build.wrapper;
+            };
           };
 
           devShells.default = pkgs.mkShell {

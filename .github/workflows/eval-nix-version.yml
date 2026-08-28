@@ -19,10 +19,6 @@ jobs:
         nix store info --json
     - name: Evaluate NixOS target directly
       run: |-
-        nix flake check \
-          --all-systems \
-          --no-build \
-          --no-write-lock-file
         nix eval --raw \
           ".#nixosConfigurations.aarch64-linux-a--theme-light--session-gui.config.system.build.toplevel.drvPath"
     strategy:

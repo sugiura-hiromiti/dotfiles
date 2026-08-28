@@ -12,7 +12,7 @@
 #    nix/profiles/hosts/<host>/meta.nix を作成し system/accounts/targets を指定
 #    (必要なら同ディレクトリに nixos.nix / hardware-configuration.nix)
 # 2) まとめて更新/反映:
-#    nix run path:.#update -- --host <host> --account <account> --theme <theme> --session <session>
+#    nix run --no-write-lock-file path:.#update -- --host <host> --account <account> --theme <theme> --session <session>
 #    - account は未指定なら current user を使う
 #    - theme/session は未指定なら実行時に検出する
 #    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
@@ -30,6 +30,9 @@
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
 
   inputs = {
+    nix = {
+      url = "github:NixOS/nix";
+    };
     nixpkgs = {
       url = "github:nixos/nixpkgs?ref=nixos-unstable";
     };
@@ -107,6 +110,7 @@
   outputs =
     inputs@{
       self,
+      nix,
       nixpkgs,
       home-manager,
       nix-darwin,
@@ -212,6 +216,8 @@
         // lib.optionalAttrs (config ? accountName) {
           inherit (config) accountName;
         };
+      systemSpecialArgs =
+        config: commonSpecialArgs config // { nixPackage = nix.packages.${config.system}.default; };
       hm-conf =
         config:
         home-manager.lib.homeManagerConfiguration {
@@ -234,7 +240,7 @@
         config:
         nixpkgs.lib.nixosSystem {
           inherit (config) system;
-          specialArgs = commonSpecialArgs config;
+          specialArgs = systemSpecialArgs config;
           modules = [
             (nixosProfileModule config)
             ./nix/nixos/configuration.nix
@@ -248,7 +254,7 @@
         config:
         nix-darwin.lib.darwinSystem {
           inherit (config) system;
-          specialArgs = commonSpecialArgs config;
+          specialArgs = systemSpecialArgs config;
           modules = [
             (darwinProfileModule config)
             ./nix/nix-darwin
@@ -318,15 +324,22 @@
             };
           };
 
-          apps.update = import ./nix/apps/update {
-            inherit
-              lib
-              pkgs
-              system
-              hosts
-              hostNames
-              mkTargetConfigEntries
-              ;
+          apps = {
+            update = import ./nix/apps/update {
+              inherit
+                lib
+                pkgs
+                system
+                hosts
+                hostNames
+                mkTargetConfigEntries
+                ;
+              source = self.outPath;
+            };
+            fix = import ./nix/apps/fix {
+              inherit lib pkgs;
+              formatter = config.treefmt.build.wrapper;
+            };
           };
 
           devShells.default = pkgs.mkShell {

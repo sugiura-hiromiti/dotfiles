@@ -44,3 +44,4 @@ in
   target: self.nixosConfigurations.${target}.config.system.build.toplevel
 )
 // mkBuildChecks "darwin" darwinConfigNames (target: self.darwinConfigurations.${target}.system)
+// (import ./apps/update/tests { inherit lib pkgs; })

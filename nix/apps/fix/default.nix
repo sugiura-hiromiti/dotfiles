@@ -8,7 +8,11 @@ let
     name = "dotfiles-fix";
 
     text = ''
-      root="$(${lib.getExe pkgs.jujutsu} root)"
+      if ! root="$(${lib.getExe pkgs.jujutsu} root)"; then
+        echo "dotfiles-fix requires a Jujutsu workspace." >&2
+        echo "Initialize this checkout with: jj git init --colocate" >&2
+        exit 1
+      fi
       cd "$root"
 
       ${lib.getExe pkgs.deadnix} --edit .

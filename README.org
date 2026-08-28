@@ -8,6 +8,7 @@ Nix flake based dotfiles for Home Manager, NixOS, and nix-darwin.
 
 - Nix with flakes enabled.
 - Git.
+- Jujutsu (=jj=).
 - =sudo= access for NixOS or nix-darwin system switches.
 - Optional: =direnv= for entering the repository dev shell automatically.
 
@@ -30,6 +31,7 @@ Use =~/dotfiles= for the default bootstrap path:
 #+begin_src sh
 git clone https://github.com/sugiura-hiromiti/dotfiles.git ~/dotfiles
 cd ~/dotfiles
+jj git init --colocate
 #+end_src
 
 If =direnv= is installed:

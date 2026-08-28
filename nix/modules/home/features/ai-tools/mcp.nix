@@ -16,6 +16,12 @@ in
     };
     mcp-servers = {
       programs = {
+        nixos = {
+          enable = true;
+        };
+        context7 = {
+          enable = true;
+        };
         serena = {
           enable = true;
         };

@@ -4,10 +4,12 @@
   emacsPackage,
 }:
 let
-  python = pkgs.python3.withPackages (ps: with ps; [
-    openpyxl
-    pymupdf
-  ]);
+  python = pkgs.python3.withPackages (
+    ps: with ps; [
+      openpyxl
+      pymupdf
+    ]
+  );
 
   runtimePackages =
     with pkgs;

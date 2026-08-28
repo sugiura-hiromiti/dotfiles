@@ -12,35 +12,35 @@ let
     inherit lib pkgs;
     emacsPackage = config.programs.emacs.package;
   };
+  baseMcpServers = {
+    nix-agent = {
+      command = "${nixAgentPackage}/bin/nix-agent";
+      env.NIX_AGENT_FLAKE = "${config.home.homeDirectory}/dotfiles";
+    };
+  };
+  anvilMcpServers = lib.optionalAttrs emacsEnabled {
+    anvil = {
+      command = "${anvilPackage}/bin/anvil-stdio";
+      args = [
+        "--server-id=anvil"
+        "--init-function=anvil-enable"
+        "--stop-function=anvil-disable"
+      ];
+      env.ANVIL_PROFILE = "full";
+    };
+
+    anvil-emacs-eval = {
+      command = "${anvilPackage}/bin/anvil-stdio";
+      args = [ "--server-id=emacs-eval" ];
+      env.ANVIL_PROFILE = "full";
+    };
+  };
 in
 {
   config = lib.mkIf cfg.enable {
     programs.mcp = {
       enable = true;
-      servers =
-        {
-          "nix-agent" = {
-            command = "${nixAgentPackage}/bin/nix-agent";
-            env.NIX_AGENT_FLAKE = "${config.home.homeDirectory}/dotfiles";
-          };
-        }
-        // lib.optionalAttrs emacsEnabled {
-          anvil = {
-            command = "${anvilPackage}/bin/anvil-stdio";
-            args = [
-              "--server-id=anvil"
-              "--init-function=anvil-enable"
-              "--stop-function=anvil-disable"
-            ];
-            env.ANVIL_PROFILE = "full";
-          };
-
-          anvil-emacs-eval = {
-            command = "${anvilPackage}/bin/anvil-stdio";
-            args = [ "--server-id=emacs-eval" ];
-            env.ANVIL_PROFILE = "full";
-          };
-        };
+      servers = baseMcpServers // anvilMcpServers;
     };
 
     mcp-servers.programs = {

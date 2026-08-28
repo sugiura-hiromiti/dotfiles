@@ -1,4 +1,3 @@
-_:
-{
+_: {
   dotfiles.features.nixAgent.enable = true;
 }

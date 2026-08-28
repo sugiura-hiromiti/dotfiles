@@ -153,11 +153,6 @@ in
                   default = "codex";
                   description = "Serena context passed to the Codex MCP server.";
                 };
-                startupTimeoutSec = lib.mkOption {
-                  type = lib.types.int;
-                  default = 30;
-                  description = "Serena MCP startup timeout for Codex, in seconds.";
-                };
               };
             };
           };

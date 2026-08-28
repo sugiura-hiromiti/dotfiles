@@ -10,29 +10,16 @@
 let
   aiToolsCfg = config.dotfiles.features.aiTools;
   cfg = aiToolsCfg.codex;
-  aiToolsLib = import ./lib.nix { inherit pkgs lib; };
-  inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
-  codexPackage = mkGitHubAuthWrappedPackage {
-    inherit (cfg) package;
-    tokenCommand = aiToolsCfg.mcp.github.tokenCommand;
-    tokenEnvVar = aiToolsCfg.mcp.github.bearerTokenEnvVar;
-  };
-  serenaCommand = "${aiToolsCfg.mcp.serena.uvPackage}/bin/uvx";
-  codexMcpServers = {
-    serena = {
-      command = serenaCommand;
-      args = mkSerenaArgs {
-        packageSpec = aiToolsCfg.mcp.serena.packageSpec;
-        context = cfg.mcp.serena.context;
-        projectFromCwd = true;
-      };
-    };
-    github = {
-      url = aiToolsCfg.mcp.github.url;
-      bearer_token_env_var = aiToolsCfg.mcp.github.bearerTokenEnvVar;
-    };
-  };
 
+  serenaMcp = config.programs.mcp.servers.serena;
+  codexSerenaMcp = {
+    inherit (serenaMcp) command;
+    args = serenaMcp.args ++ [
+      "--context"
+      cfg.mcp.serena.context
+      "--project-from-cwd"
+    ];
+  };
   iHaveAdhdOpenaiYaml = builtins.readFile "${iHaveAdhdSkill}/skills/i-have-adhd/agents/openai.yaml";
   iHaveAdhdNeedsImplicitPatch = lib.hasInfix "allow_implicit_invocation: false" iHaveAdhdOpenaiYaml;
   iHaveAdhdAllowsImplicit = lib.hasInfix "allow_implicit_invocation: true" iHaveAdhdOpenaiYaml;
@@ -95,7 +82,9 @@ let
         trust_level = "trusted";
       };
     };
-    mcp_servers = codexMcpServers;
+    mcp_servers = {
+      serena = codexSerenaMcp;
+    };
   };
 in
 {
@@ -168,8 +157,9 @@ in
     programs = {
       codex = {
         enable = true;
+        enableMcpIntegration = true;
         settings = lib.recursiveUpdate defaultCodexSettings cfg.settings;
-        package = codexPackage;
+        package = cfg.package;
         skills = {
           i-have-adhd = iHaveAdhdImplicit;
           interview-me = interviewMeAlways;

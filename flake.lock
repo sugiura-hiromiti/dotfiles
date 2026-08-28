@@ -257,6 +257,26 @@
         "type": "github"
       }
     },
+    "mcp-servers-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1787850779,
+        "narHash": "sha256-pNnb33FyN1Uw2ahItIVZtFnpHxlvHRyRZRaavt5DzmM=",
+        "owner": "natsukium",
+        "repo": "mcp-servers-nix",
+        "rev": "78afd1ae1599a95da8d8fa8133cefe8c9f12806c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "natsukium",
+        "repo": "mcp-servers-nix",
+        "type": "github"
+      }
+    },
     "nix": {
       "inputs": {
         "flake-compat": "flake-compat_2",
@@ -418,11 +438,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1787902368,
-        "narHash": "sha256-L2ev7GvIWyXFkFXyeqLSySPjD+fZU7VgDMSRW/JzWLE=",
+        "lastModified": 1787934902,
+        "narHash": "sha256-ePH9rSP9PElDKICmgshbMB2ANRb4DJx0YmfVEPBlbJw=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "6adaf2ee8a5a3a1f45bbf18a7cdc25fe1cd8e333",
+        "rev": "6d44cd46094e00f26301375f0b54ad4e769cdadd",
         "type": "github"
       },
       "original": {
@@ -439,6 +459,7 @@
         "home-manager": "home-manager",
         "i-have-adhd": "i-have-adhd",
         "interview-me": "interview-me",
+        "mcp-servers-nix": "mcp-servers-nix",
         "nix": "nix",
         "nix-darwin": "nix-darwin",
         "nix-index-database": "nix-index-database",

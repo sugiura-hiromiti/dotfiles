@@ -7,36 +7,17 @@
 let
   aiToolsConfig = config.dotfiles.features.aiTools;
   cfg = aiToolsConfig.claudeCode;
-  aiToolsLib = import ./lib.nix { inherit pkgs lib; };
-  inherit (aiToolsLib) mkGitHubAuthWrappedPackage mkSerenaArgs;
 
-  claudePackage = mkGitHubAuthWrappedPackage {
-    inherit (cfg) package;
-    tokenCommand = aiToolsConfig.mcp.github.tokenCommand;
-    tokenEnvVar = aiToolsConfig.mcp.github.bearerTokenEnvVar;
+  serenaMcp = config.programs.mcp.servers.serena;
+  claudeSerenaMcp = {
+    inherit (serenaMcp) command;
+    type = "stdio";
+    args = serenaMcp.args ++ [
+      "--context"
+      cfg.mcp.serena.context
+      "--project-from-cwd"
+    ];
   };
-
-  serenaCommand = "${aiToolsConfig.mcp.serena.uvPackage}/bin/uvx";
-
-  claudeMcpServers = {
-    serena = {
-      type = "stdio";
-      command = serenaCommand;
-      args = mkSerenaArgs {
-        packageSpec = aiToolsConfig.mcp.serena.packageSpec;
-        context = cfg.mcp.serena.context;
-        projectFromCwd = true;
-      };
-    };
-    github = {
-      type = "http";
-      url = aiToolsConfig.mcp.github.url;
-      headers = {
-        Authorization = "Bearer \${${aiToolsConfig.mcp.github.bearerTokenEnvVar}}";
-      };
-    };
-  };
-
 in
 {
   options = {
@@ -73,8 +54,11 @@ in
     programs = {
       claude-code = {
         enable = true;
-        mcpServers = claudeMcpServers;
-        package = claudePackage;
+        enableMcpIntegration = true;
+        mcpServers = {
+          serena = claudeSerenaMcp;
+        };
+        package = cfg.package;
       };
     };
   };

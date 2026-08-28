@@ -159,7 +159,7 @@ in
         enable = true;
         enableMcpIntegration = true;
         settings = lib.recursiveUpdate defaultCodexSettings cfg.settings;
-        package = cfg.package;
+        inherit (cfg) package;
         skills = {
           i-have-adhd = iHaveAdhdImplicit;
           interview-me = interviewMeAlways;

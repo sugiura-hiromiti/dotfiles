@@ -58,7 +58,7 @@ in
         mcpServers = {
           serena = claudeSerenaMcp;
         };
-        package = cfg.package;
+        inherit (cfg) package;
       };
     };
   };

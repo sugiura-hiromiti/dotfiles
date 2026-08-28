@@ -36,7 +36,7 @@ in
 
   config = lib.mkIf cfg.enable {
     nix = {
-      package = lib.mkDefautl nixPackage;
+      package = lib.mkDefault nixPackage;
       enable = lib.mkDefault true;
       linux-builder = {
         enable = true;

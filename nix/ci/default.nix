@@ -39,6 +39,11 @@ let
   installNix = {
     uses = "cachix/install-nix-action@v31";
   };
+  installNixFromMatrix = installNix // {
+    "with" = {
+      install_url = "https://releases.nixos.org/nix/nix-\${{ matrix.nix_version }}/install";
+    };
+  };
 
   linuxRunner = "ubuntu-24.04-arm";
   linuxPlatform = "aarch64-linux";
@@ -57,6 +62,46 @@ in
     };
   };
   workflows = {
+    ".github/workflows/eval-nix-version.yml" = {
+      on = {
+        pull_request = { };
+      };
+      name = "temporalily diagnostics";
+      jobs = {
+        eval-nix-version = {
+          runs-on = linuxRunner;
+
+          strategy = {
+            fail-fast = false;
+            matrix = {
+              nix_version = [
+                "2.34.8"
+                "2.35.2"
+              ];
+            };
+          };
+
+          steps = [
+            checkout
+            installNixFromMatrix
+            {
+              name = "Show Nix versions";
+              run = ''
+                nix --version
+                nix store info --json
+              '';
+            }
+            {
+              name = "Evaluate NixOS target directly";
+              run = ''
+                nix eval --raw \
+                  ".#nixosConfigurations.${linuxNixosTarget}.config.system.build.toplevel.drvPath"
+              '';
+            }
+          ];
+        };
+      };
+    };
     ".github/workflows/full-build.yml" = {
       name = "Full build";
       inherit concurrency;

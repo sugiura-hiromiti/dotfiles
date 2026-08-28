@@ -10,7 +10,10 @@ let
   primaryUser = accounts.primary;
   primaryAccount = accounts.users.${primaryUser};
   homeDirectory =
-    if primaryAccount.homeDirectory != null then primaryAccount.homeDirectory else "/home/${primaryUser}";
+    if primaryAccount.homeDirectory != null then
+      primaryAccount.homeDirectory
+    else
+      "/home/${primaryUser}";
   flakeDirectory = "${homeDirectory}/dotfiles";
   nixAgentPackage = import ../../../pkg/nix-agent.nix { inherit lib pkgs; };
   nixosRebuild = "${pkgs.nixos-rebuild}/bin/nixos-rebuild";

@@ -70,3 +70,4 @@ elfeed/
 tramp
 emacs/url/
 emacs/bookmarks
+.direnv/

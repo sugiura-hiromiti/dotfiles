@@ -55,14 +55,17 @@ let
       grammars.tree-sitter-nu
       grammars.tree-sitter-csv
       grammars.tree-sitter-diff
+      grammars.tree-sitter-elisp
       grammars.tree-sitter-gitcommit
       grammars.tree-sitter-gitignore
+      grammars.tree-sitter-javascript
       grammars.tree-sitter-json
       grammars.tree-sitter-kdl
       grammars.tree-sitter-lua
       grammars.tree-sitter-markdown
       grammars.tree-sitter-markdown-inline
       grammars.tree-sitter-nix
+      grammars.tree-sitter-python
       grammars.tree-sitter-sql
       grammars.tree-sitter-yaml
       grammars.tree-sitter-tsx

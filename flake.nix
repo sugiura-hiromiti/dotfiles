@@ -105,11 +105,15 @@
         };
       };
     };
+    mcp-servers-nix = {
+      url = "github:natsukium/mcp-servers-nix";
+    };
   };
 
   outputs =
     inputs@{
       self,
+      mcp-servers-nix,
       nix,
       nixpkgs,
       home-manager,
@@ -234,6 +238,7 @@
           ++ [
             catppuccin.homeModules.catppuccin
             nix-index-database.homeModules.default
+            mcp-servers-nix.homeManagerModules.default
           ];
         };
       nixos-conf =

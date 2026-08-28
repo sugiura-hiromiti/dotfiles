@@ -2,12 +2,12 @@ def fail-evaluation [target: record, result: record] {
 	if not ($result.stderr | is-empty) { print -e $result.stderr }
 	error make {msg: $"candidate evaluation failed for ($target.name): exit code ($result.exit_code)"}
 }
-def validate-candidate [flake: string, targets: list<record>] {
+def validate-candidate [flake_ref: string, targets: list<record>] {
 
 	# This slice preserves local-only behavior; the default policy remains unresolved.
 	for target in $targets {
 		let result = (
-			^nix eval --raw $"($flake)#($target.eval)" | complete
+			^nix eval --raw $"($flake_ref)#($target.eval)" | complete
 		)
 		if $result.exit_code != 0 { fail-evaluation $target $result }
 	}
@@ -19,9 +19,9 @@ def authorize [targets: list<record>] {
 		}
 	}
 }
-def activate [flake: string, targets: list<record>] {
+def activate [flake_ref: string, targets: list<record>] {
 	for target in $targets {
-		run-external ...$target.switch $"($flake)#($target.name)"
+		run-external ...$target.switch $"($flake_ref)#($target.name)"
 	}
 }
 def operation-lock-path [repository: string] {
@@ -56,11 +56,12 @@ def run-operation [repository: string, source: string, targets: list<record>] {
 		try {
 			cp -r $source $flake
 			^chmod -R u+w $flake
-			^nix flake update --flake $flake
-			validate-candidate $flake $targets
+			let flake_ref = $"path:($flake)"
+			^nix flake update --flake $flake_ref
+			validate-candidate $flake_ref $targets
 			authorize $targets
 			publish-candidate $flake $repository
-			activate $flake $targets
+			activate $flake_ref $targets
 		} finally {
 			if ($temporary | path exists) { rm -rf $temporary }
 		}

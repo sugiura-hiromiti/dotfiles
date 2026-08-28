@@ -30,6 +30,9 @@
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
 
   inputs = {
+    nix = {
+      url = "github:NixOS/nix";
+    };
     nixpkgs = {
       url = "github:nixos/nixpkgs?ref=nixos-unstable";
     };
@@ -107,6 +110,7 @@
   outputs =
     inputs@{
       self,
+      nix,
       nixpkgs,
       home-manager,
       nix-darwin,
@@ -212,6 +216,8 @@
         // lib.optionalAttrs (config ? accountName) {
           inherit (config) accountName;
         };
+      systemSpecialArgs =
+        config: commonSpecialArgs config // { nixPackage = nix.packages.${config.system}.default; };
       hm-conf =
         config:
         home-manager.lib.homeManagerConfiguration {
@@ -234,7 +240,7 @@
         config:
         nixpkgs.lib.nixosSystem {
           inherit (config) system;
-          specialArgs = commonSpecialArgs config;
+          specialArgs = systemSpecialArgs config;
           modules = [
             (nixosProfileModule config)
             ./nix/nixos/configuration.nix
@@ -248,7 +254,7 @@
         config:
         nix-darwin.lib.darwinSystem {
           inherit (config) system;
-          specialArgs = commonSpecialArgs config;
+          specialArgs = systemSpecialArgs config;
           modules = [
             (darwinProfileModule config)
             ./nix/nix-darwin

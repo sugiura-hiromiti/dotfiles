@@ -20,4 +20,4 @@
 (require 'init-misc)
 (require 'init-ts)
 (require 'init-org)
-(require 'init-anvil nil t)
+(require 'init-anvil)

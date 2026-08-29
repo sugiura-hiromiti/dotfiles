@@ -20,6 +20,20 @@ let
         touch "$out"
       '';
 
+  emacsInitAnvil =
+    pkgs.runCommandLocal "emacs-init-anvil-check"
+      {
+        nativeBuildInputs = [ pkgs.emacs ];
+        src = self.outPath;
+      }
+      ''
+        cd "$src"
+        emacs --batch -Q \
+          -l nix/modules/home/programs/emacs/config/test/init-anvil-test.el \
+          -f ert-run-tests-batch-and-exit
+        touch "$out"
+      '';
+
   mkBuildChecks =
     prefix: names: getDerivation:
     lib.listToAttrs (
@@ -35,6 +49,7 @@ let
 in
 {
   deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --fail .";
+  emacs-init-anvil = emacsInitAnvil;
   statix = mkLintCheck "statix" pkgs.statix "statix check .";
 }
 // mkBuildChecks "home" homeConfigNames (

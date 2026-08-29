@@ -113,12 +113,16 @@
         };
       };
     };
+    nix-agent = {
+      url = "github:JEFF7712/nix-agent";
+    };
   };
 
   outputs =
     inputs@{
       self,
       mcp-servers-nix,
+      nix-agent,
       nix,
       nixpkgs,
       home-manager,
@@ -214,6 +218,7 @@
             hostName
             session
             system
+            systemTargetKind
             os
             targetHost
             theme
@@ -258,6 +263,7 @@
           ++ profileModules "nixos" config
           ++ [
             catppuccin.nixosModules.catppuccin
+            nix-agent.nixosModules.default
           ];
         };
       darwin-conf =

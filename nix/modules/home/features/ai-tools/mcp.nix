@@ -2,46 +2,43 @@
   lib,
   pkgs,
   config,
+  systemTargetKind,
   ...
 }:
 let
   cfg = config.dotfiles.features.aiTools;
   emacsEnabled = config.dotfiles.programs.emacs.enable;
-  nixAgentPackage = import ../../../../pkg/nix-agent.nix { inherit lib pkgs; };
-  anvilPackage = import ../../../../pkg/anvil.nix {
-    inherit lib pkgs;
-    emacsPackage = config.programs.emacs.package;
-  };
-  baseMcpServers = {
+  anvilStdio = "${config.xdg.configHome}/emacs/anvil-stdio.sh";
+  nixAgentMcpServers = lib.optionalAttrs (systemTargetKind == "nixos") {
     nix-agent = {
-      command = "${nixAgentPackage}/bin/nix-agent";
-      env.NIX_AGENT_FLAKE = "${config.home.homeDirectory}/dotfiles";
+      command = "nix-agent";
     };
   };
   anvilMcpServers = lib.optionalAttrs emacsEnabled {
     anvil = {
-      command = "${anvilPackage}/bin/anvil-stdio";
-      args = [
-        "--server-id=anvil"
-        "--init-function=anvil-enable"
-        "--stop-function=anvil-disable"
-      ];
-      env.ANVIL_PROFILE = "full";
+      command = anvilStdio;
+      args = [ "--server-id=anvil" ];
     };
 
     anvil-emacs-eval = {
-      command = "${anvilPackage}/bin/anvil-stdio";
+      command = anvilStdio;
       args = [ "--server-id=emacs-eval" ];
-      env.ANVIL_PROFILE = "full";
     };
   };
 in
 {
   config = lib.mkIf cfg.enable {
+    assertions = lib.optionals emacsEnabled [
+      {
+        assertion = config.programs.mcp.servers.anvil.args == [ "--server-id=anvil" ];
+        message = "Anvil MCP server must use only --server-id=anvil; server lifecycle is managed by Emacs.";
+      }
+    ];
+
     programs = {
       mcp = {
         enable = true;
-        servers = baseMcpServers // anvilMcpServers;
+        servers = nixAgentMcpServers // anvilMcpServers;
       };
     };
 

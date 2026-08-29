@@ -8,8 +8,8 @@ let
 in
 {
   imports = [
-    ./ai-tools/mcp.nix
     ./ai-tools/anvil.nix
+    ./ai-tools/mcp.nix
     ./ai-tools/codex.nix
     ./ai-tools/claude-code.nix
   ];

@@ -9,7 +9,13 @@ let
   paths = config.dotfiles.paths;
   emacsLispFiles = lib.attrNames (
     lib.filterAttrs (
-      name: type: name != "init-paths.el" && type == "regular" && lib.hasSuffix ".el" name
+      name: type:
+      !builtins.elem name [
+        "init-anvil.el"
+        "init-paths.el"
+      ]
+      && type == "regular"
+      && lib.hasSuffix ".el" name
     ) (builtins.readDir ./config/lisp)
   );
   emacsLispConfigFiles = lib.listToAttrs (

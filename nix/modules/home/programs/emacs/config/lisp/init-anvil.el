@@ -5,6 +5,7 @@
 	    :rev "v1.3.0")
   :demand t
   :config
+  (setq anvil-optional-modules nil)
   (anvil-enable)
   (anvil-server-start))
 

@@ -329,6 +329,7 @@
 
           checks = import ./nix/checks.nix {
             inherit
+              home-manager
               lib
               pkgs
               self

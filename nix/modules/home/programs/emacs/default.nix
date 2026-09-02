@@ -11,7 +11,6 @@ let
     lib.filterAttrs (
       name: type:
       !builtins.elem name [
-        "init-anvil.el"
         "init-paths.el"
       ]
       && type == "regular"

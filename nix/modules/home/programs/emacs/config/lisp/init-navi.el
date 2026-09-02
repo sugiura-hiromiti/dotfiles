@@ -1,4 +1,8 @@
-;;; -*- lexical-binding: t; -*-
+;;; init-navi.el --- Summary -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
+;;; Code:
 
 (declare-function eldoc-box-focus-frame "eldoc-box")
 (declare-function eldoc-box-help-at-point "eldoc-box")
@@ -39,12 +43,7 @@
 	(pretty-hydra-define meta-navigation
 		(:color pink :quit-key "<escape>")
 		("window/navi"
-			(("h" windmove-left "left")
-				("j" windmove-down "down")
-				("k" windmove-up "up")
-				("l" windmove-right "right")
-				;; cycle
-				("n" other-window "next")
+			(("n" other-window "next")
 				("p" my/other-window-backward "prev"))
 			"window/create,delete"
 			(("v" split-window-right "vertical")
@@ -63,14 +62,16 @@
 				("+" enlarge-window "higher")
 				(";" shrink-window-horizontally "shrink")
 				("'" enlarge-window-horizontally "enlarge"))
-			"tab"
+			"tab pos"
 			(("q" tab-previous "prev")
 				("w" tab-next "next")
-				("t" tab-new "new")
-				("c" tab-close "close")
-				("U" tab-undo "undo")
 				(">" tab-move "right")
 				("<" my/tab-move-left "left")
+				)
+			"tab mod"
+			(("c" tab-close "close")
+				("t" tab-new "new")
+				("U" tab-undo "undo")
 				("m" my/switch-to-buffer-other-tab "buffer switch")
 				)
 			))
@@ -81,7 +82,7 @@
 			(("l" xref-find-references "list")
 				("f" xref-find-definitions "def")
 				("o" consult-eglot-symbols "outline")
-				("d" flymake-show-project-diagnostics "diagnostic")
+				("d" consult-flymake "diagnostic")
 				("a" eglot-code-actions "actions")
 				("r" eglot-rename "rename")
 				("h" my/eldoc-box-help-at-point "hover")
@@ -89,9 +90,9 @@
 			"buf/file"
 			(("b" consult-buffer "buffer")
 				("i" consult-line "line")
-				("g" my/consult-ripgrep-current-dir "rg")
-				("p" consult-ripgrep "prj rg")
-				("m" ghostel-compile "compilation-mode"))
+				("g" consult-ripgrep "prj rg")
+				("m" ghostel-compile "compilation-mode")
+				("q" dirvish "filer"))
 			"misc"
 			(("e" eval-buffer "eval")
 				("x" ghostel-project "terminal")
@@ -108,13 +109,6 @@
 	(eldoc-box-help-at-point)
 	(eldoc-box-focus-frame))
 
-(defun my/consult-ripgrep-current-dir ()
-	"現在のバッファのディレクトリ配下をrgする"
-	(interactive)
-	(consult-ripgrep
-		default-directory
-		(thing-at-point 'symbol t)))
-
 (use-package flymake
 	:ensure nil
 	:bind
@@ -130,5 +124,28 @@
 	:hook ((prog-mode text-mode) . goggles-mode)
 	:custom
 	(googles-pulse t))
+
+(use-package dirvish
+	:init
+	(dirvish-override-dired-mode)
+	:custom
+	(dirvish-attributes
+		'(nerd-icons
+			 vc-state
+			 subtree-state
+			 collapse
+			 file-modes
+			 git-msg
+			 file-size
+			 file-time))
+	:bind
+	(:map dirvish-mode-map
+		("?" . dirvish-dispatch)
+		("n" . dirvish-narrow)
+		("TAB" . dirvish-subtree-toggle)))
+
+(with-eval-after-load 'dirvish
+	(keymap-set dirvish-mode-map "h" #'dired-up-directory)
+	(keymap-set dirvish-mode-map "l" #'dired-find-file))
 
 (provide 'init-navi)

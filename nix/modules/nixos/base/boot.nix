@@ -63,6 +63,11 @@ in
         };
 
         boot = {
+          initrd = {
+            systemd = {
+              enable = true;
+            };
+          };
           loader = {
             systemd-boot.enable = lib.mkDefault true;
             efi.canTouchEfiVariables = lib.mkDefault false;

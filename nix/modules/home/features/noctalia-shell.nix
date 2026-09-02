@@ -16,15 +16,16 @@ let
     ;
   cfg = config.dotfiles.features.noctaliaShell;
   settings = {
-
-    accessibility = {
-      ui_scale = 2.5;
-    };
-
     shell = {
       settings_show_advanced = true;
       clipboard_enabled = true;
       clipboard_auto_paste = "auto";
+      panel = {
+        launcher_placement = "floating";
+        clipboard_placement = "floating";
+        wallpaper_placement = "floating";
+        session_placement = "floating";
+      };
     };
 
     backdrop = {
@@ -33,50 +34,49 @@ let
       tint_intensity = 0.2;
     };
 
-    bar.main = {
-      scale = 2.5;
-      position = "right";
+    bar = {
+      main = {
+        position = "top";
 
-      # transparent bar container
-      background_opacity = 0.0;
-      border_width = 0.0;
-      shadow = false;
+        # transparent bar container
+        background_opacity = 0.0;
+        border_width = 0.0;
+        shadow = false;
+        layer = "overlay";
+        font_weight = 200;
 
-      # opaque backgrounds around individual widgets
-      capsule = true;
-      capsule_fill = "surface_variant";
-      capsule_opacity = 1.0;
-      capsule_thickness = 1.0;
-      capsule_padding = 6;
-      capsule_radius = 5;
+        # opaque backgrounds around individual widgets
+        capsule = true;
+        capsule_fill = "surface_variant";
 
-      margin_ends = 10;
-      margin_edge = 1;
-      widget_spacing = 10;
-      thickness = 61;
+        margin_edge = 10;
+        widget_spacing = 10;
+        thickness = 27;
 
-      auto_hide = false;
-      reserve_space = true;
-      start = [
-        "launcher"
-        "workspaces"
-        "sysmon"
-        # "media"
-        # "audio_visualizer"
-      ];
-      center = [
-      ];
-      end = [
-        "clock"
-        # "notifications"
-        "battery"
-        # "clipboard"
-        "volume"
-        "wallpaper"
-      ]
-      ++ optionals cfg.ddc.enable [
-        "brightness"
-      ];
+        auto_hide = true;
+        # smart_auto_hide = true;
+        reserve_space = false;
+        start = [
+          "launcher"
+          "workspaces"
+          # "sysmon"
+          # "media"
+          # "audio_visualizer"
+        ];
+        center = [
+          "clock"
+        ];
+        end = [
+          # "notifications"
+          "wallpaper"
+          "battery"
+          # "clipboard"
+          "volume"
+        ]
+        ++ optionals cfg.ddc.enable [
+          "brightness"
+        ];
+      };
     };
 
     widget = {
@@ -114,17 +114,8 @@ let
       };
     };
 
-    shell.panel = {
-      launcher_placement = "floating";
-      clipboard_placement = "floating";
-      wallpaper_placement = "floating";
-      session_placement = "floating";
-    };
-
     theme = {
       mode = theme;
-      source = "wallpaper";
-      builtin = "m3-content";
     };
 
     notification = {

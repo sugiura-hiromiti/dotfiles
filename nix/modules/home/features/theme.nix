@@ -48,6 +48,7 @@ in
       pointerCursor = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
         name = lib.mkDefault "Alice Rolipop";
         enable = true;
+        size = 45;
       };
     };
     catppuccin = {

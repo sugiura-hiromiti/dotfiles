@@ -20,16 +20,6 @@
 		'(embark-keybinding grid))
 	(vertico-multiform-mode 1))
 
-(use-package vertico-buffer-frame
-	:after vertico
-	:vc (:url "https://github.com/kn66/vertico-buffer-frame"
-			 :rev :newest)
-	:custom
-	(vertico-buffer-frame-consult-preview t)
-	(vertico-buffer-frame-parameters '((alpha-background . 80)))
-	:config
-	(vertico-buffer-frame-mode 1))
-
 (use-package marginalia :init (marginalia-mode 1))
 
 (use-package
@@ -212,9 +202,7 @@
 	;; (setq embark-quit-after-action nil)
 	)
 
-(use-package embark-consult :after (embark consult)
-	:hook
-	(embark-collect-mode . consult-preview-at-point-mode))
+(use-package embark-consult :after (embark consult))
 
 (use-package wgrep
 	:custom

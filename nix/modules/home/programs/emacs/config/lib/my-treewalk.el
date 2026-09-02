@@ -90,17 +90,17 @@
 
 (defun my/treesit-treewalk--line-text (row)
 	"現在のbufferの1始まりのROWにある文字列を返す。"
-	(when-let ((start
-					  (and (integerp row)
-					     (> row 0)
-					     (my/treesit-treewalk--line-start-position row))))
+	(when-let* ((start
+						(and (integerp row)
+							(> row 0)
+							(my/treesit-treewalk--line-start-position row))))
 		(save-excursion
 			(goto-char start)
 			(buffer-substring-no-properties start (line-end-position)))))
 
 (defun my/treesit-treewalk--line-navigation-positions (row)
 	"ROWの最初の非blank位置と、その次の位置を返す。"
-	(when-let ((start (my/treesit-treewalk--line-start-position row)))
+	(when-let* ((start (my/treesit-treewalk--line-start-position row)))
 		(save-excursion
 			(goto-char start)
 			(let ((end (line-end-position)))
@@ -133,7 +133,7 @@
 	(or my/treesit-treewalk--single-parser-cache
 	   (and (fboundp 'treesit-local-parsers-at)
 	      (car (ignore-errors (treesit-local-parsers-at position))))
-	   (when-let ((language (ignore-errors (treesit-language-at position))))
+	   (when-let* ((language (ignore-errors (treesit-language-at position))))
 			(car (treesit-parser-list nil language)))
 	   (car (treesit-parser-list))))
 
@@ -147,7 +147,7 @@
 
 (defun my/treesit-treewalk--named-node-on (beginning end)
 	"BEGINNINGからENDまでを覆う最小のnamed nodeを返す。"
-	(when-let ((parser (my/treesit-treewalk--parser-at beginning)))
+	(when-let* ((parser (my/treesit-treewalk--parser-at beginning)))
 		(treesit-node-on beginning end parser t)))
 
 (defun my/treesit-treewalk--named-parent (node)
@@ -240,8 +240,8 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 	"ROWを代表する正規化済み構文nodeを返す。"
 	(when-let* ((line (my/treesit-treewalk--line-text row))
 	              (positions (my/treesit-treewalk--line-navigation-positions row)))
-		(let ((node (when-let ((candidate
-										  (my/treesit-treewalk--named-node-at (car positions))))
+		(let ((node (when-let* ((candidate
+											(my/treesit-treewalk--named-node-at (car positions))))
 							(my/treesit-treewalk--normalize-node candidate))))
 			(if (and (my/treesit-treewalk--highlight-target-p node)
 			       (= (my/treesit-treewalk--node-start-row node) row))
@@ -283,7 +283,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 
 (defun my/treesit-treewalk--anchor-at-row (row)
 	"ROWを代表する移動用anchorを返す。"
-	(when-let ((node (my/treesit-treewalk--node-at-row row)))
+	(when-let* ((node (my/treesit-treewalk--node-at-row row)))
 		(my/treesit-treewalk--anchor-from-node
 			node
 			(if (my/treesit-treewalk--augment-target-p node)
@@ -362,7 +362,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 				(max-row (my/treesit-treewalk--line-count)))
 		(catch 'target
 			(while (<= 1 row max-row)
-				(when-let ((candidate (my/treesit-treewalk--anchor-at-row row)))
+				(when-let* ((candidate (my/treesit-treewalk--anchor-at-row row)))
 					(when (and (= (my/treesit-treewalk--anchor-start-row candidate) row)
 					         (not
 									(string-blank-p
@@ -384,7 +384,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 	        (max-row (my/treesit-treewalk--line-count)))
 		(catch 'target
 			(while (<= row max-row)
-				(when-let ((line (my/treesit-treewalk--line-text row)))
+				(when-let* ((line (my/treesit-treewalk--line-text row)))
 					(unless (string-blank-p line)
 						(let ((indent (my/treesit-treewalk--line-indent line))
 						        (candidate (my/treesit-treewalk--anchor-at-row row)))
@@ -452,9 +452,9 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 
 (defun my/treesit-treewalk--jump (anchor)
 	"ANCHORの行の最初の非blank文字へ移動する。"
-	(when-let ((positions
-					  (my/treesit-treewalk--line-navigation-positions
-						  (my/treesit-treewalk--anchor-row anchor))))
+	(when-let* ((positions
+						(my/treesit-treewalk--line-navigation-positions
+							(my/treesit-treewalk--anchor-row anchor))))
 		(goto-char (car positions))
 		anchor))
 

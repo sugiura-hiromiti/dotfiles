@@ -30,6 +30,9 @@
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
 
   inputs = {
+    preservation = {
+      url = "github:nix-community/preservation";
+    };
     nix = {
       url = "github:NixOS/nix";
     };
@@ -121,6 +124,7 @@
   outputs =
     inputs@{
       self,
+      preservation,
       mcp-servers-nix,
       nix-agent,
       nix,
@@ -257,6 +261,7 @@
           inherit (config) system;
           specialArgs = systemSpecialArgs config;
           modules = [
+            preservation.nixosModules.default
             (nixosProfileModule config)
             ./nix/nixos/configuration.nix
           ]
@@ -309,7 +314,6 @@
           repoMaintenancePackages = with pkgs; [
             formatters.editorTools
             deadnix
-            fish
             nixd
             statix
           ];

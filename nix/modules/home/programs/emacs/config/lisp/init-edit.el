@@ -1,4 +1,8 @@
-;;; -*- lexical-binding: t; -*-
+;;; init-edit.el --- Summary -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
+;;; Code:
 
 (declare-function meow-bounds-of-thing "meow-command")
 (declare-function meow-cancel-selection "meow-command")
@@ -22,15 +26,15 @@
 		(meow-motion-define-key
 			'("j" . meow-next)
 			'("k" . meow-prev)
-			'("RET" . my/meow-ret-dispatch)
-			'("TAB" . meta-navigation/body)
+			'("/" . command-palette/body)
+			'("." . meta-navigation/body)
 			'("x" . meow-line)
 			'("y" . meow-save)
+			'(":" . execute-extended-command)
+			'(";" . eval-expression)
 			'("<escape>" . ignore))
 
 		(meow-leader-define-key
-			'("?" . meow-cheatsheet)
-			'("/" . meow-keypad-describe-key)
 			'("1" . meow-digit-argument)
 			'("2" . meow-digit-argument)
 			'("3" . meow-digit-argument)
@@ -55,9 +59,8 @@
 			'("-" . negative-argument)
 			'(":" . execute-extended-command)
 			'(";" . eval-expression)
-			'("RET" . my/meow-ret-dispatch)
-			'("TAB" . meta-navigation/body)
-			'("DEL" . tree-sitter-operations/body)
+			'("/" . command-palette/body)
+			'("." . meta-navigation/body)
 			'("<up>" . my/meow-treesit-up)
 			'("<down>" . my/meow-treesit-down)
 			'("<right>" . my/meow-treesit-in)
@@ -79,27 +82,20 @@
 			'("h" . meow-left)
 			'("H" . meow-left-expand)
 			'("i" . meow-insert)
-													 ;'("I" . meow-open-above)
 			'("j" . meow-next)
 			'("J" . meow-next-expand) ;; 要らないかも
 			'("k" . meow-prev)
 			'("K" . meow-prev-expand) ;; 要らないかも
 			'("l" . meow-right)
 			'("L" . meow-right-expand)
-													 ;'("o" . meow-block)
-													 ;'("O" . meow-to-block)
 			'("o" . meow-open-below)
 			'("O" . meow-open-above)
 			'("p" . meow-yank)
 			'("q" . meow-goto-line)
 			'("r" . meow-reverse)
 			'("s" . meow-kill)
-			'("S" . puni-transpose)
 			'("t" . comment-dwim)
 			'("u" . meow-undo)
-			'("w" . meow-mark-word)
-			;;'("W" . meow-mark-symbol)
-			;; '("w" . puni-mark-sexp-at-point) ;; 要らないかも(gでことたりる)
 			'("x" . meow-line)
 			'("y" . meow-save)
 													 ; '("z" . meow-pop-selection)
@@ -147,48 +143,38 @@ Runs when leaving Meow insert mode."
 		(when (and had-selection has-parser)
 			(my/meow-treesit-expand))))
 
+;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-up (&optional count)
 	"構造的に上へ移動し、選択があれば移動先を選択する。"
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-up count))
 
+;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-down (&optional count)
 	"構造的に下へ移動し、選択があれば移動先を選択する。"
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-down count))
 
+;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-in (&optional count)
 	"構造の内側へ移動し、選択があれば移動先を選択する。"
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-in count))
 
+;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-out (&optional count)
 	"構造の外側へ移動し、選択があれば移動先を選択する。"
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-out count))
 
-(defun my/meow-ret-dispatch ()
-	(interactive)
-	(cond
-		((derived-mode-p 'compilation-mode)
-			(compile-goto-error))
-		((derived-mode-p 'grep-mode)
-			(compile-goto-error))
-		((derived-mode-p 'occur-mode)
-			(occur-mode-goto-occurrence))
-		(t
-			(command-palette/body))))
-
+;; NOTE: deprecated
 (keymap-global-set "S-<down>" #'forward-paragraph)
 (keymap-global-set "S-<up>" #'backward-paragraph)
 
+;; NOTE: deprecated
 (with-eval-after-load 'compile
 	(keymap-set compilation-mode-map "S-<down>" #'next-error)
 	(keymap-set compilation-mode-map "S-<up>" #'previous-error))
-
-;; (define-key meow-normal-state-keymap (kbd "RET") #'my/meow-ret-dispatch)
-
-;; NOTE: emacsの場合はりつけはctrl - y
 
 (with-eval-after-load 'meow
 	(add-to-list 'meow-mode-state-list '(help-mode . normal))

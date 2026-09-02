@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -15,16 +14,16 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    i18n.inputMethod = {
-      enable = lib.mkDefault true;
-      type = lib.mkDefault "fcitx5";
-      fcitx5 = {
-        waylandFrontend = lib.mkDefault true;
-        addons = with pkgs; [
-          fcitx5-mozc-ut
-          fcitx5-gtk
-        ];
-      };
-    };
+    # i18n.inputMethod = {
+    #   enable = lib.mkDefault true;
+    #   # type = lib.mkDefault "fcitx5";
+    #   # fcitx5 = {
+    #   #   waylandFrontend = lib.mkDefault true;
+    #   #   addons = with pkgs; [
+    #   #     fcitx5-mozc-ut
+    #   #     fcitx5-gtk
+    #   #   ];
+    #   # };
+    # };
   };
 }

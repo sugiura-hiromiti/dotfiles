@@ -15,12 +15,12 @@
 	text-mode-ispell-word-completion nil)
 
 ;; Emacs internals such as VC and diff expect POSIX shell syntax.
-(when-let ((shell (or (executable-find "bash")
-                     (executable-find "sh"))))
+(when-let* ((shell (or (executable-find "bash")
+                      (executable-find "sh"))))
 	(setq shell-file-name shell
       shell-command-switch "-c"))
 
-(when-let ((nu (executable-find "nu")))
+(when-let* ((nu (executable-find "nu")))
 	(setq explicit-shell-file-name nu))
 
 (when (fboundp 'editorconfig-mode)
@@ -30,7 +30,6 @@
 (savehist-mode 1)
 (recentf-mode 1)
 (global-auto-revert-mode 1)
-(pixel-scroll-precision-mode 1)
 (electric-pair-mode 1)
 (repeat-mode 1)
 
@@ -64,7 +63,7 @@
 (use-package
 	exec-path-from-shell
 	:config
-	(when-let ((nu (executable-find "nu")))
+	(when-let* ((nu (executable-find "nu")))
 		(setq exec-path-from-shell-shell-name nu))
 	(exec-path-from-shell-initialize))
 

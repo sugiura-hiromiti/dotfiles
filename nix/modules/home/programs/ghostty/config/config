@@ -71,7 +71,6 @@ gtk-quick-terminal-layer = overlay
 gtk-quick-terminal-namespace = my_ghostty_quick_terminal
 
 #  NOTE: shell
-shell-integration = fish
 shell-integration-features = true
 window-inherit-working-directory = true
 confirm-close-surface = false

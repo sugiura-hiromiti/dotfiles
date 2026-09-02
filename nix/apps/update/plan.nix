@@ -47,7 +47,7 @@ let
   aliasNames = map (alias: alias.name) aliasPairs;
   hourName = hour: if hour < 10 then "0${toString hour}" else toString hour;
   themeByHour = lib.listToAttrs (
-    map (hour: lib.nameValuePair (hourName hour) (if hour >= 6 && hour < 17 then "light" else "dark")) (
+    map (hour: lib.nameValuePair (hourName hour) (if hour >= 6 && hour < 18 then "light" else "dark")) (
       lib.range 0 23
     )
   );

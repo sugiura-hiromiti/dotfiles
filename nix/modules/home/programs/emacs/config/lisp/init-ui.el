@@ -1,4 +1,8 @@
-;;; -*- lexical-binding: t; -*-
+;;; init-ui.el --- UI configuration -*- lexical-binding: t; -*-
+
+;;; Commentary:
+
+;;; Code:
 
 (set-language-environment "Utf-8")
 (prefer-coding-system 'utf-8-unix)
@@ -25,7 +29,7 @@
 	:family "Maple Mono NF CN"
 	:height (pcase system-type
 				  ('darwin 160)
-				  ('gnu/linux 250)
+				  ('gnu/linux 100)
 				  (_ 250))
 	:weight 'extra-light)
 (set-face-attribute 'bold nil
@@ -63,12 +67,12 @@
 			(when (display-graphic-p)
 				(auto-dark-mode 1)
 				(remove-hook 'after-make-frame-functions
-               #'my/auto-dark-on-first-gui-frame))))
+					#'my/auto-dark-on-first-gui-frame))))
 
 	(if (display-graphic-p)
-      (auto-dark-mode 1)
+		(auto-dark-mode 1)
 		(add-hook 'after-make-frame-functions
-         #'my/auto-dark-on-first-gui-frame)))
+			#'my/auto-dark-on-first-gui-frame)))
 
 (use-package doom-modeline
 	:init
@@ -171,15 +175,17 @@
 		 ghostel-mode))
 
 (defun my/current-tab-name ()
+	"Get current tab name."
 	(let ((tab (seq-find (lambda (tab)
 									(memq 'current-tab tab))
-                 (tab-bar-tabs))))
+					  (tab-bar-tabs))))
 		(alist-get 'name tab)))
 
 (defun my/tab-exists-p (name)
+	"Determine target tab with NAME exist or not."
 	(seq-some (lambda (tab)
 					 (equal (alist-get 'name tab) name))
-      (tab-bar-tabs)))
+		(tab-bar-tabs)))
 
 (defun my/tab-number-by-name (name)
 	"Return 1-based tab number for tab NAME, or nil."
@@ -221,12 +227,12 @@ When called from popup tab, return to previous tab and delete popup tab.
 When no popup tab exists, do nothing."
 	(interactive)
 	(if (equal (my/current-tab-name) my/popup-tab-name)
-      ;; Inside popup tab: return, then delete popup tab.
-      (let ((return-tab my/popup-return-tab))
+		;; Inside popup tab: return, then delete popup tab.
+		(let ((return-tab my/popup-return-tab))
 			(cond
 				((and return-tab
-                (my/tab-exists-p return-tab)
-                (not (equal return-tab my/popup-tab-name)))
+					 (my/tab-exists-p return-tab)
+					 (not (equal return-tab my/popup-tab-name)))
 					(my/switch-tab-by-name return-tab))
 				((my/first-non-popup-tab-name)
 					(my/switch-tab-by-name (my/first-non-popup-tab-name))))
@@ -277,15 +283,9 @@ alist used when creating the tab."
 				("RET" . newline)
 				("S-<return>" . shell-maker-submit)))
 
-(use-package casual
-	:custom
-	(casual-lib-use-unicode t)
-	(transient-align-variable-pitch t)
-	:config
-	(casual-info-init)
-	(casual-help-init)
-	(casual-re-builder-init)
-	(casual-compile-init)
-	(casual-calc-init))
+(use-package flymake-popon
+	:hook
+	(flymake-mode . flymake-popon-mode))
 
 (provide 'init-ui)
+;;; init-ui.el ends here

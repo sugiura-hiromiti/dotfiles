@@ -165,25 +165,7 @@ in
           interview-me = interviewMeAlways;
           urd = "${urdSkill}/skills/urd";
         };
-        context = cfg.context + ''
-          ## Required global skills
-
-          - Invoke `$i-have-adhd` and apply it to the presentation of every
-            user-facing response.
-          - Invoke `$interview-me` at the beginning of every interactive task,
-            even when the request initially appears clear. Complete its interview
-            before planning, implementation, or the final answer. Do not restart
-            the interview on each follow-up turn unless the intended outcome
-            materially changes.
-          - After the requirements are confirmed, invoke `$urd` and keep applying
-            it throughout planning, implementation, and verification.
-          - `$interview-me` and `$urd` are sequential, not concurrent. If `$urd`
-            uncovers a change to the intended outcome, success criteria,
-            constraints, or scope, return to `$interview-me`, reconfirm the intent,
-            and then resume `$urd`.
-          - Skip a skill only when the user explicitly requests it, or when a
-            higher-priority instruction makes the skill inapplicable.
-        '';
+        context = cfg.context;
       };
     };
   };

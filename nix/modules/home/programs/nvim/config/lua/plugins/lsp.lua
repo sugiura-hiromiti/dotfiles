@@ -203,7 +203,6 @@ return {
 				'dprint',
 				'html',
 				'yamlls',
-				'fish_lsp',
 				-- 'terraformls',
 				-- 'terraform_lsp',
 				'graphql',

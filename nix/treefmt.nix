@@ -13,7 +13,6 @@ in
   settings = formatters.settings // {
     global = {
       excludes = [
-        "nix/modules/home/programs/fish/config/completions/**"
         # actions.nix is the sole owner
         ".github/workflows/**"
       ];
@@ -32,8 +31,6 @@ in
       ];
       settings = formatters.dprint.settings;
     };
-
-    fish_indent.enable = true;
 
     nixfmt = {
       enable = true;

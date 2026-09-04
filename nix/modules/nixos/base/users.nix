@@ -51,7 +51,6 @@ in
 
             uid = lib.mkOption {
               type = lib.types.int;
-              default = 1000;
               description = "Explicit UID for the NixOS user.";
             };
 

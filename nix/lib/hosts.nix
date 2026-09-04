@@ -84,7 +84,7 @@ let
           homeDirectory = account.homeDirectory or null;
           roles = account.roles or [ ];
           targets = account.targets or [ "home" ];
-          uid = account.uid or null;
+          uid = account.uid;
           variants = account.variants or [ ];
         };
       accounts = {

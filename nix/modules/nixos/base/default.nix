@@ -1,5 +1,6 @@
 {
   imports = [
+    ./logging.nix
     ./audio.nix
     ./boot.nix
     ./core.nix

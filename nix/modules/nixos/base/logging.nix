@@ -1,0 +1,7 @@
+{
+  services = {
+    journald = {
+      storage = "volatile";
+    };
+  };
+}

@@ -53,7 +53,7 @@ in
             };
 
             uid = lib.mkOption {
-              type = lib.types.nullOr lib.types.int;
+              type = lib.types.int;
               default = null;
               description = "NixOS user UID. Null lets NixOS allocate the UID.";
             };

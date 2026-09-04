@@ -65,7 +65,7 @@ in
         boot = {
           initrd = {
             systemd = {
-              enable = true;
+              enable = lib.mkDefault true;
             };
           };
           loader = {

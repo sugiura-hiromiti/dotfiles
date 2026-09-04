@@ -52,7 +52,7 @@ in
             uid = lib.mkOption {
               type = lib.types.int;
               default = 1000;
-              description = "NixOS user UID. Null lets NixOS allocate the UID.";
+              description = "Explicit UID for the NixOS user.";
             };
 
             homeDirectory = lib.mkOption {

@@ -146,6 +146,19 @@
 
 (with-eval-after-load 'dirvish
 	(keymap-set dirvish-mode-map "h" #'dired-up-directory)
-	(keymap-set dirvish-mode-map "l" #'dired-find-file))
+	(keymap-set dirvish-mode-map "l" #'dired-find-file)
+	(keymap-set dirvish-mode-map "a" #'my/dirvish-create)
+	(keymap-set dirvish-mode-map "r" #'dired-do-rename))
+
+(defun my/dirvish-create (path)
+	"Create file or directory for PATH."
+	(interactive
+		(list
+			(read-file-name "Create: " (dired-current-directory))))
+	(if (directory-name-p path)
+		(make-directory path t)
+		(make-empty-file path t))
+	(revert-buffer))
 
 (provide 'init-navi)
+;;; init-navi.el ends here

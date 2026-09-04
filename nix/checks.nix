@@ -1,5 +1,6 @@
 {
   lib,
+  preservation,
   pkgs,
   self,
   targetConfigNames,
@@ -45,3 +46,6 @@ in
 )
 // mkBuildChecks "darwin" darwinConfigNames (target: self.darwinConfigurations.${target}.system)
 // (import ./apps/update/tests { inherit lib pkgs; })
+// lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+  preservation = import ./tests/nixos/preservation.nix { inherit pkgs preservation; };
+}

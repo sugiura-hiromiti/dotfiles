@@ -165,7 +165,7 @@ in
           interview-me = interviewMeAlways;
           urd = "${urdSkill}/skills/urd";
         };
-        context = cfg.context;
+        inherit (cfg) context;
       };
     };
   };

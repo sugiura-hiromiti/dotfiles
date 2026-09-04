@@ -1,4 +1,8 @@
-{ accounts, ... }:
+{
+  accounts,
+  nixAgentPackage,
+  ...
+}:
 let
   primaryUser = accounts.primary;
   primaryAccount = accounts.users.${primaryUser};
@@ -12,6 +16,7 @@ in
   programs.nix-agent = {
     enable = true;
     flake = "${homeDirectory}/dotfiles";
+    package = nixAgentPackage;
     privilegedAutomation = {
       enable = true;
       user = primaryUser;

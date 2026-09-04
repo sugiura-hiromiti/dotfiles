@@ -194,7 +194,7 @@
             description = account.description or null;
             extraGroups = account.extraGroups or [ ];
             authorizedKeys = account.authorizedKeys or [ ];
-            uid = account.uid;
+            inherit (account) uid;
             homeDirectory = account.homeDirectory or null;
           }) config.accounts.users
         );
@@ -235,7 +235,12 @@
           inherit (config) accountName;
         };
       systemSpecialArgs =
-        config: commonSpecialArgs config // { nixPackage = nix.packages.${config.system}.default; };
+        config:
+        commonSpecialArgs config
+        // {
+          nixAgentPackage = nix-agent.packages.${config.system}.default;
+          nixPackage = nix.packages.${config.system}.default;
+        };
       hm-conf =
         config:
         home-manager.lib.homeManagerConfiguration {
@@ -283,18 +288,17 @@
           ++ profileModules "darwin" config;
         };
       supportedSystems = lib.unique (map (host: hosts.${host}.system) hostNames);
+      ciConfig = import ./nix/ci {
+        inherit hosts lib;
+        inherit (targets) mkTargetConfigEntries;
+      };
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         treefmt-nix.flakeModule
-        actions-nix.flakeModules.default
       ];
       systems = supportedSystems;
       flake = {
-        actions-nix = import ./nix/ci {
-          inherit hosts lib;
-          inherit (targets) mkTargetConfigEntries;
-        };
         nixosConfigurations = mkTargetConfigs "nixos" nixos-conf;
         homeConfigurations = mkTargetConfigs "home" hm-conf;
         darwinConfigurations = mkTargetConfigs "darwin" darwin-conf;
@@ -310,6 +314,7 @@
           homeTargets = targetConfigNamesForSystem "home" system;
           nixosTargets = targetConfigNamesForSystem "nixos" system;
           darwinTargets = targetConfigNamesForSystem "darwin" system;
+          actionsEval = actions-nix.lib.evalModule pkgs ciConfig;
           formatters = import ./nix/formatters { inherit lib pkgs; };
           repoMaintenancePackages = with pkgs; [
             formatters.editorTools
@@ -333,6 +338,7 @@
 
           checks = import ./nix/checks.nix {
             inherit
+              preservation
               lib
               pkgs
               self
@@ -343,6 +349,8 @@
               darwin = darwinTargets;
             };
           };
+
+          packages.render-workflows = actionsEval.config.build.renderWorkflows;
 
           apps = {
             update = import ./nix/apps/update {

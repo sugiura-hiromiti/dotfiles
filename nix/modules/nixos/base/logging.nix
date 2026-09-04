@@ -1,7 +1,11 @@
 {
   services = {
     journald = {
-      storage = "volatile";
+      settings = {
+        Journal = {
+          Storage = "volatile";
+        };
+      };
     };
   };
 }

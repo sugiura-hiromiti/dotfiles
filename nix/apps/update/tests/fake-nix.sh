@@ -17,6 +17,7 @@ if [ "$1" = flake ] && [ "$2" = update ]; then
     if [ "$previous" = --output-lock-file ]; then output=$argument; fi
     previous=$argument
   done
+  flake=${flake#path:}
   if [ -z "$output" ]; then output="$flake/flake.lock"; fi
   printf '%s\n' "${TEST_CANDIDATE:?TEST_CANDIDATE is required}" > "$output"
   printf '%s\n' "$TEST_CANDIDATE" >> "$state/generated"
@@ -31,6 +32,7 @@ if [ "$1" = eval ]; then
     previous=$argument
   done
   flake=${last%%#*}
+  flake=${flake#path:}
   target=${last#*#}
   if [ -n "$reference" ]; then lock=$reference; else lock="$flake/flake.lock"; fi
   printf '%s %s\n' "$(cat "$flake/source-marker")" "$(cat "$lock")" >> "$state/preflight"
@@ -51,6 +53,7 @@ fi
 
 if [ "$1" = run ] && [ "$2" = nixpkgs#home-manager ]; then
   flake=${last%%#*}
+  flake=${flake#path:}
   printf '%s %s\n' "$(cat "$flake/source-marker")" "$(cat "$flake/flake.lock")" >> "$state/activation"
   if [ "${TEST_FAIL_ACTIVATION:-0}" = 1 ]; then
     printf '%s\n' 'forced activation failure' >&2

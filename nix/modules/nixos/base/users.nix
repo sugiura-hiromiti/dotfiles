@@ -11,15 +11,12 @@ let
     {
       isNormalUser = true;
       description = if account.description != null then account.description else name;
-      inherit (account) extraGroups;
+      inherit (account) extraGroups uid;
       inherit (cfg) shell;
       openssh.authorizedKeys.keys = account.authorizedKeys;
     }
     // lib.optionalAttrs (account.homeDirectory != null) {
       home = account.homeDirectory;
-    }
-    // lib.optionalAttrs (account.uid != null) {
-      inherit (account) uid;
     };
 in
 {

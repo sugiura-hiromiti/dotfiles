@@ -194,7 +194,7 @@
             description = account.description or null;
             extraGroups = account.extraGroups or [ ];
             authorizedKeys = account.authorizedKeys or [ ];
-            uid = account.uid or null;
+            uid = account.uid;
             homeDirectory = account.homeDirectory or null;
           }) config.accounts.users
         );

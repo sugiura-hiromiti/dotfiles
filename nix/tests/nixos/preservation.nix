@@ -6,25 +6,39 @@ pkgs.testers.runNixOSTest {
     machine.wait_for_unit("default.target")
 
     with subtest("persistent storage is mounted"):
-      machine.succeed("mountpoint /persist")
+        machine.succeed("mountpoint /persist")
+
     with subtest("/var/lib/nixos is managed by Preservation"):
-      machine.succeed("mountpoint /var/lib/nixos")
-    with subtest("writes reach persistent storage"):
-      machine.succeed(
-        "echo preserved > /var/lib/nixos/preservation-test"
-      )
-      machine.succeed(
-        "grep -q preserved /persist/var/lib/nixos/preservation-test"
-      )
-    with subtest("state survives reboot"):
-      machine.reboot()
-      machine.wait_for_unit("default.target")
-      machine.succeed(
-        "grep -q preserved /var/lib/nixos/preservation-test"
-      )
-      machine.succeed(
-        "grep -q preserved /persist/var/lib/nixos/preservation-test"
-      )
+        machine.succeed("mountpoint /var/lib/nixos")
+
+    with subtest("write persistent and ephemeral state"):
+        machine.succeed(
+            "echo preserved > /var/lib/nixos/preservation-test"
+        )
+        machine.succeed(
+            "grep -q preserved /persist/var/lib/nixos/preservation-test"
+        )
+
+        machine.succeed("mkdir -p /home/a")
+        machine.succeed(
+            "echo ephemeral > /home/a/ephemeral-test"
+        )
+
+    with subtest("state has correct lifetime across reboot"):
+        machine.reboot()
+        machine.wait_for_unit("default.target")
+
+        machine.succeed(
+            "grep -q preserved /var/lib/nixos/preservation-test"
+        )
+        machine.succeed(
+            "grep -q preserved /persist/var/lib/nixos/preservation-test"
+        )
+
+        machine.fail(
+            "test -e /home/a/ephemeral-test"
+        )
+
     machine.shutdown()
   '';
   nodes = {

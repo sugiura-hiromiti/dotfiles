@@ -51,4 +51,12 @@ in
 // (import ./apps/update/tests { inherit lib pkgs; })
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   preservation = import ./tests/nixos/preservation.nix { inherit pkgs preservation; };
+  machine-recovery = import ./tests/nixos/machine-recovery.nix {
+    inherit
+      pkgs
+      recoveryTarget
+      nixosModulesFor
+      systemSpecialArgs
+      ;
+  };
 }

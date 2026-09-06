@@ -332,9 +332,14 @@
           ];
           inherit (targets) mkTargetConfigEntries;
           nixosTargetEntries = mkTargetConfigEntries "nixos";
-          recoveryTarget = lib.findFirst (
-            entry: entry.config.targetHost == "aarch64-linux-a" && entry.config.sessionName == "tty"
-          ) null nixosTargetEntries;
+          recoveryTarget =
+            let
+              target = lib.findFirst (
+                entry: entry.config.targetHost == "aarch64-linux-a" && entry.config.sessionName == "tty"
+              ) null nixosTargetEntries;
+            in
+            assert lib.assertMsg (target != null) "Could not find recovery target aarch64-linux-a / tty";
+            target;
         in
         {
           treefmt = {

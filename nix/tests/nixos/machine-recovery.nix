@@ -1,0 +1,7 @@
+{
+  pkgs,
+  recoveryTarget,
+  nixosModulesFor,
+  systemSpecialArgs,
+}:
+{ }

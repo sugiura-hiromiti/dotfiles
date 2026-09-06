@@ -56,25 +56,31 @@ let
         auto_hide = false;
         smart_auto_hide = true;
         reserve_space = false;
+        # TODO: check properly conditional enabling like brightness
         start = [
+          "privacy"
           "launcher"
-          # "workspaces"
-          # "sysmon"
-          # "media"
-          # "audio_visualizer"
+          "taskbar"
+          "media"
         ];
         center = [
-          "clock"
         ];
         end = [
-          # "notifications"
-          "wallpaper"
+          "keyboard_layout"
+          "caffeine"
           "battery"
-          # "clipboard"
+          "network"
+          "bluetooth"
           "volume"
+          "nightlight"
         ]
         ++ optionals cfg.ddc.enable [
           "brightness"
+        ]
+        ++ [
+          "notification"
+          "wallpaper"
+          "clock"
         ];
       };
     };
@@ -82,7 +88,6 @@ let
     widget = {
       # launcher = { };
       # workspaces ={};
-
       notifications = {
         hide_when_no_unread = true;
       };
@@ -96,7 +101,6 @@ let
         group_by_workspace = true;
         workspace_group_content = "icons";
       };
-
     };
 
     theme = {

@@ -52,6 +52,7 @@ in
           ++ lib.optionals config.services.openssh.enable (
             map (key: {
               file = key.path;
+              how = "symlink";
               configureParent = true;
             }) config.services.openssh.hostKeys
           );

@@ -20,10 +20,28 @@ pkgs.testers.runNixOSTest {
             "grep -q preserved /persist/var/lib/nixos/preservation-test"
         )
 
-        machine.succeed("mkdir -p /home/a")
         machine.succeed(
             "echo ephemeral > /home/a/ephemeral-test"
         )
+
+    with subtest("services are healthy before reboot"):
+        machine.wait_for_unit("sshd.service")
+        machine.wait_for_unit("NetworkManager.service")
+
+    machine_id = machine.succeed("cat /etc/machine-id").strip()
+    ssh_host_key = machine.succeed(
+        "cat /etc/ssh/ssh_host_rsa_key.pub"
+    ).strip()
+
+    with subtest("Networkmanager owns persistent state"):
+        machine.succeed(
+            "nmcli connection add "
+            "type dummy  "
+            "ifname preservation-test "
+            "con-name preservation-test"
+    )
+
+    nm_uuid = machine.succeed("nmcli -g UUID connection show preservation-test").strip()
 
     with subtest("user repository state is preserved"):
         machine.succeed("echo working-copy > /home/a/dotfiles/test")
@@ -43,6 +61,25 @@ pkgs.testers.runNixOSTest {
         )
 
         machine.succeed("grep -q working-copy /home/a/dotfiles/test")
+
+    with subtest("services recover after reboot"):
+        machine.wait_for_unit("sshd.service")
+        machine.wait_for_unit("NetworkManager.service")
+
+    with subtest("machine identity survives reboot"):
+        assert machine.succeed(
+            "cat /etc/machine-id"
+        ).strip() == machine_id
+
+    with subtest("SSH host identity survives reboot"):
+        assert machine.succeed(
+            "cat /etc/ssh/ssh_host_ed25519_key.pub"
+        ).strip() == ssh_host_key
+
+    with subtest("NetworkManager state survives reboot"):
+        assert machine.succeed(
+            "nmcli -g UUID connection show preservation-test"
+        ).strip() == nm_uuid
 
     machine.shutdown()
   '';

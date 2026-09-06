@@ -11,13 +11,13 @@ pkgs.testers.runNixOSTest {
     specialArgs = systemSpecialArgs recoveryTarget.config;
   };
   nodes = {
-    machine = {
+    nixos = {
       imports = nixosModulesFor recoveryTarget.config;
     };
   };
   testScript = ''
-    machine.start()
-    machine.wait_for_unit("multi-user.target")
-    machine.shutdown()
+    nixos.start()
+    nixos.wait_for_unit("multi-user.target")
+    nixos.shutdown()
   '';
 }

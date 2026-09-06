@@ -22,16 +22,18 @@ pkgs.testers.runNixOSTest {
       };
       specialisation = {
         machine-recovery = {
-          configuration = { };
+          configuration = {
+            dotfiles = {
+              features = {
+                preservation = {
+                  enable = true;
+                };
+              };
+            };
+          };
         };
       };
-      # dotfiles = {
-      #   features = {
-      #     preservation = {
-      #       enable = true;
-      #     };
-      #   };
-      # };
+
     };
   };
   testScript = ''

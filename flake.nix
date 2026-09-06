@@ -272,12 +272,11 @@
           catppuccin.nixosModules.catppuccin
           nix-agent.nixosModules.default
         ];
-      nixosSpecialArgsFor = config: systemSpecialArgs config;
       nixos-conf =
         config:
         nixpkgs.lib.nixosSystem {
           inherit (config) system;
-          specialArgs = nixosSpecialArgsFor config;
+          specialArgs = systemSpecialArgs config;
           modules = nixosModulesFor config;
         };
       darwin-conf =

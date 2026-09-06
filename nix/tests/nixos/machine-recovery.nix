@@ -13,25 +13,12 @@ pkgs.testers.runNixOSTest {
   nodes = {
     nixos = {
       imports = nixosModulesFor recoveryTarget.config;
+      environment = {
+        systemPackages = [ pkgs.btrfs-progs ];
+      };
       virtualisation = {
-        emptyDiskImages = [ 128 ];
-        fileSystems = {
-          "/" = {
-            device = "none";
-            fsType = "btrfs";
-            options = [
-              "mode=0755"
-              "noatime"
-            ];
-            neededForBoot = true;
-          };
-          "/persist" = {
-            device = "/dev/vdb";
-            fsType = "ext4";
-            autoFormat = true;
-            neededForBoot = true;
-          };
-        };
+        emptyDiskImages = [ 512 ];
+        mountHostNixStore = true;
       };
       dotfiles = {
         features = {

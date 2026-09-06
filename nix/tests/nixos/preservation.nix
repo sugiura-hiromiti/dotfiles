@@ -25,7 +25,9 @@ pkgs.testers.runNixOSTest {
             "echo ephemeral > /home/a/ephemeral-test"
         )
 
-    with subtest("state has correct lifetime across reboot"):
+    with subtest("user repository state is preserved"):
+        machine.succeed("echo working-copy > /home/a/dotfiles/test")
+
         machine.reboot()
         machine.wait_for_unit("default.target")
 
@@ -40,18 +42,17 @@ pkgs.testers.runNixOSTest {
             "test -e /home/a/ephemeral-test"
         )
 
-    with subtest("user repository state is preserved"):
-        machine.succeed("echo working-copy > /home/a/dotfiles/test")
-
-        machine.reboot()
-        machine.wait_for_unit("default.target")
-
         machine.succeed("grep -q working-copy /home/a/dotfiles/test")
 
     machine.shutdown()
   '';
   nodes = {
     machine = { lib, ... }: {
+      services = {
+        openssh = {
+          enable = true;
+        };
+      };
       _module = {
         args = {
           accounts = {
@@ -80,6 +81,9 @@ pkgs.testers.runNixOSTest {
         };
       };
       networking = {
+        networkmanager = {
+          enable = true;
+        };
         useNetworkd = true;
       };
       virtualisation = {

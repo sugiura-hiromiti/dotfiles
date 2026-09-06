@@ -7,6 +7,7 @@ pkgs.testers.runNixOSTest {
 
     with subtest("persistent storage is mounted"):
         machine.succeed("mountpoint /persist")
+        machine.succeed("mountpoint /home/a/dotfiles")
 
     with subtest("/var/lib/nixos is managed by Preservation"):
         machine.succeed("mountpoint /var/lib/nixos")
@@ -44,9 +45,9 @@ pkgs.testers.runNixOSTest {
         machine.succeed("echo working-copy > /home/a/dotfiles/test")
 
         machine.reboot()
-        machine.wait_for_unti("default.target")
+        machine.wait_for_unit("default.target")
 
-        machine.succeed("grep -q working-copy /ome/a/dotfiles/test")
+        machine.succeed("grep -q working-copy /home/a/dotfiles/test")
 
     machine.shutdown()
   '';

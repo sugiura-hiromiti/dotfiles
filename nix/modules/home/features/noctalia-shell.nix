@@ -86,15 +86,21 @@ let
     };
 
     widget = {
-      # launcher = { };
-      # workspaces ={};
-      notifications = {
-        hide_when_no_unread = true;
+      clock = {
+        format = "{:%-m/%-d %a %H:%M}";
       };
+
       keyboard_layout = {
         hide_when_single_layout = true;
       };
+      network = {
+        show_vpn_label = true;
+      };
+      privacy = {
+        hide_inactive = true;
+      };
       media = {
+        artist_first = true;
         hide_when_no_media = true;
       };
       taskbar = {

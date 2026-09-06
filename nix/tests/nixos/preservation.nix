@@ -39,10 +39,34 @@ pkgs.testers.runNixOSTest {
             "test -e /home/a/ephemeral-test"
         )
 
+    with subtest("user repostory state is preserved"):
+        machine.succeed("mkdir -p /home/a/dotfiles")
+        machine.succeed("echo working-copy > /home/a/dotfiles/test")
+
+        machine.reboot()
+        machine.wait_for_unti("default.target")
+
+        machine.succeed("grep -q working-copy /ome/a/dotfiles/test")
+
     machine.shutdown()
   '';
   nodes = {
     machine = { ... }: {
+      _module = {
+        args = {
+          accounts = {
+            primary = "a";
+          };
+        };
+      };
+      users = {
+        users = {
+          a = {
+            isNormalUser = true;
+            uid = 1000;
+          };
+        };
+      };
       imports = [
         preservation.nixosModules.default
         ../../modules/nixos/base/boot.nix

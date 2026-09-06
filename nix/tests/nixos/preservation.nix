@@ -41,7 +41,7 @@ pkgs.testers.runNixOSTest {
             "con-name ptest0"
     )
 
-    nm_uuid = machine.succeed("nmcli -g UUID connection show ptest0").strip()
+    nm_uuid = machine.succeed("nmcli -g connection.uuid connection show ptest0").strip()
 
     with subtest("user repository state is preserved"):
         machine.succeed("echo working-copy > /home/a/dotfiles/test")
@@ -78,7 +78,7 @@ pkgs.testers.runNixOSTest {
 
     with subtest("NetworkManager state survives reboot"):
         assert machine.succeed(
-            "nmcli -g UUID connection show ptest0"
+            "nmcli -g connection.uuid connection show ptest0"
         ).strip() == nm_uuid
 
     machine.shutdown()

@@ -14,10 +14,10 @@ pkgs.testers.runNixOSTest {
 
     with subtest("write persistent and ephemeral state"):
         machine.succeed(
-            "echo preserved > /var/lib/nixos/preservation-test"
+            "echo preserved > /var/lib/nixos/ptest0"
         )
         machine.succeed(
-            "grep -q preserved /persist/var/lib/nixos/preservation-test"
+            "grep -q preserved /persist/var/lib/nixos/ptest0"
         )
 
         machine.succeed(
@@ -30,18 +30,18 @@ pkgs.testers.runNixOSTest {
 
     machine_id = machine.succeed("cat /etc/machine-id").strip()
     ssh_host_key = machine.succeed(
-        "cat /etc/ssh/ssh_host_rsa_key.pub"
+        "cat /etc/ssh/ssh_host_ed25519_key.pub"
     ).strip()
 
     with subtest("Networkmanager owns persistent state"):
         machine.succeed(
             "nmcli connection add "
-            "type dummy  "
-            "ifname preservation-test "
-            "con-name preservation-test"
+            "type dummy "
+            "ifname ptest0 "
+            "con-name ptest0"
     )
 
-    nm_uuid = machine.succeed("nmcli -g UUID connection show preservation-test").strip()
+    nm_uuid = machine.succeed("nmcli -g UUID connection show ptest0").strip()
 
     with subtest("user repository state is preserved"):
         machine.succeed("echo working-copy > /home/a/dotfiles/test")
@@ -50,10 +50,10 @@ pkgs.testers.runNixOSTest {
         machine.wait_for_unit("default.target")
 
         machine.succeed(
-            "grep -q preserved /var/lib/nixos/preservation-test"
+            "grep -q preserved /var/lib/nixos/ptest0"
         )
         machine.succeed(
-            "grep -q preserved /persist/var/lib/nixos/preservation-test"
+            "grep -q preserved /persist/var/lib/nixos/ptest0"
         )
 
         machine.fail(
@@ -78,7 +78,7 @@ pkgs.testers.runNixOSTest {
 
     with subtest("NetworkManager state survives reboot"):
         assert machine.succeed(
-            "nmcli -g UUID connection show preservation-test"
+            "nmcli -g UUID connection show ptest0"
         ).strip() == nm_uuid
 
     machine.shutdown()

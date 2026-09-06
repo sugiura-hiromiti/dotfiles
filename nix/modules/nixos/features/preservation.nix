@@ -1,4 +1,9 @@
-{ lib, config, ... }:
+{
+  lib,
+  config,
+  accounts,
+  ...
+}:
 let
   cfg = config.dotfiles.features.preservation;
 in
@@ -17,6 +22,15 @@ in
       enable = true;
       preserveAt = {
         "/persist" = {
+          users = {
+            ${accounts.primary} = {
+              directories = [
+                "dotfiles"
+                "Downloads/awa"
+                "Downloads/media"
+              ];
+            };
+          };
           directories = [
             {
               directory = "/var/lib/nixos";
@@ -25,6 +39,9 @@ in
           ]
           ++ lib.optionals config.services.tailscale.enable [ "/var/lib/tailscale" ]
           ++ lib.optionals config.hardware.bluetooth.enable [ "/var/lib/bluetooth" ]
+          ++ lib.optionals config.networking.networkmanager.enable [
+            "/etc/NetworkManager/system-connections"
+          ]
           ++ lib.optionals config.services.power-profiles-daemon.enable [ "/var/lib/power-profiles-daemon" ];
           files = [
             {

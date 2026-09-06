@@ -40,8 +40,7 @@ pkgs.testers.runNixOSTest {
             "test -e /home/a/ephemeral-test"
         )
 
-    with subtest("user repostory state is preserved"):
-        machine.succeed("mkdir -p /home/a/dotfiles")
+    with subtest("user repository state is preserved"):
         machine.succeed("echo working-copy > /home/a/dotfiles/test")
 
         machine.reboot()

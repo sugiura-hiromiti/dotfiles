@@ -23,6 +23,21 @@ pkgs.testers.runNixOSTest {
       specialisation = {
         machine-recovery = {
           configuration = {
+            virtualisation = {
+              rootDevice = "/dev/vdb";
+            };
+            fileSystems = pkgs.lib.mkVMOverride {
+              "/" = {
+                fsType = pkgs.lib.mkForce "btrfs";
+                options = [ "subvol=@root" ];
+              };
+              "/persist" = {
+                device = "/dev/vdb";
+                fsType = "btrfs";
+                options = [ "subvol=@persist" ];
+                neededForBoot = true;
+              };
+            };
             dotfiles = {
               features = {
                 preservation = {
@@ -33,7 +48,6 @@ pkgs.testers.runNixOSTest {
           };
         };
       };
-
     };
   };
   testScript = ''

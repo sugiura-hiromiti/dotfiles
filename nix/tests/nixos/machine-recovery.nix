@@ -20,13 +20,18 @@ pkgs.testers.runNixOSTest {
         emptyDiskImages = [ 512 ];
         mountHostNixStore = true;
       };
-      dotfiles = {
-        features = {
-          preservation = {
-            enable = true;
-          };
+      specialisation = {
+        machine-recovery = {
+          configuration = { };
         };
       };
+      # dotfiles = {
+      #   features = {
+      #     preservation = {
+      #       enable = true;
+      #     };
+      #   };
+      # };
     };
   };
   testScript = ''

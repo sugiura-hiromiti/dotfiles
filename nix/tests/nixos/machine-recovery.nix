@@ -54,6 +54,8 @@ pkgs.testers.runNixOSTest {
     nixos.start()
     nixos.wait_for_unit("multi-user.target")
 
+    nixos.succeed("mkfs.btrfs /dev/vdb")
+
     with subtest("recovery disk has btrfs layout"):
         nixos.succeed("btrfs filesystem show /dev/vdb")
   '';

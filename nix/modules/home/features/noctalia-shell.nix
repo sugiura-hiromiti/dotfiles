@@ -58,7 +58,7 @@ let
         reserve_space = false;
         start = [
           "launcher"
-          "workspaces"
+          # "workspaces"
           # "sysmon"
           # "media"
           # "audio_visualizer"
@@ -82,36 +82,21 @@ let
     widget = {
       # launcher = { };
       # workspaces ={};
-      sysmon = {
-        capsule_fill = "primary";
-        capsule_foreground = "on_primary";
-        capsule_border = "on_primary";
+
+      notifications = {
+        hide_when_no_unread = true;
       };
-      clock = {
-        capsule_fill = "secondary";
-        capsule_foreground = "on_secondary";
-        capsule_border = "on_secondary";
+      keyboard_layout = {
+        hide_when_single_layout = true;
       };
-      battery = {
-        capsule_fill = "tertiary";
-        capsule_foreground = "on_tertiary";
-        capsule_border = "on_tertiary";
+      media = {
+        hide_when_no_media = true;
       };
-      volume = {
-        capsule_fill = "error";
-        capsule_foreground = "on_error";
-        capsule_border = "on_error";
+      taskbar = {
+        group_by_workspace = true;
+        workspace_group_content = "icons";
       };
-      wallpaper = {
-        capsule_fill = "surface";
-        capsule_foreground = "on_surface";
-        capsule_border = "on_surface";
-      };
-      brightness = {
-        capsule_fill = "surface_variant";
-        capsule_foreground = "on_surface_variant";
-        capsule_border = "on_surface_variant";
-      };
+
     };
 
     theme = {

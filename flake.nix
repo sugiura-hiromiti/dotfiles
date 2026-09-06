@@ -260,21 +260,25 @@
             mcp-servers-nix.homeManagerModules.default
           ];
         };
+      nixosModulesFor =
+        config:
+        [
+          preservation.nixosModules.default
+          (nixosProfileModule config)
+          ./nix/nixos/configuration.nix
+        ]
+        ++ profileModules "nixos" config
+        ++ [
+          catppuccin.nixosModules.catppuccin
+          nix-agent.nixosModules.default
+        ];
+      nixosSpecialArgsFor = config: systemSpecialArgs config;
       nixos-conf =
         config:
         nixpkgs.lib.nixosSystem {
           inherit (config) system;
-          specialArgs = systemSpecialArgs config;
-          modules = [
-            preservation.nixosModules.default
-            (nixosProfileModule config)
-            ./nix/nixos/configuration.nix
-          ]
-          ++ profileModules "nixos" config
-          ++ [
-            catppuccin.nixosModules.catppuccin
-            nix-agent.nixosModules.default
-          ];
+          specialArgs = nixosSpecialArgsFor config;
+          modules = nixosModulesFor config;
         };
       darwin-conf =
         config:

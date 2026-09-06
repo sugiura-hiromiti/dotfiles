@@ -331,6 +331,11 @@
             tree-sitter
           ];
           inherit (targets) mkTargetConfigEntries;
+          nixosTargetEntries = mkTargetConfigEntries "nixos";
+          # TODO: I want to avoid hardcoding account name such as "a"
+          recoveryTarget = lib.findFirst (
+            entry: entry.config.targetHost == "aarch64-linux-a" && entry.config.session == "tty"
+          ) null nixosTargetEntries;
         in
         {
           treefmt = {

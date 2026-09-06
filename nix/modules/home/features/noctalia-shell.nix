@@ -49,12 +49,12 @@ let
         capsule = true;
         capsule_fill = "surface_variant";
 
-        margin_edge = 10;
+        margin_edge = 0;
         widget_spacing = 10;
         thickness = 27;
 
-        auto_hide = true;
-        # smart_auto_hide = true;
+        auto_hide = false;
+        smart_auto_hide = true;
         reserve_space = false;
         start = [
           "launcher"

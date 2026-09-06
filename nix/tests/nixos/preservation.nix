@@ -7,6 +7,7 @@ pkgs.testers.runNixOSTest {
 
     with subtest("persistent storage is mounted"):
         machine.succeed("mountpoint /persist")
+        machine.succeed("mountpoint /var/lib/tailscale")
         machine.succeed("mountpoint /home/a/dotfiles")
 
     with subtest("/var/lib/nixos is managed by Preservation"):
@@ -62,8 +63,20 @@ pkgs.testers.runNixOSTest {
 
         machine.succeed("grep -q working-copy /home/a/dotfiles/test")
 
+    with subtest("Tailscale state directory is persistent"):
+        machine.succeed(
+            "echo tailscale-preserved "
+            "> /var/lib/tailscale/preservation-test"
+        )
+
+        machine.succeed(
+            "grep -q tailscale-preserved "
+            "/persist/var/lib/tailscale/preservation-test"
+        )
+
     with subtest("services recover after reboot"):
         machine.wait_for_unit("sshd.service")
+        machine.wait_for_unit("tailscaled.service")
         machine.wait_for_unit("NetworkManager.service")
 
     with subtest("machine identity survives reboot"):
@@ -81,11 +94,34 @@ pkgs.testers.runNixOSTest {
             "nmcli -g connection.uuid connection show ptest0"
         ).strip() == nm_uuid
 
+    with subtest("Tailscale daemon is usable before reboot"):
+        machine.succeed(
+            "tailscale status --json --peers=false >/dev/null"
+        )
+
+    with subtest("Tailscale recovers after reboot"):
+        machine.succeed(
+            "test -S /run/tailscale/tailscaled.sock"
+        )
+
+        machine.succeed(
+            "tailscale status --json --peers=false >/dev/null"
+        )
+
+        machine.succeed(
+            "grep -q tailscale-preserved "
+            "/var/lib/tailscale/preservation-test"
+        )
+
     machine.shutdown()
   '';
   nodes = {
     machine = { lib, ... }: {
       services = {
+        tailscale = {
+          enable = true;
+          disableUpstreamLogging = true;
+        };
         openssh = {
           enable = true;
         };

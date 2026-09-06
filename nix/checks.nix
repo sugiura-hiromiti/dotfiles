@@ -1,4 +1,7 @@
 {
+  recoveryTarget,
+  nixosModulesFor,
+  systemSpecialArgs,
   lib,
   preservation,
   pkgs,

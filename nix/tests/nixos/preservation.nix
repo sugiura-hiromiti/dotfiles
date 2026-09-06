@@ -30,7 +30,7 @@ pkgs.testers.runNixOSTest {
 
     machine_id = machine.succeed("cat /etc/machine-id").strip()
     ssh_host_identity = machine.succeed(
-        "ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key.pub"
+        "ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key"
     ).strip()
 
     with subtest("Networkmanager owns persistent state"):
@@ -73,7 +73,7 @@ pkgs.testers.runNixOSTest {
 
     with subtest("SSH host identity survives reboot"):
         assert machine.succeed(
-            "ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key.pub"
+            "ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key"
         ).strip() == ssh_host_identity
 
     with subtest("NetworkManager state survives reboot"):

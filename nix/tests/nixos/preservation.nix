@@ -51,7 +51,7 @@ pkgs.testers.runNixOSTest {
     machine.shutdown()
   '';
   nodes = {
-    machine = { ... }: {
+    machine = { lib, ... }: {
       _module = {
         args = {
           accounts = {
@@ -85,11 +85,21 @@ pkgs.testers.runNixOSTest {
       virtualisation = {
         memorySize = 1024;
         emptyDiskImages = [ 64 ];
-        fileSystems."/persist" = {
-          device = "/dev/vdb";
-          fsType = "ext4";
-          neededForBoot = true;
-          autoFormat = true;
+
+        fileSystems = {
+          "/persist" = {
+            device = "/dev/vdb";
+            fsType = "ext4";
+            neededForBoot = true;
+            autoFormat = true;
+          };
+          "/" = {
+            device = lib.mkForce "none";
+            # TODO: i want to change this to something like btrfs bacause i wouldn't use tmpfs for root impermanency
+            fsType = lib.mkForce "tmpfs";
+            options = lib.mkForce [ "mode=0755" ];
+            neededForBoot = true;
+          };
         };
       };
     };

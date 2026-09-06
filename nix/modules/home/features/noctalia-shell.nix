@@ -50,6 +50,7 @@ let
         capsule_fill = "surface_variant";
 
         margin_edge = 0;
+        margin_end = 0;
         widget_spacing = 10;
         thickness = 27;
 

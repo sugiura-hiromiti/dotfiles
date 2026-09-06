@@ -13,6 +13,13 @@ pkgs.testers.runNixOSTest {
   nodes = {
     nixos = {
       imports = nixosModulesFor recoveryTarget.config;
+      dotfiles = {
+        features = {
+          preservation = {
+            enable = true;
+          };
+        };
+      };
     };
   };
   testScript = ''

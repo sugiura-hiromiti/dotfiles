@@ -58,5 +58,11 @@ pkgs.testers.runNixOSTest {
 
     with subtest("recovery disk has btrfs layout"):
         nixos.succeed("btrfs filesystem show /dev/vdb")
+
+    nixos.succeed("mkdir -p /mnt/recovery")
+    nixos.succeed("mount /dev/vdb /mnt/recovery")
+
+    with subtest("root subvolume exists"):
+        nixos.succeed("btrfs subvolume show /mnt/recovery/@root")
   '';
 }

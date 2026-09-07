@@ -144,5 +144,12 @@ pkgs.testers.runNixOSTest {
           nixos.succeed("btrfs subvolume show /mnt/recovery/@persist")
           nixos.succeed("grep -q ephemeral /mnt/recovery/@root/etc/machine-recovery-ephemeral")
           nixos.succeed("grep -q persistent /mnt/recovery/@persist/var/lib/nixos/machine-recovery-test")
+      with subtest("reset ephemeral root"):
+          nixos.succeed("btrfs subvolume delete /mnt/recovery/@root")
+          nixos.succeed("btrfs subvolume create /mnt/recovery/@root")
+
+      with subtest("root reset removes ephemeral state only"):
+          nixos.fail("test -e /mnt/recovery/@root/etc/machine-recovery-ephemeral")
+          nixos.succeed("grep -q persistent /mnt/recovery/@persist/var/lib/nixos/machine-recovery-test")
     '';
 }

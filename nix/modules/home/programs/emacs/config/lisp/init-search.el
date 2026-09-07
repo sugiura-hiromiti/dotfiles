@@ -1,6 +1,12 @@
-;;; -*- lexical-binding: t; -*-
+;;; init-search.el --- owo -*- lexical-binding: t; -*-
+
+
+;;; Commentary:
+;;
 
 (require 'init-paths)
+
+;;; Code:
 
 (declare-function embark-completing-read-prompter "embark")
 
@@ -202,6 +208,41 @@
 	;; (setq embark-quit-after-action nil)
 	)
 
+(defun my/embark-dired (target)
+	"Open TARGET in Dired.  For a directory, enter it.  For a file, open its parent directory and select TARGET."
+	(if (file-directory-p target)
+		(dired target)
+		(dired-jump nil target)))
+
+(defun my/switch-to-buffer-below (buffer)
+	"Open BUFFER in a new window below the current one."
+	(interactive (list (read-buffer "Buffer: " nil t)))
+	(select-window (split-window-below))
+	(switch-to-buffer buffer))
+
+(defun my/switch-to-buffer-right (buffer)
+	"Open BUFFER in a new window right to the current one."
+	(interactive (list (read-buffer "Buffer: " nil t)))
+	(select-window (split-window-right))
+	(switch-to-buffer buffer))
+
+(defun my/switch-to-buffer-below (buffer)
+	"Open BUFFER in a new tab."
+	(interactive (list (read-buffer "Buffer: " nil t)))
+	(tab-bar-new-tab)
+	(switch-to-buffer buffer))
+
+(with-eval-after-load 'embark
+	(keymap-unset embark-file-map "d")
+	(keymap-unset embark-file-map "D")
+	(keymap-set embark-file-map "d" #'my/embark-dired)
+	(keymap-set embark-buffer-map "2" #' my/switch-to-buffer-below)
+	(keymap-set embark-buffer-map "3" #' my/switch-to-buffer-right)
+	(keymap-set embark-buffer-map "t" #' my/switch-to-buffer-new-tab)
+	(keymap-unset embark-buffer-map "b")
+	(keymap-unset embark-buffer-map "o")
+	)
+
 (use-package embark-consult :after (embark consult))
 
 (use-package wgrep
@@ -280,3 +321,7 @@
 (minibuffer-depth-indicate-mode 1)
 
 (provide 'init-search)
+
+(provide 'init-search)
+
+;;; init-search.el ends here

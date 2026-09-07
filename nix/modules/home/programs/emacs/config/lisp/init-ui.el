@@ -278,10 +278,13 @@ alist used when creating the tab."
 	(keymap-global-set "C-," #'my/toggle-popup-tab))
 
 ;; TODO: 何故か現在動かないので治す
-(use-package agent-shell
-	:bind (:map agent-shell-mode-map
-				("RET" . newline)
-				("S-<return>" . shell-maker-submit)))
+;; NOTE: codex-acp is archived and moved to new repository.
+;; but current codex-acp package in nixpkgs points to older archived one.
+;; so currently, codex-acp is outdated. that's the reason agent-shell doesn't work
+;; (use-package agent-shell
+;; 	:bind (:map agent-shell-mode-map
+;; 				("RET" . newline)
+;; 				("S-<return>" . shell-maker-submit)))
 
 (use-package flymake-popon
 	:hook

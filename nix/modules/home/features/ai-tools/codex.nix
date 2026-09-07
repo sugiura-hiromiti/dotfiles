@@ -54,7 +54,7 @@ let
   );
 
   defaultCodexSettings = {
-    model = "gpt-5.6-sol";
+    model = "gpt-6-astra";
     model_reasoning_effort = "ultra";
     hide_agent_reasoning = true;
     network_access = true;
@@ -124,7 +124,8 @@ in
             acp = {
               enable = lib.mkOption {
                 type = lib.types.bool;
-                default = true;
+                # NOTE: codex-acp is currently archived
+                default = false;
                 description = "Whether to install the Codex ACP package.";
               };
               package = lib.mkOption {

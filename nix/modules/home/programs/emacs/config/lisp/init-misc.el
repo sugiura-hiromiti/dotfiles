@@ -1,11 +1,17 @@
-;;; -*- lexical-binding: t; -*-
+;;; init-misc.el --- init-misc -*- lexical-binding: t; -*-
+
+
+;;; Commentary:
+;;
+
+;;; Code:
 
 (declare-function flymake-mode "flymake")
 (declare-function hl-todo-flymake "hl-todo")
 (defvar flymake-diagnostic-functions)
 
 (defun my/hl-todo-flymake-setup ()
-	"現在のbufferでhl-todoのFlymake diagnosticsを有効化する。"
+	"現在のbufferでhl-todoのFlymake diagnosticsを有効化する。."
 	(add-hook 'flymake-diagnostic-functions #'hl-todo-flymake nil t)
 	(flymake-mode 1))
 
@@ -51,14 +57,15 @@
 			 ("https://www.matem.unam.mx/~omar/apropos-emacs.xml"))))
 
 (defun my/elfeed-play-enclosure-with-mpv (&optional enclosure-index)
-	"play current elfeed enclosure with mpv"
+	"Play current elfeed enclosure with mpv.
+Optional argument ENCLOSURE-INDEX index passed by elfeed."
 	(interactive)
 	(unless (derived-mode-p 'elfeed-show-mode)
 		(user-error "not in elfeed-show-mode"))
 	(let* ((entry elfeed-show-entry)
 				(enclosures (elfeed-entry-enclosures entry)))
 		(unless enclosures
-			(user-error "no enclosure in this entry"))
+			(user-error "No enclosure in this entry"))
 		(let* ((idx (or enclosure-index
 							(if (= 1 (length enclosures))
 								1
@@ -86,3 +93,7 @@
 	(browse-url-secondary-browser-function #'browse-url-default-browser))
 
 (provide 'init-misc)
+
+(provide 'init-misc)
+
+;;; init-misc.el ends here

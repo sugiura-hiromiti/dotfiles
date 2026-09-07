@@ -112,6 +112,8 @@ let
 
     theme = {
       mode = theme;
+      source = "builtin";
+      builtin = "Catppuccin";
     };
 
     notification = {

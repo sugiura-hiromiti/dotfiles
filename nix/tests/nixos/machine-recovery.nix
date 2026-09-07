@@ -63,8 +63,10 @@ pkgs.testers.runNixOSTest {
     nixos.succeed("mount /dev/vdb /mnt/recovery")
 
     nixos.succeed("btrfs subvolume create /mnt/recovery/@root")
+    nixos.succeed("btrfs subvolume create /mnt/recovery/@persist")
 
     with subtest("root subvolume exists"):
         nixos.succeed("btrfs subvolume show /mnt/recovery/@root")
+        nixos.succeed("btrfs subvolume show /mnt/recovery/@persist")
   '';
 }

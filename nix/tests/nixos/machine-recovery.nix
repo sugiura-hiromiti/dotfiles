@@ -134,10 +134,13 @@ pkgs.testers.runNixOSTest {
           nixos.wait_for_unit("multi-user.target")
 
       with subtest("bootstrap system is not running from recovery root"):
-          print(
-              nixos.succeed(
-                  "findmnt -n -o SOURCE,FSROOT,FSTYPE /"
-              )
-          )
+          nixos.succeed('test "$(findmnt -n -o FSROOT /)" != /@root')
+
+      nixos.succeed("mkdir -p /mnt/recovery")
+      nixos.succeed("mount -o subvolid=5 /dev/vdb /mnt/recovery")
+
+      with subtest("recovery subvolumes are accessible from bootstrap"):
+          nixos.succeed("btrfs subvolume show /mnt/recovery/@root")
+          nixos.succeed("btrfs subvolume show /mnt/recovery/@persist")
     '';
 }

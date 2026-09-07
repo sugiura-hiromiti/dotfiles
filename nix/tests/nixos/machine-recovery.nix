@@ -94,6 +94,14 @@ pkgs.testers.runNixOSTest {
           nixos.crash()
           nixos.wait_for_unit("multi-user.target")
 
+      with subtest("recovery filesystem layout is mounted"):
+          nixos.succeed('test "$(findmnt -n -o FSTYPE /)" = btrfs')
+          nixos.succeed('test "$(findmnt -n -o FSROOT /)" = /@root')
+
+          nixos.succeed("mountpoint /persist")
+          nixos.succeed('test "$(findmnt -n -o FSTYPE /persist)" = btrfs')
+          nixos.succeed('test "$(findmnt -n -o FSROOT /persist)" = /@persist')
+
       with subtest("write persistent and ephemeral probes"):
           nixos.succeed(
               "echo persistent > /var/lib/nixos/machine-recovery-test"
@@ -115,12 +123,5 @@ pkgs.testers.runNixOSTest {
               "test -e /persist/etc/machine-recovery-ephemeral"
           )
 
-      with subtest("recovery filesystem layout is mounted"):
-          nixos.succeed('test "$(findmnt -n -o FSTYPE /)" = btrfs')
-          nixos.succeed('test "$(findmnt -n -o FSROOT /)" = /@root')
-
-          nixos.succeed("mountpoint /persist")
-          nixos.succeed('test "$(findmnt -n -o FSTYPE /persist)" = btrfs')
-          nixos.succeed('test "$(findmnt -n -o FSROOT /persist)" = /@persist')
     '';
 }

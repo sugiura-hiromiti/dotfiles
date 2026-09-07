@@ -17,6 +17,7 @@ let
   cfg = config.dotfiles.features.noctaliaShell;
   settings = {
     shell = {
+      launcher = { };
       settings_show_advanced = true;
       clipboard_enabled = true;
       clipboard_auto_paste = "auto";
@@ -80,7 +81,6 @@ let
         ]
         ++ [
           "notification"
-          "wallpaper"
           "clock"
         ];
       };
@@ -111,6 +111,8 @@ let
     };
 
     theme = {
+      source = "builtin";
+      builtin = "Catppuccin";
       mode = theme;
       source = "builtin";
       builtin = "Catppuccin";

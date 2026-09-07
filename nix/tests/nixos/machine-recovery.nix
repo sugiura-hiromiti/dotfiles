@@ -115,7 +115,7 @@ pkgs.testers.runNixOSTest {
               "grep -q persistent /persist/var/lib/nixos/machine-recovery-test"
           )
 
-      with subtest("ephemeral probe lives only on root"):
+      with subtest("ephemeral probe is not persisted"):
           nixos.succeed(
               "grep -q ephemeral /etc/machine-recovery-ephemeral"
           )

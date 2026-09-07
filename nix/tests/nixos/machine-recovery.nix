@@ -124,5 +124,19 @@ pkgs.testers.runNixOSTest {
               "test -e /persist/etc/machine-recovery-ephemeral"
           )
 
+      with subtest("boots back into bootstrap system"):
+          nixos.succeed(
+              "${bootstrapSystem}/bin/switch-to-configuration boot"
+          )
+          nixos.succeed("sync")
+          nixos.crash()
+          nixos.wait_for_unit("multi-user.target")
+
+      with subtest("bootstrap system is not running from recovery root"):
+          print(
+              nixos.succeed(
+                  "findmnt -n -o SOURCE,FSROOT,FSTYPE /"
+              )
+          )
     '';
 }

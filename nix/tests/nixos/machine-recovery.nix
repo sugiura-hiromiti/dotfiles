@@ -62,23 +62,36 @@ pkgs.testers.runNixOSTest {
       };
     };
   };
-  testScript = ''
-    nixos.start()
-    nixos.wait_for_unit("multi-user.target")
+  testScript =
+    { nodes, ... }:
+    let
+      recoverySystem = nodes.nixos.specialisation.machine-recovery.configuration.system.build.toplevel;
+    in
+    ''
+      nixos.start()
+      nixos.wait_for_unit("multi-user.target")
 
-    nixos.succeed("mkfs.btrfs /dev/vdb")
+      nixos.succeed("mkfs.btrfs /dev/vdb")
 
-    with subtest("recovery disk has btrfs layout"):
-        nixos.succeed("btrfs filesystem show /dev/vdb")
+      with subtest("recovery disk has btrfs layout"):
+          nixos.succeed("btrfs filesystem show /dev/vdb")
 
-    nixos.succeed("mkdir -p /mnt/recovery")
-    nixos.succeed("mount /dev/vdb /mnt/recovery")
+      nixos.succeed("mkdir -p /mnt/recovery")
+      nixos.succeed("mount /dev/vdb /mnt/recovery")
 
-    nixos.succeed("btrfs subvolume create /mnt/recovery/@root")
-    nixos.succeed("btrfs subvolume create /mnt/recovery/@persist")
+      nixos.succeed("btrfs subvolume create /mnt/recovery/@root")
+      nixos.succeed("btrfs subvolume create /mnt/recovery/@persist")
 
-    with subtest("recovery subvolume exists"):
-        nixos.succeed("btrfs subvolume show /mnt/recovery/@root")
-        nixos.succeed("btrfs subvolume show /mnt/recovery/@persist")
-  '';
+      with subtest("recovery subvolume exists"):
+          nixos.succeed("btrfs subvolume show /mnt/recovery/@root")
+          nixos.succeed("btrfs subvolume show /mnt/recovery/@persist")
+
+      nixos.succeed("umount /mnt/recovery")
+
+      with subtest("boots recovery specialisation"):
+          nixos.succeed("${recoverySystem}/bin/switch-to-configuration boot")
+          nixos.succeed("sync")
+          nixos.crash()
+          nixos.wait_for_unit("multi-user.target")
+    '';
 }

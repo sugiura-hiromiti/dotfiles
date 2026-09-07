@@ -65,10 +65,11 @@ pkgs.testers.runNixOSTest {
   testScript =
     { nodes, ... }:
     let
-      # bootstrapSystem = nodes.nixos.system.build.toplevel;
+      bootstrapSystem = nodes.nixos.system.build.toplevel;
       recoverySystem = nodes.nixos.specialisation.machine-recovery.configuration.system.build.toplevel;
     in
     ''
+      import json
       nixos.start()
       nixos.wait_for_unit("multi-user.target")
 
@@ -125,10 +126,12 @@ pkgs.testers.runNixOSTest {
           )
 
       with subtest("boots back into bootstrap system"):
-          print(nixos.succeed("ls -la /nix/var/nix/profiles || true"))
-          print(nixos.succeed("readlink -f /nix/var/nix/profiles/system || true"))
-          print(nixos.succeed("nix-env --list-generations -p /nix/var/nix/profiles/system || true"))
-          print(nixos.succeed("bootctl list --no-pager"))
+          entries = json.loads(nixos.succeed("bootctl list --json=short"))
+          bootstrap_entry = next(entry["id"] for entry in entries if "${bootstrapSystem}/init" in entry.get("options", ""))
+          nixos.succeed(f"bootctl set-oneshot {bootstrap_entry}")
+          nixos.succeed("sync")
+          nixos.crash()
+          nixos.wait_for_unit("multi-user.target")
 
       with subtest("bootstrap system is not running from recovery root"):
           print(

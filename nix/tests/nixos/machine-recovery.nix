@@ -16,9 +16,21 @@ pkgs.testers.runNixOSTest {
       environment = {
         systemPackages = [ pkgs.btrfs-progs ];
       };
+      boot = {
+        loader = {
+          systemd-boot = {
+            enable = true;
+          };
+          efi = {
+            canTouchEfiVariables = true;
+          };
+        };
+      };
       virtualisation = {
         emptyDiskImages = [ 512 ];
         mountHostNixStore = true;
+        useBootLoader = true;
+        useEFIBoot = true;
       };
       specialisation = {
         machine-recovery = {
@@ -65,7 +77,7 @@ pkgs.testers.runNixOSTest {
     nixos.succeed("btrfs subvolume create /mnt/recovery/@root")
     nixos.succeed("btrfs subvolume create /mnt/recovery/@persist")
 
-    with subtest("root subvolume exists"):
+    with subtest("recovery subvolume exists"):
         nixos.succeed("btrfs subvolume show /mnt/recovery/@root")
         nixos.succeed("btrfs subvolume show /mnt/recovery/@persist")
   '';

@@ -65,6 +65,7 @@ pkgs.testers.runNixOSTest {
   testScript =
     { nodes, ... }:
     let
+      bootstrapSystem = nodes.nixos.system.build.toplevel;
       recoverySystem = nodes.nixos.specialisation.machine-recovery.configuration.system.build.toplevel;
     in
     ''

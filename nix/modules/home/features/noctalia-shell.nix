@@ -17,11 +17,28 @@ let
   cfg = config.dotfiles.features.noctaliaShell;
   settings = {
     shell = {
-      launcher = { };
+      launcher = {
+        show_app_actions = true;
+        providers = {
+          session = {
+            global = true;
+          };
+          wallpaper = {
+            global = true;
+          };
+          windows = {
+            global = true;
+          };
+          emoji = {
+            global = true;
+          };
+        };
+      };
       settings_show_advanced = true;
       clipboard_enabled = true;
       clipboard_auto_paste = "auto";
       panel = {
+        transparency_mode = "glass";
         launcher_placement = "floating";
         clipboard_placement = "floating";
         wallpaper_placement = "floating";
@@ -111,8 +128,6 @@ let
     };
 
     theme = {
-      source = "builtin";
-      builtin = "Catppuccin";
       mode = theme;
       source = "builtin";
       builtin = "Catppuccin";

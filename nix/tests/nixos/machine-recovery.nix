@@ -93,5 +93,13 @@ pkgs.testers.runNixOSTest {
           nixos.succeed("sync")
           nixos.crash()
           nixos.wait_for_unit("multi-user.target")
+
+      with subtest("recovery filesystem layout is mounted"):
+          nixos.succeed('test "$(findmnt -n -o FSTYPE /)" = btrfs')
+          nixos.succeed('test "$(findmnt -n -o FSROOT /)" = /@root')
+
+          nixos.succeed("mountpoint /persist")
+          nixos.succeed('test "$(findmnt -n -o FSTYPE /persist)" = btrfs')
+          nixos.succeed('test "$(findmnt -n -o FSROOT /persist)" = /@persist')
     '';
 }

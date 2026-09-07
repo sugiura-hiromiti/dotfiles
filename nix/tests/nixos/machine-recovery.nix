@@ -52,6 +52,10 @@ pkgs.testers.runNixOSTest {
             };
             dotfiles = {
               features = {
+                ephemeralRoot = {
+                  enable = true;
+                  device = "/dev/vdb";
+                };
                 preservation = {
                   enable = true;
                 };

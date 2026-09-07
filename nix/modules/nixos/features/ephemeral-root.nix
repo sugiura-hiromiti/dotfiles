@@ -3,6 +3,10 @@
     dotfiles = {
       features = {
         ephemeralRoot = {
+          device = lib.mkOption {
+            type = lib.types.str;
+            description = "btrfs device containing the ephemeral @root subvolume";
+          };
           enable = lib.mkOption {
             type = lib.types.bool;
             default = false;

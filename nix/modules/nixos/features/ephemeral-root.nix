@@ -45,6 +45,7 @@ in
                 serviceConfig = {
                   Type = "oneshot";
                 };
+                script = "echo ran > /run/ephemeral-root-reset-ran";
               };
           };
         };

@@ -101,6 +101,7 @@ pkgs.testers.runNixOSTest {
           nixos.wait_for_unit("multi-user.target")
 
       with subtest("recovery filesystem layout is mounted"):
+          nixos.succeed('test -e /run/ephemeral-root-reset-ran')
           nixos.succeed('test "$(findmnt -n -o FSTYPE /)" = btrfs')
           nixos.succeed('test "$(findmnt -n -o FSROOT /)" = /@root')
 

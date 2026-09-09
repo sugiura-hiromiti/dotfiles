@@ -7,6 +7,7 @@
 }:
 let
   cfg = config.dotfiles.features.ephemeralRoot;
+  btrfs = lib.getExe' pkgs.btrfs-progs "btrfs";
 in
 {
   options = {
@@ -30,9 +31,14 @@ in
     boot = {
       initrd = {
         systemd = {
-          extraBin = {
-            btrfs = lib.getExe' pkgs.btrfs-progs "btrfs";
-          };
+          mounts = [
+            {
+              what = cfg.device;
+              where = "/run/ephemeral-root";
+              type = "btrfs";
+              options = "subvolid=5";
+            }
+          ];
           services = {
             ephemeral-root-reset =
               let
@@ -47,6 +53,10 @@ in
                   DefaultDependencies = false;
                 };
                 serviceConfig = {
+                  ExecStart = [
+                    "${btrfs} subvolume delete ..."
+                    "${btrfs} subvolume create ..."
+                  ];
                   Type = "oneshot";
                 };
                 script = ''

@@ -8,6 +8,8 @@
 let
   cfg = config.dotfiles.features.ephemeralRoot;
   btrfs = lib.getExe' pkgs.btrfs-progs "btrfs";
+  mountPoint = "/run/ephemeral-root";
+  mountUnit = "${utils.escapeSystemdPath mountPoint}.mount";
 in
 {
   options = {
@@ -34,39 +36,26 @@ in
           mounts = [
             {
               what = cfg.device;
-              where = "/run/ephemeral-root";
+              where = mountPoint;
               type = "btrfs";
               options = "subvolid=5";
             }
           ];
           services = {
-            ephemeral-root-reset =
-              let
-                deviceUnit = "${utils.escapeSystemdPath cfg.device}.device";
-              in
-              {
-                requires = [ deviceUnit ];
-                after = [ deviceUnit ];
-                requiredBy = [ "sysroot.mount" ];
-                before = [ "sysroot.mount" ];
-                unitConfig = {
-                  DefaultDependencies = false;
-                };
-                serviceConfig = {
-                  ExecStart = [
-                    "${btrfs} subvolume delete ..."
-                    "${btrfs} subvolume create ..."
-                  ];
-                  Type = "oneshot";
-                };
-                script = ''
-                  mkdir -p /run/ephemeral-root
-                  mount -t btrfs -o subvolid=5 ${cfg.device} /run/ephemeral-root
-                  btrfs subvolume show /run/ephemeral-root/@root
-                  umount /run/ephemeral-root
-                  echo ran > /run/ephemeral-root-reset-ran
-                '';
+            ephemeral-root-reset = {
+              requires = [ mountUnit ];
+              after = [ mountUnit ];
+              requiredBy = [ "sysroot.mount" ];
+              before = [ "sysroot.mount" ];
+              unitConfig = {
+                DefaultDependencies = false;
               };
+              serviceConfig = {
+                ExecStart = "${btrfs} subvolume show ${mountPoint}/@root";
+                ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
+                Type = "oneshot";
+              };
+            };
           };
         };
       };

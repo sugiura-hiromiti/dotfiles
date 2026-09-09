@@ -2,6 +2,7 @@
   lib,
   config,
   utils,
+  pkgs,
   ...
 }:
 let
@@ -29,6 +30,9 @@ in
     boot = {
       initrd = {
         systemd = {
+          extraBin = {
+            btrfs = lib.getExe' pkgs.btrfs-progs "btrfs";
+          };
           services = {
             ephemeral-root-reset =
               let
@@ -45,7 +49,13 @@ in
                 serviceConfig = {
                   Type = "oneshot";
                 };
-                script = "echo ran > /run/ephemeral-root-reset-ran";
+                script = ''
+                  mkdir -p /run/ephemeral-root
+                  mount -t btrfs -o subvolid=5 ${cfg.device} /run/ephemeral-root
+                  btrfs subvolume show /run/ephemeral-root/@root
+                  umount /run/ephemeral-root
+                  echo ran > /run/ephemeral-root-reset-ran
+                '';
               };
           };
         };

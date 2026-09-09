@@ -10,6 +10,7 @@ let
   btrfs = lib.getExe' pkgs.btrfs-progs "btrfs";
   mountPoint = "/run/ephemeral-root";
   mountUnit = "${utils.escapeSystemdPath mountPoint}.mount";
+  mountedRoot = "${mountPoint}/@root";
 in
 {
   options = {
@@ -41,22 +42,45 @@ in
               options = "subvolid=5";
             }
           ];
-          services = {
-            ephemeral-root-reset = {
-              requires = [ mountUnit ];
-              after = [ mountUnit ];
-              requiredBy = [ "sysroot.mount" ];
-              before = [ "sysroot.mount" ];
-              unitConfig = {
-                DefaultDependencies = false;
+          services =
+            let
+              deleteServiceName = "ephemeral-root-delete.service";
+            in
+            {
+              ephemeral-root-create = {
+                requires = [
+                  mountUnit
+                  deleteServiceName
+                ];
+                after = [
+                  mountUnit
+                  deleteServiceName
+                ];
+                requiredBy = [ "sysroot.mount" ];
+                before = [ "sysroot.mount" ];
+                unitConfig = {
+                  DefaultDependencies = false;
+                };
+                serviceConfig = {
+                  Type = "oneshot";
+                  ExecStart = "${btrfs} subvolume create ${mountedRoot}";
+                  ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
+                };
               };
-              serviceConfig = {
-                ExecStart = "${btrfs} subvolume show ${mountPoint}/@root";
-                ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
-                Type = "oneshot";
+              ephemeral-root-delete = {
+                requires = [ mountUnit ];
+                after = [ mountUnit ];
+                unitConfig = {
+                  DefaultDependencies = false;
+                  ConditionPathExists = mountedRoot;
+                };
+                serviceConfig = {
+                  ExecStart = "${btrfs} subvolume delete --recursive --commit-after ${mountedRoot}";
+                  ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
+                  Type = "oneshot";
+                };
               };
             };
-          };
         };
       };
     };

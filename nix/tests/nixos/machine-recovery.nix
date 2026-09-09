@@ -28,7 +28,6 @@ pkgs.testers.runNixOSTest {
       };
       virtualisation = {
         emptyDiskImages = [ 512 ];
-        mountHostNixStore = true;
         useBootLoader = true;
         useEFIBoot = true;
       };
@@ -39,6 +38,12 @@ pkgs.testers.runNixOSTest {
               rootDevice = "/dev/vdb";
             };
             fileSystems = pkgs.lib.mkVMOverride {
+              "/nix" = {
+                device = "/dev/vdb";
+                fsType = "btrfs";
+                options = [ "subvol=@nix" ];
+                neededForBoot = true;
+              };
               "/" = {
                 fsType = pkgs.lib.mkForce "btrfs";
                 options = [ "subvol=@root" ];
@@ -98,7 +103,7 @@ pkgs.testers.runNixOSTest {
           nixos.succeed("${recoverySystem}/bin/switch-to-configuration boot")
           nixos.succeed("sync")
           nixos.crash()
-          nixos.wait_for_unit("multi-user.target")
+          nixos.wait_for_unit("multi-user.target", timeout=60)
 
       with subtest("recovery filesystem layout is mounted"):
           nixos.succeed('test -e /run/ephemeral-root-reset-ran')

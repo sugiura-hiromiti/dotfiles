@@ -8,6 +8,9 @@ pkgs.testers.runNixOSTest {
   nodes = {
     machine = { ... }: {
       imports = [ ../../modules/nixos/features/ephemeral-root.nix ];
+      virtualisation = {
+        emptyDiskImages = [ 64 ];
+      };
       dotfiles = {
         features = {
           ephemeralRoot = {

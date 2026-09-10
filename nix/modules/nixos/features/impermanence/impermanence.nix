@@ -1,7 +1,7 @@
 { lib, config, ... }:
 let
   cfg = config.dotfiles.features.impermanence;
-  storage = config.dotfiles.storage;
+  storage = config.dotfiles.features.storage;
 in
 {
   imports = [

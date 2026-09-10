@@ -1,8 +1,22 @@
 { pkgs, ... }:
+let
+  # Test fixture only.
+  btrfsDevice = "/dev/vdb";
+in
 pkgs.testers.runNixOSTest {
   name = "dotfiles.ephemeral-root";
   nodes = {
-    machine = { ... }: { };
+    machine = { ... }: {
+      imports = [ ../../modules/nixos/features/ephemeral-root.nix ];
+      dotfiles = {
+        features = {
+          ephemeralRoot = {
+            enable = true;
+            device = btrfsDevice;
+          };
+        };
+      };
+    };
   };
   testScript = ''
     machine.start()

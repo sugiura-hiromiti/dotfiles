@@ -10,7 +10,7 @@ let
   btrfs = lib.getExe' pkgs.btrfs-progs "btrfs";
   mountPoint = "/run/ephemeral-root";
   mountUnit = "${utils.escapeSystemdPath mountPoint}.mount";
-  mountedRoot = "${mountPoint}/@root";
+  mountedRoot = "${mountPoint}/${cfg.subvolume}";
 in
 {
   options = {
@@ -20,6 +20,9 @@ in
           device = lib.mkOption {
             type = lib.types.str;
             description = "btrfs device containing the ephemeral @root subvolume";
+          };
+          subvolume = lib.mkOption {
+            type = lib.types.str;
           };
           enable = lib.mkOption {
             type = lib.types.bool;

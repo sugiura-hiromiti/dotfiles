@@ -51,5 +51,12 @@ in
         neededForBoot = true;
       };
     };
+    dotfiles = {
+      features = {
+        ephemeralRoot = {
+          subvolume = cfg.subvolumes.root;
+        };
+      };
+    };
   };
 }

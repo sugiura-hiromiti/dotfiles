@@ -55,7 +55,7 @@ in
       features = {
         ephemeralRoot = {
           enable = true;
-          device = cfg.subvolumes.root;
+          device = cfg.device;
           subvolume = cfg.subvolumes.root;
         };
       };

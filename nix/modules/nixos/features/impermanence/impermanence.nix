@@ -3,6 +3,7 @@ let
   cfg = config.dotfiles.features.impermanence;
 in
 {
+  imports = [ ./ephemeral-root.nix ];
   options = {
     dotfiles = {
       features = {
@@ -29,10 +30,8 @@ in
         };
       };
     };
-
   };
   config = lib.mkIf cfg.enable {
-    imports = [ ./ephemeral-root.nix ];
     fileSystems = {
       "/" = {
         device = cfg.device;

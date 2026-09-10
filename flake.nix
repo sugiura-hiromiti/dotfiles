@@ -30,6 +30,14 @@
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
 
   inputs = {
+    disko = {
+      url = "github:nix-community/disko";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
+    };
     preservation = {
       url = "github:nix-community/preservation";
     };
@@ -124,6 +132,7 @@
   outputs =
     inputs@{
       self,
+      disko,
       preservation,
       mcp-servers-nix,
       nix-agent,
@@ -263,6 +272,7 @@
       nixosModulesFor =
         config:
         [
+          disko.nixosModules.disko
           preservation.nixosModules.default
           (nixosProfileModule config)
           ./nix/nixos/configuration.nix

@@ -1,9 +1,13 @@
 { lib, config, ... }:
 let
   cfg = config.dotfiles.features.impermanence;
+  storage = config.dotfiles.storage;
 in
 {
-  imports = [ ./ephemeral-root.nix ];
+  imports = [
+    ./ephemeral-root.nix
+    ../storage
+  ];
   options = {
     dotfiles = {
       features = {
@@ -12,7 +16,6 @@ in
             type = lib.types.bool;
             default = false;
           };
-          device = lib.mkOption { type = lib.types.str; };
         };
       };
     };
@@ -20,20 +23,20 @@ in
   config = lib.mkIf cfg.enable {
     fileSystems = {
       "/" = {
-        device = cfg.device;
+        device = storage.device;
         fsType = "btrfs";
-        options = [ "subvol=${cfg.subvolumes.root}" ];
+        options = [ "subvol=${storage.subvolumes.root}" ];
       };
       "/persist" = {
-        device = cfg.device;
+        device = storage.device;
         fsType = "btrfs";
-        options = [ "subvol=${cfg.subvolumes.persist}" ];
+        options = [ "subvol=${storage.subvolumes.persist}" ];
         neededForBoot = true;
       };
       "/nix" = {
-        device = cfg.device;
+        device = storage.device;
         fsType = "btrfs";
-        options = [ "subvol=${cfg.subvolumes.nix}" ];
+        options = [ "subvol=${storage.subvolumes.nix}" ];
         neededForBoot = true;
       };
     };
@@ -41,8 +44,8 @@ in
       features = {
         ephemeralRoot = {
           enable = true;
-          device = cfg.device;
-          subvolume = cfg.subvolumes.root;
+          device = storage.device;
+          subvolume = storage.subvolumes.root;
         };
       };
     };

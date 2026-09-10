@@ -5,14 +5,16 @@ let
     {
       dotfiles = {
         features = {
-          impermanence = {
-            enable = true;
+          storage = {
             device = "/dev/test";
             subvolumes = lib.mkIf (subVolNamePrefix != "") {
               root = "@${subVolNamePrefix}root";
               persist = "@${subVolNamePrefix}persist";
               nix = "@${subVolNamePrefix}nix";
             };
+          };
+          impermanence = {
+            enable = true;
           };
         };
       };

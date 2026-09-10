@@ -8,16 +8,6 @@ pkgs.testers.runNixOSTest {
   nodes = {
     machine = { ... }: {
       imports = [ ../../modules/nixos/features/impermanence/ephemeral-root.nix ];
-      boot = {
-        loader = {
-          systemd-boot = {
-            enable = true;
-          };
-          efi = {
-            canTouchEfiVariables = true;
-          };
-        };
-      };
       dotfiles = {
         features = {
           ephemeralRoot = {

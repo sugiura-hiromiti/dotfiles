@@ -34,6 +34,7 @@ in
     boot = {
       initrd = {
         systemd = {
+          enable = true;
           mounts = [
             {
               what = cfg.device;

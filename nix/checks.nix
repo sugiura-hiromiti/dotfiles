@@ -51,6 +51,7 @@ in
 // (import ./apps/update/tests { inherit lib pkgs; })
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   preservation = import ./tests/nixos/preservation.nix { inherit pkgs preservation; };
+  ephemeral-root = import ./tests/nixos/ephemeral-root.nix;
   machine-recovery = import ./tests/nixos/machine-recovery.nix {
     inherit
       pkgs

@@ -13,6 +13,7 @@ pkgs.testers.runNixOSTest {
           ephemeralRoot = {
             enable = true;
             device = btrfsDevice;
+            subvolume = "@root";
           };
         };
       };

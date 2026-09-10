@@ -3,6 +3,7 @@ let
   cfg = config.dotfiles.features.storage;
 in
 {
+  imports = [ ./provisioning.nix ];
   options = {
     dotfiles = {
       features = {

@@ -60,4 +60,5 @@ in
       systemSpecialArgs
       ;
   };
+  impermanence = import ./tests/nixos/impermanence.nix { inherit lib pkgs; };
 }

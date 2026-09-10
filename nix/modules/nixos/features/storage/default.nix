@@ -3,6 +3,10 @@
     dotfiles = {
       features = {
         storage = {
+          provisioning = {
+            enable = lib.mkEnableOption "provisioning";
+            disk = lib.mkOption { type = lib.types.str; };
+          };
           device = lib.mkOption { type = lib.types.str; };
           subvolumes = {
             root = lib.mkOption {

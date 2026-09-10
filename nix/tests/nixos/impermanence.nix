@@ -8,7 +8,7 @@ let
           impermanence = {
             enable = true;
             device = "/dev/test";
-            subvolumes = {
+            subvolumes = lib.mkIf (subVolNamePrefix != "") {
               root = "@${subVolNamePrefix}root";
               persist = "@${subVolNamePrefix}persist";
               nix = "@${subVolNamePrefix}nix";

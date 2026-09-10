@@ -16,19 +16,20 @@ let
       }
     ];
   };
-  fs = system.config.fileSystem;
+  fs = system.config.fileSystems;
+  subvolOptions = fs: builtins.filter (option: lib.hasPrefix "subvol=" option) fs.options;
 in
 assert fs."/".device == "/dev/test";
 assert fs."/".fsType == "btrfs";
-assert fs."/".options == [ "subvol=@root" ];
+assert subvolOptions fs."/" == [ "subvol=@root" ];
 
 assert fs."/persist".device == "/dev/test";
 assert fs."/persist".fsType == "btrfs";
-assert fs."/persist".options == [ "subvol=@persist" ];
+assert subvolOptions fs."/persist" == [ "subvol=@persist" ];
 assert fs."/persist".neededForBoot;
 
 assert fs."/nix".device == "/dev/test";
 assert fs."/nix".fsType == "btrfs";
-assert fs."/nix".options == [ "subvol=@nix" ];
+assert subvolOptions fs."/nix" == [ "subvol=@nix" ];
 assert fs."/nix".neededForBoot;
 pkgs.runCommandLocal "impermanence-eval-test" { } ''touch "$out"''

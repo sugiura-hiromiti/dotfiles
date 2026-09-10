@@ -32,6 +32,7 @@ in
 
   };
   config = lib.mkIf cfg.enable {
+    imports = [ ./ephemeral-root.nix ];
     fileSystems = {
       "/" = {
         device = cfg.device;

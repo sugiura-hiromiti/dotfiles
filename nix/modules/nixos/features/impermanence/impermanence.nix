@@ -32,6 +32,24 @@ in
 
   };
   config = lib.mkIf cfg.enable {
-
+    fileSystems = {
+      "/" = {
+        device = lib.mkDefault cfg.device;
+        fsType = "btrfs";
+        options = [ "subvol=${cfg.subvolumes.root}" ];
+      };
+      "/persist" = {
+        device = lib.mkDefault cfg.device;
+        fsType = "btrfs";
+        options = [ "subvol=${cfg.subvolumes.persist}" ];
+        neededForBoot = true;
+      };
+      "/nix" = {
+        device = lib.mkDefault cfg.device;
+        fsType = "btrfs";
+        options = [ "subvol=${cfg.subvolumes.nix}" ];
+        neededForBoot = true;
+      };
+    };
   };
 }

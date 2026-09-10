@@ -6,7 +6,7 @@ let
       dotfiles = {
         features = {
           storage = {
-            device = "/dev/test";
+            partitionLabel = "test";
             subvolumes = lib.mkIf (subVolNamePrefix != "") {
               root = "@${subVolNamePrefix}root";
               persist = "@${subVolNamePrefix}persist";
@@ -32,16 +32,16 @@ let
   customFs = customSystem.config.fileSystems;
   subvolOptions = fs: builtins.filter (option: lib.hasPrefix "subvol=" option) fs.options;
 in
-assert fs."/".device == "/dev/test";
+assert fs."/".device == "/dev/disk/by-partlabel/test";
 assert fs."/".fsType == "btrfs";
 assert subvolOptions fs."/" == [ "subvol=@root" ];
 
-assert fs."/persist".device == "/dev/test";
+assert fs."/persist".device == "/dev/disk/by-partlabel/test";
 assert fs."/persist".fsType == "btrfs";
 assert subvolOptions fs."/persist" == [ "subvol=@persist" ];
 assert fs."/persist".neededForBoot;
 
-assert fs."/nix".device == "/dev/test";
+assert fs."/nix".device == "/dev/disk/by-partlabel/test";
 assert fs."/nix".fsType == "btrfs";
 assert subvolOptions fs."/nix" == [ "subvol=@nix" ];
 assert fs."/nix".neededForBoot;
@@ -54,9 +54,9 @@ assert system.config.dotfiles.features.ephemeralRoot.subvolume == "@root";
 assert customSystem.config.dotfiles.features.ephemeralRoot.subvolume == "@test-root";
 
 assert system.config.dotfiles.features.ephemeralRoot.enable;
-assert system.config.dotfiles.features.ephemeralRoot.device == "/dev/test";
+assert system.config.dotfiles.features.ephemeralRoot.device == "/dev/disk/by-partlabel/test";
 
 assert customSystem.config.dotfiles.features.ephemeralRoot.enable;
-assert customSystem.config.dotfiles.features.ephemeralRoot.device == "/dev/test";
+assert customSystem.config.dotfiles.features.ephemeralRoot.device == "/dev/disk/by-partlabel/test";
 
 pkgs.runCommandLocal "impermanence-eval-test" { } ''touch "$out"''

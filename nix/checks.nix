@@ -7,6 +7,7 @@
   pkgs,
   self,
   targetConfigNames,
+  disko,
 }:
 let
   mkLintCheck =
@@ -61,4 +62,5 @@ in
       ;
   };
   impermanence = import ./tests/nixos/impermanence.nix { inherit lib pkgs; };
+  storage-provisioning = import ./tests/nixos/storage-provisioning.nix { inherit lib pkgs disko; };
 }

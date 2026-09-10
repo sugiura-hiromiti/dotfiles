@@ -367,6 +367,7 @@
               lib
               pkgs
               self
+              disko
               ;
             targetConfigNames = {
               home = homeTargets;

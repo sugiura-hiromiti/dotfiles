@@ -1,12 +1,23 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  disko,
+  ...
+}:
 let
   importWith = subVolNamePrefix: [
+    disko.nixosModules.disko
     ../../modules/nixos/features/impermanence/impermanence.nix
+    ../../modules/nixos/features/storage
     {
       dotfiles = {
         features = {
           storage = {
             partitionLabel = "test";
+            provisioning = {
+              enable = true;
+              disk = "test";
+            };
             subvolumes = lib.mkIf (subVolNamePrefix != "") {
               root = "@${subVolNamePrefix}root";
               persist = "@${subVolNamePrefix}persist";
@@ -58,5 +69,11 @@ assert system.config.dotfiles.features.ephemeralRoot.device == "/dev/disk/by-par
 
 assert customSystem.config.dotfiles.features.ephemeralRoot.enable;
 assert customSystem.config.dotfiles.features.ephemeralRoot.device == "/dev/disk/by-partlabel/test";
+
+assert system.config.disko.devices.disk.main.device == "/dev/test-disk";
+assert system.config.disko.devices.disk.main.content.type == "gpt";
+
+assert system.config.disko.device.disk.main.content.partitions.system.name == "test-system";
+assert system.config.disko.device.disk.main.content.partitions.system.content.type == "btrfs";
 
 pkgs.runCommandLocal "impermanence-eval-test" { } ''touch "$out"''

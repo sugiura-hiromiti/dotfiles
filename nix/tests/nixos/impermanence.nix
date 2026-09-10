@@ -48,4 +48,7 @@ assert subvolOptions customFs."/" == [ "subvol=@test-root" ];
 assert subvolOptions customFs."/persist" == [ "subvol=@test-persist" ];
 assert subvolOptions customFs."/nix" == [ "subvol=@test-nix" ];
 
+assert system.config.dotfiles.features.ephemeralRoot.subvolume == "@root";
+assert customSystem.config.dotfiles.features.ephemeralRoot.subvolume == "@test-root";
+
 pkgs.runCommandLocal "impermanence-eval-test" { } ''touch "$out"''

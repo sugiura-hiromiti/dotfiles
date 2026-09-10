@@ -54,6 +54,8 @@ in
     dotfiles = {
       features = {
         ephemeralRoot = {
+          enable = true;
+          device = cfg.subvolumes.root;
           subvolume = cfg.subvolumes.root;
         };
       };

@@ -7,10 +7,7 @@ pkgs.testers.runNixOSTest {
   name = "dotfiles.ephemeral-root";
   nodes = {
     machine = { ... }: {
-      imports = [ ../../modules/nixos/features/ephemeral-root.nix ];
-      virtualisation = {
-        emptyDiskImages = [ 64 ];
-      };
+      imports = [ ../../modules/nixos/features/impermanence/ephemeral-root.nix ];
       dotfiles = {
         features = {
           ephemeralRoot = {

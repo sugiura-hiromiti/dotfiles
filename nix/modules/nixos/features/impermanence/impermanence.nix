@@ -4,16 +4,19 @@ let
 in
 {
   options = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-  };
-  config = lib.mkIf cfg.enable {
     dotfiles = {
       features = {
-        impermanence = { };
+        impermanence = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+          };
+        };
       };
     };
+
+  };
+  config = lib.mkIf cfg.enable {
+
   };
 }

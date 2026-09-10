@@ -51,4 +51,10 @@ assert subvolOptions customFs."/nix" == [ "subvol=@test-nix" ];
 assert system.config.dotfiles.features.ephemeralRoot.subvolume == "@root";
 assert customSystem.config.dotfiles.features.ephemeralRoot.subvolume == "@test-root";
 
+assert system.config.dotfiles.features.ephemeralRoot.enable;
+assert system.config.dotfiles.features.ephemeralRoot.device == "/dev/test";
+
+assert customSystem.config.dotfiles.features.ephemeralRoot.enable;
+assert customSystem.config.dotfiles.features.ephemeralRoot.device == "/dev/test";
+
 pkgs.runCommandLocal "impermanence-eval-test" { } ''touch "$out"''

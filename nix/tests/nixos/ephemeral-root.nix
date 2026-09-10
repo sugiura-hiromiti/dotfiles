@@ -41,5 +41,8 @@ pkgs.testers.runNixOSTest {
     };
   };
 
-  testScript = "";
+  testScript = ''
+    machine.start()
+    machine.wait_for_unit("multi-user.target")
+  '';
 }

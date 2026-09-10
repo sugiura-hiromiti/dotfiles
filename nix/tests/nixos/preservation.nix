@@ -144,7 +144,7 @@ pkgs.testers.runNixOSTest {
       imports = [
         preservation.nixosModules.default
         ../../modules/nixos/base/boot.nix
-        ../../modules/nixos/features/preservation.nix
+        ../../modules/nixos/features/impermanence/preservation.nix
       ];
       dotfiles = {
         features = {

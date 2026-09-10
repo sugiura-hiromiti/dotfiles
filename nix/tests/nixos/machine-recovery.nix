@@ -60,6 +60,7 @@ pkgs.testers.runNixOSTest {
                 ephemeralRoot = {
                   enable = true;
                   device = "/dev/vdb";
+                  subvolume = "@root";
                 };
                 preservation = {
                   enable = true;
@@ -71,9 +72,5 @@ pkgs.testers.runNixOSTest {
       };
     };
   };
-  testScript =
-    { nodes, ... }:
-    let
-    in
-    "";
+  testScript = "";
 }

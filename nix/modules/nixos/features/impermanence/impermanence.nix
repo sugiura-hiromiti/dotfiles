@@ -23,18 +23,18 @@ in
   config = lib.mkIf cfg.enable {
     fileSystems = {
       "/" = {
-        device = storage.device;
+        inherit (storage) device;
         fsType = "btrfs";
         options = [ "subvol=${storage.subvolumes.root}" ];
       };
       "/persist" = {
-        device = storage.device;
+        inherit (storage) device;
         fsType = "btrfs";
         options = [ "subvol=${storage.subvolumes.persist}" ];
         neededForBoot = true;
       };
       "/nix" = {
-        device = storage.device;
+        inherit (storage) device;
         fsType = "btrfs";
         options = [ "subvol=${storage.subvolumes.nix}" ];
         neededForBoot = true;
@@ -44,7 +44,7 @@ in
       features = {
         ephemeralRoot = {
           enable = true;
-          device = storage.device;
+          inherit (storage) device;
           subvolume = storage.subvolumes.root;
         };
       };

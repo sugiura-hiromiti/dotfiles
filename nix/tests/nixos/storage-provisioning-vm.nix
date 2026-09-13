@@ -54,5 +54,11 @@ pkgs.testers.runNixOSTest {
     machine.succeed(
         "${pkgs.btrfs-progs}/bin/btrfs subvolume show /run/storage-top/@root"
     )
+    machine.succeed(
+        "${pkgs.btrfs-progs}/bin/btrfs subvolume show /run/storage-top/@nix"
+    )
+    machine.succeed(
+        "${pkgs.btrfs-progs}/bin/btrfs subvolume show /run/storage-top/@persist"
+    )
   '';
 }

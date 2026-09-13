@@ -16,9 +16,6 @@ let
       {
         dotfiles = {
           features = {
-            ephemeralRoot = {
-              device = btrfsDevice;
-            };
             storage = {
               partitionLabel = "test-system";
               provisioning = {
@@ -49,7 +46,7 @@ pkgs.testers.runNixOSTest {
               features = {
                 ephemeralRoot = {
                   enable = true;
-                  device = disk;
+                  device = btrfsDevice;
                   subvolume = "@root";
                 };
               };

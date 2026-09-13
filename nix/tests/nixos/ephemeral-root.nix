@@ -88,5 +88,32 @@ pkgs.testers.runNixOSTest {
     machine.succeed(
         "${pkgs.btrfs-progs}/bin/btrfs subvolume show /run/storage-top/@root"
     )
+
+    marker = "/run/storage-top/@root/before-reset";
+    machine.succeed(f"touch {marker}")
+    machine.succeed(f"test -e {marker}")
+    machine.succeed("umount /run/storage-top")
+    machine.succeed(
+        "/run/current-system/specialisation/ephemeral-root/"
+        "bin/switch-to-configuration boot"
+    )
+    machine.shutdown()
+    machine.start()
+    machine.wait_for_unit("multi-user.target")
+    machine.succeed("mkdir -p /run/storage-top")
+    machine.succeed(
+        "mount -o subvolid=5 "
+        "${btrfsDevice} "
+        "/run/storage-top"
+    )
+
+    machine.fail(
+        "test -e /run/storage-top/@root/before-reset"
+    )
+
+    machine.succeed(
+        "${pkgs.btrfs-progs}/bin/btrfs subvolume show "
+        "/run/storage-top/@root"
+    )
   '';
 }

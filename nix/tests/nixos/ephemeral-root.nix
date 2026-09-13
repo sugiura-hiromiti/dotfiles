@@ -54,7 +54,7 @@ pkgs.testers.runNixOSTest {
         };
       };
       virtualisation = {
-        emptyDiskImages = [ 512 ];
+        emptyDiskImages = [ 1024 ];
         useBootLoader = true;
         useEFIBoot = true;
       };

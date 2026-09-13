@@ -34,6 +34,10 @@ pkgs.testers.runNixOSTest {
   nodes = {
     machine = { ... }: {
       imports = [ ../../modules/nixos/features/impermanence/ephemeral-root.nix ];
+      # TODO: this code have to be removed finally
+      system = {
+        extraDependencies = [ diskoScript ];
+      };
       specialisation = {
         ephemeral-root = {
           configuration = {

@@ -6,7 +6,7 @@ in
 {
   config = lib.mkIf cfg.enable {
     disko = {
-      enableConfig = false;
+      enableConfig = true;
       devices = {
         disk = {
           main = {
@@ -30,9 +30,15 @@ in
                   content = {
                     type = "btrfs";
                     subvolumes = {
-                      ${storage.subvolumes.root} = { };
-                      ${storage.subvolumes.nix} = { };
-                      ${storage.subvolumes.persist} = { };
+                      ${storage.subvolumes.root} = {
+                        mountpoint = "/";
+                      };
+                      ${storage.subvolumes.nix} = {
+                        mountpoint = "/nix";
+                      };
+                      ${storage.subvolumes.persist} = {
+                        mountpoint = "/persist";
+                      };
                     };
                   };
                 };

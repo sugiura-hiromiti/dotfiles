@@ -21,25 +21,6 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
-    fileSystems = {
-      "/" = {
-        inherit (storage) device;
-        fsType = "btrfs";
-        options = [ "subvol=${storage.subvolumes.root}" ];
-      };
-      "/persist" = {
-        inherit (storage) device;
-        fsType = "btrfs";
-        options = [ "subvol=${storage.subvolumes.persist}" ];
-        neededForBoot = true;
-      };
-      "/nix" = {
-        inherit (storage) device;
-        fsType = "btrfs";
-        options = [ "subvol=${storage.subvolumes.nix}" ];
-        neededForBoot = true;
-      };
-    };
     dotfiles = {
       features = {
         ephemeralRoot = {

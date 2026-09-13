@@ -45,4 +45,6 @@ assert subvolumes ? "@root";
 assert subvolumes ? "@nix";
 assert subvolumes ? "@persist";
 
+assert system.config.disko.enableConfig;
+
 pkgs.runCommandLocal "storage-provisioning-eval-test" { } ''touch "$out"''

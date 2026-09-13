@@ -25,7 +25,7 @@ in
                   };
                 };
                 system = {
-                  name = storage.partitionLabel;
+                  label = storage.partitionLabel;
                   size = "100%";
                   content = {
                     type = "btrfs";

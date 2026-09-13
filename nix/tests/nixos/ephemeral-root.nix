@@ -6,7 +6,8 @@
 }:
 let
   # Test fixture only.
-  btrfsDevice = "/dev/vdb";
+  disk = "/dev/vdb";
+  btrfsDevice = "/dev/disk/by-partlabel/test-system";
   diskoSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     modules = [
@@ -15,11 +16,14 @@ let
       {
         dotfiles = {
           features = {
+            ephemeralRoot = {
+              device = btrfsDevice;
+            };
             storage = {
               partitionLabel = "test-system";
               provisioning = {
                 enable = true;
-                disk = btrfsDevice;
+                inherit disk;
               };
             };
           };
@@ -45,7 +49,7 @@ pkgs.testers.runNixOSTest {
               features = {
                 ephemeralRoot = {
                   enable = true;
-                  device = btrfsDevice;
+                  device = disk;
                   subvolume = "@root";
                 };
               };
@@ -81,7 +85,7 @@ pkgs.testers.runNixOSTest {
     machine.succeed("mkdir -p /run/storage-top")
     machine.succeed(
         "mount -o subvolid=5 "
-        "/dev/disk/by-partlabel/test-system "
+        "${btrfsDevice} "
         "/run/storage-top"
     )
     machine.succeed(

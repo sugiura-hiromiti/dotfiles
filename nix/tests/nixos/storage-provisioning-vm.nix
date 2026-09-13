@@ -46,5 +46,13 @@ pkgs.testers.runNixOSTest {
     machine.succeed(
         "test \"$(blkid -s TYPE -o value /dev/disk/by-partlabel/test-system)\" = btrfs"
     )
+    machine.succeed("mkdir -p /run/storage-top")
+    machine.succeed(
+        "mount -o subvolid=5 /dev/disk/by-partlabel/test-system /run/storage-top"
+    )
+
+    machine.succeed(
+        "${pkgs.btrfs-progs}/bin/btrfs subvolume show /run/storage-top/@root"
+    )
   '';
 }

@@ -1,16 +1,21 @@
 {
   lib,
   pkgs,
+  disko,
   ...
 }:
 let
   importWith = subVolNamePrefix: [
     ../../modules/nixos/features/impermanence/impermanence.nix
+    disko.nixosModules.disko
     {
       dotfiles = {
         features = {
           storage = {
             partitionLabel = "test";
+            provisioning = {
+              disk = "/dev/test-disk";
+            };
             subvolumes = lib.mkIf (subVolNamePrefix != "") {
               root = "@${subVolNamePrefix}root";
               persist = "@${subVolNamePrefix}persist";

@@ -61,6 +61,6 @@ in
       systemSpecialArgs
       ;
   };
-  impermanence = import ./tests/nixos/impermanence.nix { inherit lib pkgs; };
+  impermanence = import ./tests/nixos/impermanence.nix { inherit lib disko pkgs; };
   storage-provisioning = import ./tests/nixos/storage-provisioning.nix { inherit lib pkgs disko; };
 }

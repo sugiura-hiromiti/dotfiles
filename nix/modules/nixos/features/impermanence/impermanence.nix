@@ -23,6 +23,11 @@ in
   config = lib.mkIf cfg.enable {
     dotfiles = {
       features = {
+        storage = {
+          provisioning = {
+            enable = true;
+          };
+        };
         ephemeralRoot = {
           enable = true;
           inherit (storage) device;

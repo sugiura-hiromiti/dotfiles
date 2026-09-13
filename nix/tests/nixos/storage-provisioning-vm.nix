@@ -60,5 +60,15 @@ pkgs.testers.runNixOSTest {
     machine.succeed(
         "${pkgs.btrfs-progs}/bin/btrfs subvolume show /run/storage-top/@persist"
     )
+    esp = machine.succeed(
+        "lsblk -rno PATH,PARTTYPE /dev/vdb "
+        "| grep -i c12a7328-f81f-11d2-ba4b-00a0c93ec93b "
+        "| awk '{print $1}'"
+    ).strip()
+
+    assert esp != "", "EFI System Partition not found"
+    machine.succeed(
+        f'test "$(blkid -s TYPE -o value {esp})" = vfat'
+    )
   '';
 }

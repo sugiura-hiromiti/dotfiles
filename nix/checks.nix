@@ -63,4 +63,7 @@ in
   };
   impermanence = import ./tests/nixos/impermanence.nix { inherit lib disko pkgs; };
   storage-provisioning = import ./tests/nixos/storage-provisioning.nix { inherit lib pkgs disko; };
+  storage-provisioning-vm = import ./tests/nixos/storage-provisioning-vm.nix {
+    inherit lib pkgs disko;
+  };
 }

@@ -21,6 +21,14 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
+    fileSystems = {
+      "/nix" = {
+        neededForBoot = true;
+      };
+      "/persist" = {
+        neededForBoot = true;
+      };
+    };
     dotfiles = {
       features = {
         storage = {

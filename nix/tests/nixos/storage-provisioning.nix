@@ -38,7 +38,8 @@ assert esp.content.type == "filesystem";
 assert esp.content.format == "vfat";
 assert esp.content.mountpoint == "/boot";
 
-assert systemPartition.name == "test-system";
+assert systemPartition.label == "test-system";
+assert systemPartition.device == "/dev/disk/by-partlabel/test-system";
 assert systemPartition.content.type == "btrfs";
 
 assert subvolumes ? "@root";

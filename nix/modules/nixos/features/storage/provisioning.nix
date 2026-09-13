@@ -15,7 +15,15 @@ in
             content = {
               type = "gpt";
               partitions = {
-                ESP = { };
+                ESP = {
+                  size = "512M";
+                  type = "EF00";
+                  content = {
+                    type = "filesystem";
+                    format = "vfat";
+                    mountpoint = "/boot";
+                  };
+                };
                 system = {
                   name = storage.partitionLabel;
                   size = "100%";

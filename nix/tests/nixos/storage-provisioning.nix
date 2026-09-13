@@ -28,9 +28,15 @@ let
   disk = system.config.disko.devices.disk.main;
   systemPartition = disk.content.partitions.system;
   subvolumes = systemPartition.content.subvolumes;
+  esp = disk.content.partitions.ESP;
 in
 assert disk.device == "/dev/test-disk";
 assert disk.content.type == "gpt";
+
+assert esp.type == "EF00";
+assert esp.content.type == "filesystem";
+assert esp.content.format == "vfat";
+assert esp.content.mountpoint == "/boot";
 
 assert systemPartition.name == "test-system";
 assert systemPartition.content.type == "btrfs";

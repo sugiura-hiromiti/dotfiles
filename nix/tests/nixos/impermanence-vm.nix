@@ -4,4 +4,8 @@ pkgs.testers.runNixOSTest {
   nodes = {
     machine = { };
   };
+  testScript = ''
+    machine.start()
+    machine.wait_for_unit("multi-user.target")
+  '';
 }

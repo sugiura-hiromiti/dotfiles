@@ -39,4 +39,4 @@ assert subvolumes ? "@root";
 assert subvolumes ? "@nix";
 assert subvolumes ? "@persist";
 
-pkgs.runCommandLocal "storage-providioning-eval-test" { } ''touch "$out"''
+pkgs.runCommandLocal "storage-provisioning-eval-test" { } ''touch "$out"''

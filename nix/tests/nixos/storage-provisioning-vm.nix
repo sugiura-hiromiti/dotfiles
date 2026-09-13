@@ -43,5 +43,8 @@ pkgs.testers.runNixOSTest {
     machine.succeed("test -b /dev/vdb")
     machine.succeed("${diskoScript}")
     machine.succeed("test -b /dev/disk/by-partlabel/test-system")
+    machine.succeed(
+        "test \"$(blkid -s TYPE -o value /dev/disk/by-partlabel/test-system)\" = btrfs"
+    )
   '';
 }

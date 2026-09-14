@@ -13,6 +13,9 @@ let
       {
         dotfiles = {
           features = {
+            impermanence = {
+              enable = true;
+            };
             storage = {
               partitionLabel = "test-system";
               provisioning = {

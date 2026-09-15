@@ -23,6 +23,38 @@
 	(defun my/meow-setup ()
 		(setq meow-cheatsheet-layout meow-cheatsheet-layout-qwerty)
 
+		(defvar meow-visual-state-keymap (make-sparse-keymap))
+		(meow-define-state visual
+			"Vim-like visual selection state."
+			:lighter " [V]"
+			:keymap meow-visual-state-keymap
+			;; this body runs whenever the state is enabled/disabled.
+			(if meow-visual-mode
+				(unless (region-active-p)
+					(push-mark (point) t t))
+				(deactivate-mark)))
+
+		(setq meow-cursor-type-visual 'box)
+
+		(defun my-meow-visual ()
+			(interactive)
+			(meow-visual-mode))
+
+		(meow-define-keys 'visual
+			'("<escape>" . meow-normal-mode)
+			'("h" . backward-char)
+			'("j" . next-line)
+			'("k" . previous-line)
+			'("l" . forward-char)
+			'("y" . kill-ring-save)
+			'("d" . kill-region)
+			'("b" . meow-back-word)
+			'("e" . meow-next-word)
+			'("<up>" . my/meow-treesit-up)
+			'("<down>" . my/meow-treesit-down)
+			'("<right>" . my/meow-treesit-in)
+			'("<left>" . my/meow-treesit-out))
+
 		(meow-motion-define-key
 			'("j" . meow-next)
 			'("k" . meow-prev)
@@ -120,21 +152,22 @@ Runs when leaving Meow insert mode."
 	:custom (meow-use-clipboard t))
 
 (defun my/meow-treesit-expand ()
-	"Tree-sitter nodeを選択し、parserがなければPuniへfallbackする。"
+	"Tree-sitter nodeを選択し、parserがなければPuniへfallbackする。."
 	(interactive)
 	(if (my/treesit-treewalk-available-p)
 		(meow-bounds-of-thing ?n)
 		(call-interactively #'puni-expand-region)))
 
 (defun my/meow-treesit-contract ()
-	"Tree-sitter選択を1段戻し、選択がなければMeow Grabを使う。"
+	"Tree-sitter選択を1段戻し、選択がなければMeow Grabを使う。."
 	(interactive)
 	(if (and (my/treesit-treewalk-available-p) (use-region-p))
 		(call-interactively #'meow-pop-selection)
 		(call-interactively #'meow-grab)))
 
 (defun my/meow-treesit--move (command count)
-	"構造移動COMMAND後、既存のMeow選択を移動先へ同期する。"
+	"構造移動COMMAND後、既存のMeow選択を移動先へ同期する。.
+Argument COUNT count."
 	(let ((had-selection (use-region-p))
 			  (has-parser (my/treesit-treewalk-available-p)))
 		(when had-selection
@@ -145,25 +178,29 @@ Runs when leaving Meow insert mode."
 
 ;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-up (&optional count)
-	"構造的に上へ移動し、選択があれば移動先を選択する。"
+	"構造的に上へ移動し、選択があれば移動先を選択する。.
+Optional argument COUNT count."
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-up count))
 
 ;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-down (&optional count)
-	"構造的に下へ移動し、選択があれば移動先を選択する。"
+	"構造的に下へ移動し、選択があれば移動先を選択する。.
+Optional argument COUNT count."
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-down count))
 
 ;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-in (&optional count)
-	"構造の内側へ移動し、選択があれば移動先を選択する。"
+	"構造の内側へ移動し、選択があれば移動先を選択する。.
+Optional argument COUNT count."
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-in count))
 
 ;; TODO: treesitter supportやmodeによって実行関数を変える
 (defun my/meow-treesit-out (&optional count)
-	"構造の外側へ移動し、選択があれば移動先を選択する。"
+	"構造の外側へ移動し、選択があれば移動先を選択する。.
+Optional argument COUNT count."
 	(interactive "p")
 	(my/meow-treesit--move #'my/treesit-treewalk-out count))
 
@@ -194,3 +231,5 @@ Runs when leaving Meow insert mode."
 	(eglot-tempel-mode t))
 
 (provide 'init-edit)
+
+;;; init-edit.el ends here

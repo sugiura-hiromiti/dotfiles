@@ -8,32 +8,30 @@
 let
   targetSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
-    _module = {
-      args = {
-        accounts = {
-          primary = "a";
-        };
+    specialArgs = {
+      accounts = {
+        primary = "a";
       };
     };
-    users = {
-      users = {
-        a = {
-          isNormalUser = true;
-          uid = 1000;
-        };
-      };
-    };
+
     modules = [
       disko.nixosModules.disko
       ../../modules/nixos/features/impermanence/impermanence.nix
       preservation.nixosModules.default
-      ../../modules/nixos/features/impermanence
 
       ({ modulesPath, ... }: {
         imports = [ (modulesPath + "/testing/test-instrumentation.nix") ];
       })
 
       {
+        users = {
+          users = {
+            a = {
+              isNormalUser = true;
+              uid = 1000;
+            };
+          };
+        };
         boot = {
           loader = {
             systemd-boot = {

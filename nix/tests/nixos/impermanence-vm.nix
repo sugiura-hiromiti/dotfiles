@@ -29,7 +29,7 @@ let
             storage = {
               partitionLabel = "test-system";
               provisioning = {
-                disk = "/dev/vdb";
+                disk = "/dev/vda";
               };
             };
           };
@@ -45,15 +45,23 @@ pkgs.testers.runNixOSTest {
   nodes = {
     installer = {
       virtualisation = {
+        diskImage = "./target.qcow2";
+        diskSize = 4096;
         additionalPaths = [ targetTopLevel ];
-        emptyDiskImages = [ 4096 ];
+        rootDevice = "/dev/vdb";
+        emptyDiskImages = [ 1024 ];
+        fileSystems = {
+          "/" = {
+            autoFormat = true;
+          };
+        };
       };
     };
   };
   testScript = ''
     installer.start()
     installer.wait_for_unit("multi-user.target")
-    installer.succeed("test -b /dev/vdb")
+    installer.succeed("test -b /dev/vda")
     installer.succeed("${diskoScript}")
 
     installer.succeed("test -b /dev/disk/by-partlabel/test-system")

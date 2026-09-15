@@ -77,5 +77,12 @@ pkgs.testers.runNixOSTest {
         "test -e /mnt/boot/EFI/BOOT/"
         "BOOT${lib.toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI"
     )
+    installer.succeed("umount -R /mnt")
+    installer.succeed("sync")
+    installer.shutdown()
+
+    target.state_dir = installer.state_dir
+    target.start()
+    target.wait_for_unit("multi-user.target")
   '';
 }

@@ -43,7 +43,7 @@ pkgs.testers.runNixOSTest {
     machine = {
       virtualisation = {
         additionalPaths = [ targetTopLevel ];
-        emptyDiskImages = [ 1024 ];
+        emptyDiskImages = [ 4096 ];
       };
     };
   };

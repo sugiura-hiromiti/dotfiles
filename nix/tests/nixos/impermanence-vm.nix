@@ -136,5 +136,11 @@ pkgs.testers.runNixOSTest {
     target.state_dir = installer.state_dir
     target.start()
     target.wait_for_unit("multi-user.target")
+
+    target.succeed("test \"$(findmnt -n -o FSTYPE /)\" = btrfs")
+    target.succeed("test \"$(findmnt -n -o FSROOT /)\" = /@root")
+
+    target.succeed("test \"$(findmnt -n -o FSROOT /nix)\" = /@nix")
+    target.succeed("test \"$(findmnt -n -o FSROOT /persist)\" = /@persist")
   '';
 }

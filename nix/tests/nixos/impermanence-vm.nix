@@ -12,6 +12,18 @@ let
       ../../modules/nixos/features/impermanence/impermanence.nix
       {
         boot = {
+          initrd = {
+            systemd = {
+              services = {
+                initrd-nixos-activation = {
+                  serviceConfig = {
+                    StandardOutput = "journal+console";
+                    StandardError = "journal+console";
+                  };
+                };
+              };
+            };
+          };
           loader = {
             systemd-boot = {
               enable = true;
@@ -43,6 +55,23 @@ in
 pkgs.testers.runNixOSTest {
   name = "dotfiles.impermanence-vm";
   nodes = {
+    target = {
+      virtualisation = {
+        fileSystems = {
+          "/" = {
+            device = "/dev/disk/by-partlabel/unused-test-root";
+            fsType = "ext4";
+          };
+        };
+        diskImage = "./target.qcow2";
+        useBootLoader = true;
+        useEFIBoot = true;
+        useDefaultFilesystems = false;
+        efi = {
+          keepVariables = false;
+        };
+      };
+    };
     installer = {
       virtualisation = {
         diskImage = "./target.qcow2";
@@ -85,5 +114,12 @@ pkgs.testers.runNixOSTest {
         "test -e /mnt/boot/EFI/BOOT/"
         "BOOT${lib.toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI"
     )
+    installer.succeed("umount -R /mnt")
+    installer.succeed("sync")
+    installer.shutdown()
+
+    target.state_dir = installer.state_dir
+    target.start()
+    target.wait_for_unit("multi-user.target")
   '';
 }

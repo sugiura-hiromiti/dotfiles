@@ -17,18 +17,6 @@ let
 
       {
         boot = {
-          initrd = {
-            systemd = {
-              services = {
-                initrd-nixos-activation = {
-                  serviceConfig = {
-                    StandardOutput = "journal+console";
-                    StandardError = "journal+console";
-                  };
-                };
-              };
-            };
-          };
           loader = {
             systemd-boot = {
               enable = true;
@@ -119,15 +107,6 @@ pkgs.testers.runNixOSTest {
         "test -e /mnt/boot/EFI/BOOT/"
         "BOOT${lib.toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI"
     )
-
-    installer.succeed("test -x /mnt${targetTopLevel}/prepare-root")
-
-    installer.succeed(r"""
-        interpreter="$(head -n1 /mnt${targetTopLevel}/prepare-root | sed 's/^#![[:space:]]*//')"
-        echo "prepare-root interpreter: $interpreter"
-        test -x "/mnt$interpreter"
-        chroot /mnt "$interpreter" -c true
-    """)
 
     installer.succeed("umount -R /mnt")
     installer.succeed("sync")

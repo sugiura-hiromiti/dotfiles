@@ -10,6 +10,11 @@ let
     modules = [
       disko.nixosModules.disko
       ../../modules/nixos/features/impermanence/impermanence.nix
+
+      ({ modulesPath, ... }: {
+        imports = [ (modulesPath + "/testing/test-instrumentation.nix") ];
+      })
+
       {
         boot = {
           initrd = {

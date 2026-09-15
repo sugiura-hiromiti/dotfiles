@@ -28,11 +28,19 @@ let
     ];
   };
   diskoScript = targetSystem.config.system.build.diskoScript;
+  targetTopLevel = targetSystem.config.system.build.toplevel;
 in
 pkgs.testers.runNixOSTest {
   name = "dotfiles.impermanence-vm";
   nodes = {
     machine = {
+      boot = {
+        loader = {
+          grub = {
+            enable = false;
+          };
+        };
+      };
       virtualisation = {
         emptyDiskImages = [ 1024 ];
       };
@@ -50,5 +58,16 @@ pkgs.testers.runNixOSTest {
     machine.succeed("mountpoint -q /mnt/nix")
     machine.succeed("mountpoint -q /mnt/persist")
     machine.succeed("mountpoint -q /mnt/boot")
+    machine.succeed(
+        "${pkgs.nixos-install-tools}/bin/nixos-install "
+        "--root /mnt "
+        "--system ${targetTopLevel} "
+        "--no-channel-copy "
+        "--no-root-password "
+        "--no-bootloader"
+    )
+
+    machine.succeed("test -L /mnt/nix/var/nix/profiles/system")
+    machine.succeed("test -e /mnt/etc/NIXOS")
   '';
 }

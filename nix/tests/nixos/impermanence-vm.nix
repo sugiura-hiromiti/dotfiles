@@ -142,5 +142,17 @@ pkgs.testers.runNixOSTest {
 
     target.succeed("test \"$(findmnt -n -o FSROOT /nix)\" = /@nix")
     target.succeed("test \"$(findmnt -n -o FSROOT /persist)\" = /@persist")
+
+    target.succeed("echo disposable > /impermanence-root-marker")
+    target.succeed("echo persistent > /persist/impermanence-persist-marker")
+    target.succeed("sync")
+
+    target.reboot()
+    target.wait_for_unit("multi-user.target")
+
+    target.succeed("test ! -e /impermanence-root-marker")
+    target.succeed(
+        "test \"$(cat /persist/impermanence-persist-marker)\" = persistent"
+    )
   '';
 }

@@ -1,4 +1,5 @@
 {
+  preservation,
   lib,
   disko,
   pkgs,
@@ -7,9 +8,26 @@
 let
   targetSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
+    _module = {
+      args = {
+        accounts = {
+          primary = "a";
+        };
+      };
+    };
+    users = {
+      users = {
+        a = {
+          isNormalUser = true;
+          uid = 1000;
+        };
+      };
+    };
     modules = [
       disko.nixosModules.disko
       ../../modules/nixos/features/impermanence/impermanence.nix
+      preservation.nixosModules.default
+      ../../modules/nixos/features/impermanence
 
       ({ modulesPath, ... }: {
         imports = [ (modulesPath + "/testing/test-instrumentation.nix") ];
@@ -28,6 +46,9 @@ let
         };
         dotfiles = {
           features = {
+            preservation = {
+              enable = true;
+            };
             impermanence = {
               enable = true;
             };
@@ -116,6 +137,7 @@ pkgs.testers.runNixOSTest {
     target.start(allow_reboot=True)
     target.wait_for_unit("multi-user.target")
 
+    target.succeed("mountpoint -q /var/lib/nixos")
     target.succeed("test \"$(findmnt -n -o FSTYPE /)\" = btrfs")
     target.succeed("test \"$(findmnt -n -o FSROOT /)\" = /@root")
 

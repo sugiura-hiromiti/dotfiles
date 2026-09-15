@@ -134,7 +134,7 @@ pkgs.testers.runNixOSTest {
     installer.shutdown()
 
     target.state_dir = installer.state_dir
-    target.start()
+    target.start(allow_reboot=True)
     target.wait_for_unit("multi-user.target")
 
     target.succeed("test \"$(findmnt -n -o FSTYPE /)\" = btrfs")

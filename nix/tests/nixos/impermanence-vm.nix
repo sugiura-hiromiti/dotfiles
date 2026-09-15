@@ -11,6 +11,13 @@ let
       disko.nixosModules.disko
       ../../modules/nixos/features/impermanence/impermanence.nix
       {
+        boot = {
+          loader = {
+            grub = {
+              enable = false;
+            };
+          };
+        };
         dotfiles = {
           features = {
             impermanence = {
@@ -34,13 +41,7 @@ pkgs.testers.runNixOSTest {
   name = "dotfiles.impermanence-vm";
   nodes = {
     machine = {
-      boot = {
-        loader = {
-          grub = {
-            enable = false;
-          };
-        };
-      };
+
       virtualisation = {
         emptyDiskImages = [ 1024 ];
       };

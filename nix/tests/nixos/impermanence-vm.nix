@@ -16,7 +16,7 @@ let
 
     modules = [
       disko.nixosModules.disko
-      ../../modules/nixos/features/impermanence/impermanence.nix
+      ../../modules/nixos/features/impermanence
       preservation.nixosModules.default
 
       ({ modulesPath, ... }: {

@@ -135,6 +135,6 @@ pkgs.testers.runNixOSTest {
 
     target.state_dir = installer.state_dir
     target.start()
-    target.wait_for_unit("multi-user.target", timeout=60)
+    target.wait_for_unit("multi-user.target")
   '';
 }

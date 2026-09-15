@@ -60,10 +60,10 @@
 			'("d" . my/meow-visual-kill)
 			'("b" . backward-word)
 			'("e" . forward-word)
-			'("<up>" . my/meow-treesit-up)
-			'("<down>" . my/meow-treesit-down)
-			'("<right>" . my/meow-treesit-in)
-			'("<left>" . my/meow-treesit-out))
+			'("<up>" . my/treesit-treewalk-up)
+			'("<down>" . my/treesit-treewalk-down)
+			'("<right>" . my/treesit-treewalk-in)
+			'("<left>" . my/treesit-treewalk-out))
 
 		(meow-motion-define-key
 			'("j" . meow-next)

@@ -13,6 +13,9 @@ let
       {
         boot = {
           loader = {
+            systemd-boot = {
+              enable = true;
+            };
             grub = {
               enable = false;
             };
@@ -65,10 +68,14 @@ pkgs.testers.runNixOSTest {
         "--system ${targetTopLevel} "
         "--no-channel-copy "
         "--no-root-password "
-        "--no-bootloader"
     )
 
     machine.succeed("test -L /mnt/nix/var/nix/profiles/system")
     machine.succeed("test -e /mnt/etc/NIXOS")
+    machine.succeed("test -e /mnt/boot/loader/loader.conf")
+    machine.succeed(
+        "test -e /mnt/boot/EFI/BOOT/"
+        "BOOT${lib.toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI"
+    )
   '';
 }

@@ -60,8 +60,8 @@ def hour [] {
 def auto_theme [] {
 	hour | if 5 < $in and 18 > $in { set_theme light } else { set_theme dark }
 }
-def "set_theme dark" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-dark"' }
-def "set_theme light" [] { dconf write /org/gnome/desktop/interface/color-scheme '"prefer-light"' }
+def "set_theme dark" [] { noctalia msg theme-mode-set dark }
+def "set_theme light" [] { noctalia msg theme-mode-set light }
 
 # def rw [] {
 # 	let files = (ls $env.WALLPAPER_DIR | where type == file | get name)

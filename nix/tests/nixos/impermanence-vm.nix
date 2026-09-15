@@ -41,8 +41,8 @@ pkgs.testers.runNixOSTest {
   name = "dotfiles.impermanence-vm";
   nodes = {
     machine = {
-
       virtualisation = {
+        additionalPaths = [ targetTopLevel ];
         emptyDiskImages = [ 1024 ];
       };
     };

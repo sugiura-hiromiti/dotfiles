@@ -67,6 +67,7 @@ in
                 };
                 serviceConfig = {
                   Type = "oneshot";
+                  RemainAfterExit = true;
                   ExecStart = "${btrfs} subvolume create ${mountedRoot}";
                   ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
                 };
@@ -82,6 +83,7 @@ in
                   ExecStart = "${btrfs} subvolume delete --recursive --commit-after ${mountedRoot}";
                   ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
                   Type = "oneshot";
+                  RemainAfterExit = true;
                 };
               };
             };

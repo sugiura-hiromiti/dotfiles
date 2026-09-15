@@ -36,9 +36,19 @@
 
 		(setq meow-cursor-type-visual 'box)
 
-		(defun my-meow-visual ()
+		(defun my/meow-visual ()
 			(interactive)
-			(meow-visual-mode))
+			(meow-visual-mode 1))
+
+		(defun my/meow-visual-save ()
+			(interactive)
+			(call-interactively #'kill-ring-save)
+			(meow-normal-mode))
+
+		(defun my/meow-visual-kill ()
+			(interactive)
+			(call-interactively #'kill-region)
+			(meow-normal-mode))
 
 		(meow-define-keys 'visual
 			'("<escape>" . meow-normal-mode)
@@ -46,10 +56,10 @@
 			'("j" . next-line)
 			'("k" . previous-line)
 			'("l" . forward-char)
-			'("y" . kill-ring-save)
-			'("d" . kill-region)
-			'("b" . meow-back-word)
-			'("e" . meow-next-word)
+			'("y" . my/meow-visual-save)
+			'("d" . my/meow-visual-kill)
+			'("b" . backward-word)
+			'("e" . forward-word)
 			'("<up>" . my/meow-treesit-up)
 			'("<down>" . my/meow-treesit-down)
 			'("<right>" . my/meow-treesit-in)
@@ -62,6 +72,7 @@
 			'("." . meta-navigation/body)
 			'("x" . meow-line)
 			'("y" . meow-save)
+			'("v" . my/meow-visual)
 			'(":" . execute-extended-command)
 			'(";" . eval-expression)
 			'("<escape>" . ignore))
@@ -128,6 +139,7 @@
 			'("s" . meow-kill)
 			'("t" . comment-dwim)
 			'("u" . meow-undo)
+			'("v" . my/meow-visual)
 			'("x" . meow-line)
 			'("y" . meow-save)
 													 ; '("z" . meow-pop-selection)

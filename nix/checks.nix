@@ -5,6 +5,7 @@
   self,
   targetConfigNames,
   disko,
+  nixosTargetEntries,
 }:
 let
   mkLintCheck =
@@ -34,11 +35,33 @@ let
   nixosConfigNames = targetConfigNames.nixos or [ ];
   homeConfigNames = targetConfigNames.home or [ ];
   darwinConfigNames = targetConfigNames.darwin or [ ];
+
+  mkEmbeddedHomeManagerCheck =
+    entry:
+    let
+      expectedUsers = lib.optionals (lib.elem "home" entry.config.targets) (
+        lib.filter (
+          accountName: lib.elem "home" entry.config.accounts.users.${accountName}.targets
+        ) entry.config.accountNames
+      );
+      actualUsers = lib.attrNames self.nixosConfigurations.${entry.name}.config.home-manager.users;
+    in
+    assert lib.assertMsg (
+      actualUsers == expectedUsers
+    ) "NixOS target '${entry.name}' embedded Home Manager users do not match Home-eligible accounts";
+    pkgs.writeText "embedded-home-manager-${entry.name}" "ok\n";
+  embeddedHomeManagerChecks = lib.listToAttrs (
+    map (entry: {
+      name = "embedded-home-manager-${entry.name}";
+      value = mkEmbeddedHomeManagerCheck entry;
+    }) nixosTargetEntries
+  );
 in
 {
   deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --fail .";
   statix = mkLintCheck "statix" pkgs.statix "statix check .";
 }
+// embeddedHomeManagerChecks
 // mkBuildChecks "home" homeConfigNames (
   target: self.homeConfigurations.${target}.activationPackage
 )

@@ -80,7 +80,7 @@ in
     (import ./checks.nix {
       inherit lib self;
       inherit (inputs) disko preservation;
-      inherit (targets) targetConfigNamesForSystem;
+      inherit (targets) mkTargetConfigEntries targetConfigNamesForSystem;
     })
     (import ./ci.nix {
       inherit lib hosts;

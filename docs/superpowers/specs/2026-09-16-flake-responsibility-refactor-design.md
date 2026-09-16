@@ -24,20 +24,20 @@ code explicit owners while reusing those implementations.
 
 ## File ownership
 
-| File | Owns |
-| --- | --- |
-| `flake.nix` | Input declarations and the call to `flake-parts.lib.mkFlake` |
-| `nix/flake/default.nix` | Composition: instantiate the existing host/runtime/target helpers, derive supported systems, construct builders, and connect output modules |
-| `nix/configurations/common.nix` | Profile-module resolution adapter and common/system configuration arguments |
-| `nix/configurations/home.nix` | Home Manager construction, its package import and overlays, and Home-specific arguments/module stack |
-| `nix/configurations/nixos.nix` | NixOS construction, account-default module, and reusable module-stack function |
-| `nix/configurations/darwin.nix` | Darwin construction, account-default module, and Darwin module stack |
-| `nix/flake/configurations.nix` | Publish Home Manager, NixOS, and Darwin configurations using existing target enumeration |
-| `nix/flake/checks.nix` | Per-system target selection, recovery fixture selection, and wiring into existing checks |
-| `nix/flake/apps.nix` | Publish the existing update and fix applications |
-| `nix/flake/dev-shells.nix` | Maintenance package lists and the default/Neovim shells |
-| `nix/flake/formatting.nix` | Import the treefmt flake module and connect the existing treefmt configuration |
-| `nix/flake/ci.nix` | Construct CI configuration and publish the per-system workflow renderer |
+| File                            | Owns                                                                                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flake.nix`                     | Input declarations and the call to `flake-parts.lib.mkFlake`                                                                                |
+| `nix/flake/default.nix`         | Composition: instantiate the existing host/runtime/target helpers, derive supported systems, construct builders, and connect output modules |
+| `nix/configurations/common.nix` | Profile-module resolution adapter and common/system configuration arguments                                                                 |
+| `nix/configurations/home.nix`   | Home Manager construction, its package import and overlays, and Home-specific arguments/module stack                                        |
+| `nix/configurations/nixos.nix`  | NixOS construction, account-default module, and reusable module-stack function                                                              |
+| `nix/configurations/darwin.nix` | Darwin construction, account-default module, and Darwin module stack                                                                        |
+| `nix/flake/configurations.nix`  | Publish Home Manager, NixOS, and Darwin configurations using existing target enumeration                                                    |
+| `nix/flake/checks.nix`          | Per-system target selection, recovery fixture selection, and wiring into existing checks                                                    |
+| `nix/flake/apps.nix`            | Publish the existing update and fix applications                                                                                            |
+| `nix/flake/dev-shells.nix`      | Maintenance package lists and the default/Neovim shells                                                                                     |
+| `nix/flake/formatting.nix`      | Import the treefmt flake module and connect the existing treefmt configuration                                                              |
+| `nix/flake/ci.nix`              | Construct CI configuration and publish the per-system workflow renderer                                                                     |
 
 The new flake modules are adapters around existing implementations. For example,
 `nix/flake/checks.nix` selects dependencies and publishes checks;

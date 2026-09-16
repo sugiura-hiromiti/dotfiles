@@ -7,7 +7,7 @@
 let
   # Test fixture only.
   disk = "/dev/vdb";
-  btrfsDevice = "/dev/disk/by-partlabel/test-system";
+  btrfsDevice = "/dev/vdb2";
   diskoSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     modules = [

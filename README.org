@@ -2,6 +2,26 @@
 
 Nix flake based dotfiles for Home Manager, NixOS, and nix-darwin.
 
+* Flake architecture
+
+=flake.nix= declares inputs and calls flake-parts. =nix/flake/default.nix=
+connects host discovery, runtime expansion, target enumeration, configuration
+builders, and output modules.
+
+- =nix/configurations/= builds Home Manager, NixOS, and nix-darwin configurations.
+  =common.nix= owns shared arguments and the profile-resolution adapter.
+- =nix/flake/= publishes configurations, checks, apps, development shells,
+  formatting, and the workflow renderer. Each module declares its dependencies.
+- =nix/lib/= owns host normalization, runtime expansion, target naming/enumeration,
+  and profile resolution.
+- =nix/apps/=, =nix/checks.nix=, and =nix/ci/= retain their existing implementations.
+  =nix/home/=, =nix/nixos/=, and =nix/nix-darwin/= remain configuration module entrypoints.
+
+To add a host, edit =nix/profiles/hosts/<host>/meta.nix= and its profiles.
+To change a platform's module stack or constructor arguments, edit its builder
+in =nix/configurations/=. To change output wiring, edit the corresponding module
+in =nix/flake/=. Tool behavior belongs in the existing implementation directories.
+
 * Bootstrap
 
 ** Prerequisites

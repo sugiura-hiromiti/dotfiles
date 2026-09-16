@@ -1,7 +1,4 @@
 {
-  recoveryTarget,
-  nixosModulesFor,
-  systemSpecialArgs,
   lib,
   preservation,
   pkgs,
@@ -53,14 +50,6 @@ in
 // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   preservation = import ./tests/nixos/preservation.nix { inherit pkgs preservation; };
   ephemeral-root = import ./tests/nixos/ephemeral-root.nix { inherit pkgs lib disko; };
-  machine-recovery = import ./tests/nixos/machine-recovery.nix {
-    inherit
-      pkgs
-      recoveryTarget
-      nixosModulesFor
-      systemSpecialArgs
-      ;
-  };
   impermanence = import ./tests/nixos/impermanence.nix { inherit lib disko pkgs; };
   storage-provisioning = import ./tests/nixos/storage-provisioning.nix { inherit lib pkgs disko; };
   storage-provisioning-vm = import ./tests/nixos/storage-provisioning-vm.nix {

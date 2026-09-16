@@ -39,15 +39,17 @@ let
     inherit (common) profileModules commonSpecialArgs;
   };
   nixos = import ../configurations/nixos.nix {
-    inherit lib;
+    inherit lib home;
     inherit (inputs)
       nixpkgs
       disko
       preservation
       catppuccin
       nix-agent
+      home-manager
       ;
     inherit (common) profileModules systemSpecialArgs;
+    inherit (targets) mkHomeTargetConfig;
   };
   darwin = import ../configurations/darwin.nix {
     inherit lib;

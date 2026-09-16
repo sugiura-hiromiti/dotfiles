@@ -115,6 +115,7 @@ let
 in
 {
   inherit
+    mkHomeTargetConfig
     mkTargetConfigEntries
     mkTargetConfigs
     targetConfigNamesForSystem

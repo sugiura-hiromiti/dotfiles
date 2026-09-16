@@ -19,7 +19,7 @@ in
           device = lib.mkOption {
             type = lib.types.str;
             readOnly = true;
-            default = "/dev/disk/by-partlabel/${cfg.partitionLabel}";
+            default = "/dev/disk/by-uuid/${cfg.filesystemUuid}";
           };
           provisioning = {
             enable = lib.mkEnableOption "provisioning";

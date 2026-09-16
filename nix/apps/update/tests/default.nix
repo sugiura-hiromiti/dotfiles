@@ -119,6 +119,65 @@ let
     source = fixtureSource;
     planFile = fixturePlan;
   };
+
+  fixtureNixosPlan = pkgs.writeText "update-nixos-plan-fixture.json" (
+    builtins.toJSON {
+      aliases.test = "test";
+      defaultHosts.tester = "test";
+
+      themeByHour = lib.genAttrs (map (hour: if hour < 10 then "0${toString hour}" else toString hour) (
+        lib.range 0 23
+      )) (_: "dark");
+
+      hosts.test = {
+        autoSession = {
+          gui = "tty";
+          tty = "tty";
+        };
+
+        defaultSession = "tty";
+
+        home.tester.dark.tty = {
+          name = "home-test";
+          eval = "homeConfigurations.home-test.activationPackage.drvPath";
+          authorize = [ ];
+          switch = [
+            "nix"
+            "run"
+            "nixpkgs#home-manager"
+            "--"
+            "switch"
+            "--flake"
+          ];
+        };
+
+        system = {
+          kind = "nixos";
+
+          targets.dark.tty = {
+            name = "nixos-test";
+            eval = "nixosConfigurations.nixos-test.config.system.build.toplevel.drvPath";
+            authorize = [ ];
+
+            # Deliberately reuse the fake activation command.
+            # This test cares about target selection, not nixos-rebuild itself.
+            switch = [
+              "nix"
+              "run"
+              "nixpkgs#home-manager"
+              "--"
+              "switch"
+              "--flake"
+            ];
+          };
+        };
+      };
+    }
+  );
+  fixtureNixosApp = mkUpdateScript {
+    source = fixtureSource;
+    planFile = fixtureNixosPlan;
+  };
 in
 {
   update-source-pin = pkgs.runCommandLocal "update-source-pin-check" { } ''

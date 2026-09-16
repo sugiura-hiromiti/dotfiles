@@ -5,6 +5,7 @@
   ...
 }:
 let
+  filesystemUuid = "11111111-2222-4333-8444-555555555555";
   system = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     modules = [
@@ -14,6 +15,7 @@ let
         dotfiles = {
           features = {
             storage = {
+              inherit filesystemUuid;
               partitionLabel = "test-system";
               provisioning = {
                 enable = true;

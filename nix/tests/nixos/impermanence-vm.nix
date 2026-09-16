@@ -6,6 +6,7 @@
   ...
 }:
 let
+  filesystemUuid = "11111111-2222-4333-8444-555555555555";
   targetSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     specialArgs = {
@@ -51,6 +52,7 @@ let
               enable = true;
             };
             storage = {
+              inherit filesystemUuid;
               partitionLabel = "test-system";
               provisioning = {
                 disk = "/dev/vda";

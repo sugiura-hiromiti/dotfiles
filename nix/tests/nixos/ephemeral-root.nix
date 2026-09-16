@@ -6,6 +6,7 @@
 }:
 let
   # Test fixture only.
+  filesystemUuid = "11111111-2222-4333-8444-555555555555";
   disk = "/dev/vdb";
   btrfsDevice = "/dev/disk/by-partlabel/test-system";
   diskoSystem = lib.nixosSystem {
@@ -17,6 +18,7 @@ let
         dotfiles = {
           features = {
             storage = {
+              inherit filesystemUuid;
               partitionLabel = "test-system";
               provisioning = {
                 enable = true;

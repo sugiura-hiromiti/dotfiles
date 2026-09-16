@@ -46,7 +46,7 @@ let
               args = home.specialArgsFor homeConfig;
             };
             nixpkgs = {
-              overlays = home.overlays;
+              inherit (home) overlays;
             };
           }
         );

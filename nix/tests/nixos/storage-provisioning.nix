@@ -50,4 +50,6 @@ assert subvolumes ? "@persist";
 
 assert system.config.disko.enableConfig;
 
+assert system.config.dotfiles.features.storage.device == "/dev/disk/by-uuid/${filesystemUuid}";
+
 pkgs.runCommandLocal "storage-provisioning-eval-test" { } ''touch "$out"''

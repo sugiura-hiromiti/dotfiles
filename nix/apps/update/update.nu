@@ -46,9 +46,14 @@ def main [
 	let system = if $host_plan.system == null or $runtime_kind != $host_plan.system.kind {
 		null
 	} else {
-		let target = $host_plan.system.targets | key $theme $system_session
+	   let effective_system_session = if $runtime_kind == "nixos" {
+			$session
+		} else {
+		   $system_session
+		}
+		let target = $host_plan.system.targets | key $theme $effective_system_session
 		if $target == null {
-			error make $"system configuration is not defined for ($host): kind=($host_plan.system.kind), theme=($theme), session=($system_session)"
+			error make $"system configuration is not defined for ($host): kind=($host_plan.system.kind), theme=($theme), session=($effective_system_session)"
 		}
 		$target
 	}

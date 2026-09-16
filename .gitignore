@@ -8,10 +8,8 @@ neofetch/
 coc/
 logs/
 .fig/bin/
-apps/
 animations/
 shell/
-# themes/
 tools/
 user/
 extensions/

@@ -36,8 +36,6 @@ def main [
 		 ) { "gui" } else { "tty" }
 	let session = $session | default ($host_plan.autoSession | get $mode)
 	let system_session = $system_session | default $host_plan.defaultSession
-	let home = $host_plan.home | key $account $theme $session
-	if $home == null { error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)" }
 	let runtime_kind = if $nu.os-info.name == "macos" {
 		"darwin"
 	} else if $nu.os-info.name == "linux" and ("/etc/os-release" | path exists) and (open --raw /etc/os-release | str contains "ID=nixos") {
@@ -54,6 +52,15 @@ def main [
 		let target = $host_plan.system.targets | key $theme $effective_system_session
 		if $target == null {
 			error make $"system configuration is not defined for ($host): kind=($host_plan.system.kind), theme=($theme), session=($effective_system_session)"
+		}
+		$target
+	}
+	let home = if $runtime_kind == "nixos" and $system != null {
+		null
+	} else {
+	   let target = $host_plan.home | key $account $theme $session
+		if $target == null {
+			error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)"
 		}
 		$target
 	}

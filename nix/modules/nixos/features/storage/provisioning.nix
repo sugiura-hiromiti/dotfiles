@@ -29,6 +29,10 @@ in
                   size = "100%";
                   content = {
                     type = "btrfs";
+                    extraArgs = [
+                      "-U"
+                      storage.filesystemUuid
+                    ];
                     subvolumes = {
                       ${storage.subvolumes.root} = {
                         mountpoint = "/";

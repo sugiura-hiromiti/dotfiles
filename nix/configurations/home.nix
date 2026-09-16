@@ -47,6 +47,7 @@ let
     };
 in
 {
+  overlays = commonOverlays;
   inherit
     build
     modulesFor

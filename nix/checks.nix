@@ -1,4 +1,5 @@
 {
+  home-manager,
   lib,
   preservation,
   pkgs,
@@ -80,6 +81,7 @@ in
   };
   impermanence-vm = import ./tests/nixos/impermanence-vm.nix {
     inherit
+      home-manager
       pkgs
       lib
       disko

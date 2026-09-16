@@ -3,6 +3,7 @@
   lib,
   disko,
   pkgs,
+  home-manager,
   ...
 }:
 let
@@ -19,12 +20,27 @@ let
       disko.nixosModules.disko
       ../../modules/nixos/features/impermanence
       preservation.nixosModules.default
+      home-manager.nixosModules.home-manager
 
       ({ modulesPath, ... }: {
         imports = [ (modulesPath + "/testing/test-instrumentation.nix") ];
       })
 
       {
+        home-manager = {
+          users = {
+            a = {
+              home = {
+                stateVersion = "26.05";
+                file = {
+                  ".config/impermanence-reconstruction-probe" = {
+                    text = "reconstructed\n";
+                  };
+                };
+              };
+            };
+          };
+        };
         users = {
           users = {
             a = {
@@ -139,6 +155,8 @@ pkgs.testers.runNixOSTest {
         target.state_dir = installer.state_dir
         target.start(allow_reboot=True)
         target.wait_for_unit("multi-user.target")
+        target.wait_for_unit("home-manager-a.service")
+        target.succeed("grep -qx reconstructed " "/home/a/.config/impermanence-reconstruction-probe")
 
         target.succeed("mountpoint -q /var/lib/nixos")
         target.succeed('test "$(findmnt -n -o FSTYPE /)" = btrfs')
@@ -150,6 +168,10 @@ pkgs.testers.runNixOSTest {
         target.succeed("echo disposable > /impermanence-root-marker")
         target.succeed(
             "echo persistent > /persist/impermanence-persist-marker"
+        )
+        target.succeed(
+            "echo disposable > "
+            "/home/a/.config/impermanence-disposable-marker"
         )
 
         target.succeed(
@@ -164,6 +186,7 @@ pkgs.testers.runNixOSTest {
         target.succeed("sync")
         target.reboot()
         target.wait_for_unit("multi-user.target")
+        target.wait_for_unit("home-manager-a.service")
 
     with subtest("verify impermanence contract"):
         target.succeed("test ! -e /impermanence-root-marker")
@@ -179,6 +202,14 @@ pkgs.testers.runNixOSTest {
         target.succeed(
             "grep -qx preserved "
             "/persist/var/lib/nixos/impermanence-preservation-marker"
+        )
+
+        target.succeed(
+            "test ! -e /home/a/.config/impermanence-disposable-marker"
+        )
+        target.succeed(
+            "grep -qx reconstructed "
+            "/home/a/.config/impermanence-reconstruction-probe"
         )
   '';
 }

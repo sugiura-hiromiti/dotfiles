@@ -79,7 +79,7 @@ in
     (import ./dev-shells.nix { inherit lib; })
     (import ./checks.nix {
       inherit lib self;
-      inherit (inputs) disko preservation;
+      inherit (inputs) disko preservation home-manager;
       inherit (targets) mkTargetConfigEntries targetConfigNamesForSystem;
     })
     (import ./ci.nix {

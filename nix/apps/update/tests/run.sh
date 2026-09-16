@@ -23,7 +23,6 @@ run_update() {
       --account tester \
       --theme dark \
       --session tty \
-      --system-session tty
   )
 }
 
@@ -211,7 +210,6 @@ run_nixos_update "$nixos_repo" \
   TEST_REPOSITORY="$nixos_repo" \
   TEST_CANDIDATE=LA
 
-cat "$nixos_state/preflight-targets"
 test "$(cat "$nixos_state/preflight-targets")" = \
   'nixosConfigurations.nixos-tty-test.config.system.build.toplevel.drvPath'
 

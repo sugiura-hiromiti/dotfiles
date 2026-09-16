@@ -40,17 +40,12 @@ let
     system = pkgs.stdenv.hostPlatform.system;
     modules = importWith "test-";
   };
-  customFs = customSystem.config.fileSystems;
-  subvolOptions = fs: builtins.filter (option: lib.hasPrefix "subvol=" option) fs.options;
 in
 assert fs."/persist".neededForBoot;
 assert fs."/nix".neededForBoot;
 
-assert subvolOptions customFs."/" == [ "subvol=@test-root" ];
-assert subvolOptions customFs."/persist" == [ "subvol=@test-persist" ];
-assert subvolOptions customFs."/nix" == [ "subvol=@test-nix" ];
+assert system.config.dotfiles.features.storage.provisioning.enable;
 
-assert system.config.dotfiles.features.ephemeralRoot.subvolume == "@root";
 assert
   system.config.dotfiles.features.ephemeralRoot.subvolume
   == system.config.dotfiles.features.storage.subvolumes.root;

@@ -28,6 +28,7 @@ let
     ];
   };
   diskoScript = diskoSystem.config.system.build.diskoScript;
+  storageDevice = diskoSystem.config.dotfiles.features.storage.device;
 in
 pkgs.testers.runNixOSTest {
   name = "dotfiles.storage-provisioning-vm";
@@ -46,17 +47,17 @@ pkgs.testers.runNixOSTest {
     machine.succeed("${diskoScript}")
     machine.succeed("test -b /dev/disk/by-partlabel/test-system")
     machine.succeed(
-        "test \"$(blkid -s TYPE -o value /dev/disk/by-partlabel/test-system)\" = btrfs"
+        "test \"$(blkid -s TYPE -o value ${storageDevice})\" = btrfs"
     )
 
     machine.succeed(
-        "test \"$(blkid -s UUID -o value /dev/disk/by-partlabel/test-system)\" "
+        "test \"$(blkid -s UUID -o value ${storageDevice})\" "
         "= ${filesystemUuid}"
     )
 
     machine.succeed("mkdir -p /run/storage-top")
     machine.succeed(
-        "mount -o subvolid=5 /dev/disk/by-partlabel/test-system /run/storage-top"
+        "mount -o subvolid=5 ${storageDevice} /run/storage-top"
     )
 
     machine.succeed(

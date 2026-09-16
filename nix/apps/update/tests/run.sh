@@ -27,6 +27,19 @@ run_update() {
   )
 }
 
+run_nixos_update() {
+  repository=$1
+  shift
+  (
+    cd "$repository"
+    env "$@" "$UPDATE_NIXOS_APP" \
+      --host test \
+      --account tester \
+      --theme dark \
+      --session tty
+  )
+}
+
 run_operation() {
   repository=$1
   shift
@@ -188,6 +201,18 @@ then
   wait "$pid_a"
   exit 1
 fi
+
+nixos_repo="$root/nixos-repo"
+nixos_state="$root/nixos-state"
+new_repository "$nixos_repo"
+
+run_nixos_update "$nixos_repo" \
+  TEST_STATE="$nixos_state" \
+  TEST_REPOSITORY="$nixos_repo" \
+  TEST_CANDIDATE=LA
+
+test "$(cat "$nixos_state/preflight-targets")" = \
+  'nixosConfigurations.nixos-test.config.system.build.toplevel.drvPath'
 
 grep -F 'dependency update is already running' "$root/b.log"
 test ! -e "$state_b/generated"

@@ -197,6 +197,7 @@ in
           pkgs.nushell
         ];
         UPDATE_APP = toString fixtureApp;
+        UPDATE_NIXOS_APP = toString fixtureNixosApp;
         OPERATION_APP = toString fixtureOperationApp;
       }
       ''

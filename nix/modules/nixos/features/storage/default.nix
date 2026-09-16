@@ -12,6 +12,10 @@ in
             type = lib.types.str;
             default = "nixos";
           };
+          filesystemUuid = lib.mkOption {
+            type = lib.types.str;
+            description = "UUID or the Btrfs filesystem";
+          };
           device = lib.mkOption {
             type = lib.types.str;
             readOnly = true;

@@ -215,6 +215,32 @@ cat "$nixos_state/preflight-targets"
 test "$(cat "$nixos_state/preflight-targets")" = \
   'nixosConfigurations.nixos-tty-test.config.system.build.toplevel.drvPath'
 
+nixos_legacy_session_repo="$root/nixos-legacy-session-repo"
+nixos_legacy_session_state="$root/nixos-legacy-session-state"
+new_repository "$nixos_legacy_session_repo"
+
+if (
+  cd "$nixos_legacy_session_repo"
+  env \
+    TEST_STATE="$nixos_legacy_session_state" \
+    TEST_REPOSITORY="$nixos_legacy_session_repo" \
+    TEST_CANDIDATE=LA \
+    "$UPDATE_NIXOS_APP" \
+      --host test \
+      --account tester \
+      --theme dark \
+      --session tty \
+      --system-session gui
+) >"$root/nixos-legacy-session.log" 2>&1
+then
+  printf '%s\n' 'NixOS --system-session unexpectedly succeeded' >&2
+  exit 1
+fi
+
+grep -F -- \
+  '--system-session is not supported on NixOS; use --session' \
+  "$root/nixos-legacy-session.log"
+
 grep -F 'dependency update is already running' "$root/b.log"
 test ! -e "$state_b/generated"
 touch "$state_a/release-preflight"

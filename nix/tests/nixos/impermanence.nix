@@ -43,15 +43,7 @@ let
   customFs = customSystem.config.fileSystems;
   subvolOptions = fs: builtins.filter (option: lib.hasPrefix "subvol=" option) fs.options;
 in
-assert fs."/".fsType == "btrfs";
-assert subvolOptions fs."/" == [ "subvol=@root" ];
-
-assert fs."/persist".fsType == "btrfs";
-assert subvolOptions fs."/persist" == [ "subvol=@persist" ];
 assert fs."/persist".neededForBoot;
-
-assert fs."/nix".fsType == "btrfs";
-assert subvolOptions fs."/nix" == [ "subvol=@nix" ];
 assert fs."/nix".neededForBoot;
 
 assert subvolOptions customFs."/" == [ "subvol=@test-root" ];

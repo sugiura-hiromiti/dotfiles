@@ -5,6 +5,7 @@
   ...
 }:
 let
+  filesystemUuid = "11111111-2222-4333-8444-555555555555";
   diskoSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     modules = [
@@ -15,6 +16,7 @@ let
           features = {
             storage = {
               partitionLabel = "test-system";
+              inherit filesystemUuid;
               provisioning = {
                 enable = true;
                 disk = "/dev/vdb";
@@ -46,6 +48,12 @@ pkgs.testers.runNixOSTest {
     machine.succeed(
         "test \"$(blkid -s TYPE -o value /dev/disk/by-partlabel/test-system)\" = btrfs"
     )
+
+    machine.succeed(
+        "test \"$(blkid -s UUID -o value /dev/disk/by-partlabel/test-system)\" "
+        "= ${filesystemUuid}"
+    )
+
     machine.succeed("mkdir -p /run/storage-top")
     machine.succeed(
         "mount -o subvolid=5 /dev/disk/by-partlabel/test-system /run/storage-top"

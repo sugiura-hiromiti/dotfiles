@@ -44,9 +44,9 @@ let
             imports = home.modulesFor homeConfig;
             _module = {
               args = home.specialArgsFor homeConfig;
-              nixpkgs = {
-                overlays = home.overlays;
-              };
+            };
+            nixpkgs = {
+              overlays = home.overlays;
             };
           }
         );

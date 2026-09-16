@@ -27,29 +27,54 @@ pkgs.testers.runNixOSTest {
 
     with subtest("services are healthy before reboot"):
         machine.wait_for_unit("sshd.service")
+        machine.wait_for_unit("tailscaled.service")
         machine.wait_for_unit("NetworkManager.service")
 
-    machine_id = machine.succeed("cat /etc/machine-id").strip()
+    machine_id = machine.succeed(
+        "cat /etc/machine-id"
+    ).strip()
+
     ssh_host_identity = machine.succeed(
         "ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key"
     ).strip()
 
-    with subtest("Networkmanager owns persistent state"):
+    with subtest("NetworkManager owns persistent state"):
         machine.succeed(
             "nmcli connection add "
             "type dummy "
             "ifname ptest0 "
             "con-name ptest0"
-    )
+        )
 
-    nm_uuid = machine.succeed("nmcli -g connection.uuid connection show ptest0").strip()
+    nm_uuid = machine.succeed(
+        "nmcli -g connection.uuid connection show ptest0"
+    ).strip()
 
-    with subtest("user repository state is preserved"):
-        machine.succeed("echo working-copy > /home/a/dotfiles/test")
+    with subtest("Tailscale daemon is usable before reboot"):
+        machine.succeed(
+            "tailscale status --json --peers=false >/dev/null"
+        )
 
-        machine.reboot()
-        machine.wait_for_unit("default.target")
+    with subtest("write Tailscale persistent state"):
+        machine.succeed(
+            "echo tailscale-preserved "
+            "> /var/lib/tailscale/preservation-test"
+        )
 
+        machine.succeed(
+            "grep -q tailscale-preserved "
+            "/persist/var/lib/tailscale/preservation-test"
+        )
+
+    with subtest("write user repository state"):
+        machine.succeed(
+            "echo working-copy > /home/a/dotfiles/test"
+        )
+
+    machine.reboot()
+    machine.wait_for_unit("default.target")
+
+    with subtest("persistent and ephemeral state survive correctly"):
         machine.succeed(
             "grep -q preserved /var/lib/nixos/ptest0"
         )
@@ -61,17 +86,8 @@ pkgs.testers.runNixOSTest {
             "test -e /home/a/ephemeral-test"
         )
 
-        machine.succeed("grep -q working-copy /home/a/dotfiles/test")
-
-    with subtest("Tailscale state directory is persistent"):
         machine.succeed(
-            "echo tailscale-preserved "
-            "> /var/lib/tailscale/preservation-test"
-        )
-
-        machine.succeed(
-            "grep -q tailscale-preserved "
-            "/persist/var/lib/tailscale/preservation-test"
+            "grep -q working-copy /home/a/dotfiles/test"
         )
 
     with subtest("services recover after reboot"):
@@ -94,11 +110,6 @@ pkgs.testers.runNixOSTest {
             "nmcli -g connection.uuid connection show ptest0"
         ).strip() == nm_uuid
 
-    with subtest("Tailscale daemon is usable before reboot"):
-        machine.succeed(
-            "tailscale status --json --peers=false >/dev/null"
-        )
-
     with subtest("Tailscale recovers after reboot"):
         machine.succeed(
             "test -S /run/tailscale/tailscaled.sock"
@@ -111,6 +122,11 @@ pkgs.testers.runNixOSTest {
         machine.succeed(
             "grep -q tailscale-preserved "
             "/var/lib/tailscale/preservation-test"
+        )
+
+        machine.succeed(
+            "grep -q tailscale-preserved "
+            "/persist/var/lib/tailscale/preservation-test"
         )
 
     machine.shutdown()

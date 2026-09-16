@@ -17,6 +17,10 @@ in
     dotfiles = {
       features = {
         ephemeralRoot = {
+          expectedFilesystemUuid = lib.mkOption {
+            type = lib.types.str;
+            description = "Expected UUID of the Btrfs filesystem before destructive reset";
+          };
           device = lib.mkOption {
             type = lib.types.str;
             description = "btrfs device containing the ephemeral @root subvolume";

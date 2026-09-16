@@ -36,7 +36,7 @@ in
   config = lib.mkIf cfg.enable {
     boot = {
       initrd = {
-        supportedFileSystems = [ "btrfs" ];
+        supportedFilesystems = [ "btrfs" ];
         systemd = {
           enable = true;
           mounts = [

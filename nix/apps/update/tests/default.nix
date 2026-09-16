@@ -195,10 +195,12 @@ in
           pkgs.coreutils
           pkgs.git
           pkgs.nushell
-        ];
+        ]
+        ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.libredirect.hook ];
         UPDATE_APP = toString fixtureApp;
         UPDATE_NIXOS_APP = toString fixtureNixosApp;
         OPERATION_APP = toString fixtureOperationApp;
+        NIX_REDIRECTS = "/etc/os-release=${launcherOsRelease}";
       }
       ''
         export PATH="${fakeNix}/bin:$PATH"

@@ -35,12 +35,15 @@ def main [
 		 or (($env.DISPLAY? | default "") != "")
 		 ) { "gui" } else { "tty" }
 	let session = $session | default ($host_plan.autoSession | get $mode)
-	let system_session = $system_session | default $host_plan.defaultSession
 	let runtime_kind = if $nu.os-info.name == "macos" {
 		"darwin"
 	} else if $nu.os-info.name == "linux" and ("/etc/os-release" | path exists) and (open --raw /etc/os-release | str contains "ID=nixos") {
 		"nixos"
 	} else { null }
+	if $runtime_kind == "nixos" and $system_session != null {
+		error make "--system-session is not supported on NixOS; use --session"
+	}
+	let system_session = $system_session | default $host_plan.defaultSession
 	let effective_system_session = if $runtime_kind == "nixos" {
 		$session
 	} else {

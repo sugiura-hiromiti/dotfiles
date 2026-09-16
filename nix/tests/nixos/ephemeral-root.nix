@@ -7,7 +7,6 @@
 let
   # Test fixture only.
   filesystemUuid = "11111111-2222-4333-8444-555555555555";
-  wrongFilesystemUuid = "22222222-3333-4444-8555-666666666666";
   wrongUuidSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     modules = [
@@ -16,7 +15,6 @@ let
         dotfiles.features.ephemeralRoot = {
           enable = true;
           device = btrfsDevice;
-          expectedFilesystemUuid = wrongFilesystemUuid;
           subvolume = "@root";
         };
       }
@@ -67,7 +65,6 @@ pkgs.testers.runNixOSTest {
                 ephemeralRoot = {
                   enable = true;
                   device = btrfsDevice;
-                  expectedFilesystemUuid = filesystemUuid;
                   subvolume = "@root";
                 };
               };

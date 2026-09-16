@@ -135,7 +135,7 @@ let
           tty = "tty";
         };
 
-        defaultSession = "tty";
+        defaultSession = "gui";
 
         home.tester.dark.tty = {
           name = "home-test";
@@ -154,21 +154,38 @@ let
         system = {
           kind = "nixos";
 
-          targets.dark.tty = {
-            name = "nixos-test";
-            eval = "nixosConfigurations.nixos-test.config.system.build.toplevel.drvPath";
-            authorize = [ ];
+          targets = {
+            dark = {
+              gui = {
+                name = "nixos-gui-test";
+                eval = "nixosConfigurations.nixos-gui-test-config.system.build.toplevel.drvPath";
+                authorize = [ ];
+                switch = [
+                  "nix"
+                  "run"
+                  "nixpkgs#home-manager"
+                  "--"
+                  "switch"
+                  "flake"
+                ];
+              };
+              tty = {
+                name = "nixos-test";
+                eval = "nixosConfigurations.nixos-tty-test.config.system.build.toplevel.drvPath";
+                authorize = [ ];
 
-            # Deliberately reuse the fake activation command.
-            # This test cares about target selection, not nixos-rebuild itself.
-            switch = [
-              "nix"
-              "run"
-              "nixpkgs#home-manager"
-              "--"
-              "switch"
-              "--flake"
-            ];
+                # Deliberately reuse the fake activation command.
+                # This test cares about target selection, not nixos-rebuild itself.
+                switch = [
+                  "nix"
+                  "run"
+                  "nixpkgs#home-manager"
+                  "--"
+                  "switch"
+                  "--flake"
+                ];
+              };
+            };
           };
         };
       };

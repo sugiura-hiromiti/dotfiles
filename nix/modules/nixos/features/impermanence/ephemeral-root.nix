@@ -70,7 +70,6 @@ in
                   Type = "oneshot";
                   RemainAfterExit = true;
                   ExecStart = "${btrfs} subvolume create ${mountedRoot}";
-                  ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
                 };
               };
               ephemeral-root-delete = {
@@ -82,7 +81,6 @@ in
                 };
                 serviceConfig = {
                   ExecStart = "${btrfs} subvolume delete --recursive --commit-after ${mountedRoot}";
-                  ExecStartPost = "${lib.getExe' pkgs.coreutils "touch"} ${mountPoint}-reset-ran";
                   Type = "oneshot";
                   RemainAfterExit = true;
                 };

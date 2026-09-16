@@ -6,7 +6,7 @@
 let
   cfg = config.dotfiles.darwin.users;
   accountUsers = cfg.accounts;
-  accountUid = name: accountUsers.${name}.uid or null;
+  accountUid = name: accountUsers.${name}.uid;
   accountNamesWithUid = lib.filter (name: accountUid name != null) (lib.attrNames accountUsers);
   accountHomeDirectory =
     name: account:
@@ -28,9 +28,8 @@ in
         lib.types.submodule {
           options = {
             uid = lib.mkOption {
-              type = lib.types.nullOr lib.types.int;
-              default = null;
-              description = "Darwin user UID. Null skips users.knownUsers/users.users generation.";
+              type = lib.types.int;
+              description = "Darwin user UID.";
             };
 
             homeDirectory = lib.mkOption {

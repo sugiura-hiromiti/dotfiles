@@ -6,7 +6,9 @@ in
   accounts = {
     primary = "hiromichisugiura";
     users = {
-      hiromichisugiura = personalIdentity;
+      hiromichisugiura = personalIdentity // {
+        uid = 502;
+      };
     };
   };
   targets = [

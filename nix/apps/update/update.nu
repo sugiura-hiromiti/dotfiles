@@ -43,14 +43,14 @@ def main [
 	} else if $nu.os-info.name == "linux" and ("/etc/os-release" | path exists) and (open --raw /etc/os-release | str contains "ID=nixos") {
 		"nixos"
 	} else { null }
+	let effective_system_session = if $runtime_kind == "nixos" {
+		$session
+	} else {
+	   $system_session
+	}
 	let system = if $host_plan.system == null or $runtime_kind != $host_plan.system.kind {
 		null
 	} else {
-	   let effective_system_session = if $runtime_kind == "nixos" {
-			$session
-		} else {
-		   $system_session
-		}
 		let target = $host_plan.system.targets | key $theme $effective_system_session
 		if $target == null {
 			error make $"system configuration is not defined for ($host): kind=($host_plan.system.kind), theme=($theme), session=($effective_system_session)"

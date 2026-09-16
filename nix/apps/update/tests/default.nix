@@ -137,19 +137,7 @@ let
 
         defaultSession = "gui";
 
-        home.tester.dark.tty = {
-          name = "home-test";
-          eval = "homeConfigurations.home-test.activationPackage.drvPath";
-          authorize = [ ];
-          switch = [
-            "nix"
-            "run"
-            "nixpkgs#home-manager"
-            "--"
-            "switch"
-            "--flake"
-          ];
-        };
+        home = { };
 
         system = {
           kind = "nixos";

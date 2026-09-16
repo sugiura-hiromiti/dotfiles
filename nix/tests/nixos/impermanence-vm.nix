@@ -102,76 +102,83 @@ pkgs.testers.runNixOSTest {
     };
   };
   testScript = ''
-    installer.start()
-    installer.wait_for_unit("multi-user.target")
-    installer.succeed("test -b /dev/vda")
-    installer.succeed("${diskoScript}")
+    with subtest("provision and install impermanent system"):
+        installer.start()
+        installer.wait_for_unit("multi-user.target")
+        installer.succeed("test -b /dev/vda")
+        installer.succeed("${diskoScript}")
 
-    installer.succeed("test -b /dev/disk/by-partlabel/test-system")
+        installer.succeed("test -b /dev/disk/by-partlabel/test-system")
 
-    installer.succeed("mountpoint -q /mnt")
-    installer.succeed("mountpoint -q /mnt/nix")
-    installer.succeed("mountpoint -q /mnt/persist")
-    installer.succeed("mountpoint -q /mnt/boot")
-    installer.succeed(
-        "${pkgs.nixos-install-tools}/bin/nixos-install "
-        "--root /mnt "
-        "--system ${targetTopLevel} "
-        "--no-channel-copy "
-        "--no-root-password "
-    )
+        installer.succeed("mountpoint -q /mnt")
+        installer.succeed("mountpoint -q /mnt/nix")
+        installer.succeed("mountpoint -q /mnt/persist")
+        installer.succeed("mountpoint -q /mnt/boot")
 
-    installer.succeed("test -L /mnt/nix/var/nix/profiles/system")
-    installer.succeed("test -e /mnt/etc/NIXOS")
-    installer.succeed("test -e /mnt/boot/loader/loader.conf")
-    installer.succeed(
-        "test -e /mnt/boot/EFI/BOOT/"
-        "BOOT${lib.toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI"
-    )
+        installer.succeed(
+            "${pkgs.nixos-install-tools}/bin/nixos-install "
+            "--root /mnt "
+            "--system ${targetTopLevel} "
+            "--no-channel-copy "
+            "--no-root-password "
+        )
 
-    installer.succeed("umount -R /mnt")
-    installer.succeed("sync")
-    installer.shutdown()
+        installer.succeed("test -L /mnt/nix/var/nix/profiles/system")
+        installer.succeed("test -e /mnt/etc/NIXOS")
+        installer.succeed("test -e /mnt/boot/loader/loader.conf")
+        installer.succeed(
+            "test -e /mnt/boot/EFI/BOOT/"
+            "BOOT${lib.toUpper pkgs.stdenv.hostPlatform.efiArch}.EFI"
+        )
 
-    target.state_dir = installer.state_dir
-    target.start(allow_reboot=True)
-    target.wait_for_unit("multi-user.target")
+        installer.succeed("umount -R /mnt")
+        installer.succeed("sync")
+        installer.shutdown()
 
-    target.succeed("mountpoint -q /var/lib/nixos")
-    target.succeed("test \"$(findmnt -n -o FSTYPE /)\" = btrfs")
-    target.succeed("test \"$(findmnt -n -o FSROOT /)\" = /@root")
+    with subtest("boot installed impermanent system"):
+        target.state_dir = installer.state_dir
+        target.start(allow_reboot=True)
+        target.wait_for_unit("multi-user.target")
 
-    target.succeed("test \"$(findmnt -n -o FSROOT /nix)\" = /@nix")
-    target.succeed("test \"$(findmnt -n -o FSROOT /persist)\" = /@persist")
+        target.succeed("mountpoint -q /var/lib/nixos")
+        target.succeed('test "$(findmnt -n -o FSTYPE /)" = btrfs')
+        target.succeed('test "$(findmnt -n -o FSROOT /)" = /@root')
+        target.succeed('test "$(findmnt -n -o FSROOT /nix)" = /@nix')
+        target.succeed('test "$(findmnt -n -o FSROOT /persist)" = /@persist')
 
-    target.succeed("echo disposable > /impermanence-root-marker")
-    target.succeed("echo persistent > /persist/impermanence-persist-marker")
+    with subtest("create disposable and persistent state"):
+        target.succeed("echo disposable > /impermanence-root-marker")
+        target.succeed(
+            "echo persistent > /persist/impermanence-persist-marker"
+        )
 
-    target.succeed(
-        "echo preserved > /var/lib/nixos/impermanence-preservation-marker"
-    )
-    target.succeed(
-        "grep -qx preserved "
-        "/persist/var/lib/nixos/impermanence-preservation-marker"
-    )
+        target.succeed(
+            "echo preserved > /var/lib/nixos/impermanence-preservation-marker"
+        )
+        target.succeed(
+            "grep -qx preserved "
+            "/persist/var/lib/nixos/impermanence-preservation-marker"
+        )
 
-    target.succeed("sync")
+    with subtest("reboot impermanent system"):
+        target.succeed("sync")
+        target.reboot()
+        target.wait_for_unit("multi-user.target")
 
-    target.reboot()
-    target.wait_for_unit("multi-user.target")
+    with subtest("verify impermanence contract"):
+        target.succeed("test ! -e /impermanence-root-marker")
 
-    target.succeed("test ! -e /impermanence-root-marker")
-    target.succeed(
-        "test \"$(cat /persist/impermanence-persist-marker)\" = persistent"
-    )
+        target.succeed(
+            'test "$(cat /persist/impermanence-persist-marker)" = persistent'
+        )
 
-    target.succeed(
-        "grep -qx preserved "
-        "/var/lib/nixos/impermanence-preservation-marker"
-    )
-    target.succeed(
-        "grep -qx preserved "
-        "/persist/var/lib/nixos/impermanence-preservation-marker"
-    )
+        target.succeed(
+            "grep -qx preserved "
+            "/var/lib/nixos/impermanence-preservation-marker"
+        )
+        target.succeed(
+            "grep -qx preserved "
+            "/persist/var/lib/nixos/impermanence-preservation-marker"
+        )
   '';
 }

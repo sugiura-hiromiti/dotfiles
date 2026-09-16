@@ -158,7 +158,7 @@ let
             dark = {
               gui = {
                 name = "nixos-gui-test";
-                eval = "nixosConfigurations.nixos-gui-test-config.system.build.toplevel.drvPath";
+                eval = "nixosConfigurations.nixos-gui-test.config.system.build.toplevel.drvPath";
                 authorize = [ ];
                 switch = [
                   "nix"
@@ -166,11 +166,11 @@ let
                   "nixpkgs#home-manager"
                   "--"
                   "switch"
-                  "flake"
+                  "--flake"
                 ];
               };
               tty = {
-                name = "nixos-test";
+                name = "nixos-tty-test";
                 eval = "nixosConfigurations.nixos-tty-test.config.system.build.toplevel.drvPath";
                 authorize = [ ];
 

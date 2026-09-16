@@ -1,6 +1,7 @@
 *.qcow2
 !settings.json
 result
+result/
 github-copilot/
 neofetch/
 .vim/
@@ -8,8 +9,6 @@ coc/
 logs/
 .fig/bin/
 apps/
-!nix/apps/
-!nix/apps/**
 animations/
 shell/
 # themes/

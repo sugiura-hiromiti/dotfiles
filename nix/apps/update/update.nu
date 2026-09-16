@@ -53,6 +53,10 @@ def main [
 		$target
 	}
 	let repository = pwd | path expand --strict
-	let targets = [$home $system] | compact
+	let targets = if $runtime_kind == "nixos" and $system != null {
+		 [$system]
+	} else {
+	  [$home $system] | compact
+	}
 	run-operation $repository $SOURCE $targets
 }

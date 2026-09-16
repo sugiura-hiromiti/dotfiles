@@ -1,4 +1,5 @@
 {
+  home-manager,
   lib,
   self,
   disko,
@@ -18,6 +19,7 @@
 
       checks = import ../checks.nix {
         inherit
+          home-manager
           nixosTargetEntries
           preservation
           lib

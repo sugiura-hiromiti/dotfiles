@@ -144,6 +144,15 @@ pkgs.testers.runNixOSTest {
 
     target.succeed("echo disposable > /impermanence-root-marker")
     target.succeed("echo persistent > /persist/impermanence-persist-marker")
+
+    target.succeed(
+        "echo preserved > /var/lib/nixos/impermanence-preservation-marker"
+    )
+    target.succeed(
+        "grep -qx preserved "
+        "/persist/var/lib/nixos/impermanence-preservation-marker"
+    )
+
     target.succeed("sync")
 
     target.reboot()
@@ -152,6 +161,15 @@ pkgs.testers.runNixOSTest {
     target.succeed("test ! -e /impermanence-root-marker")
     target.succeed(
         "test \"$(cat /persist/impermanence-persist-marker)\" = persistent"
+    )
+
+    target.succeed(
+        "grep -qx preserved "
+        "/var/lib/nixos/impermanence-preservation-marker"
+    )
+    target.succeed(
+        "grep -qx preserved "
+        "/persist/var/lib/nixos/impermanence-preservation-marker"
     )
   '';
 }

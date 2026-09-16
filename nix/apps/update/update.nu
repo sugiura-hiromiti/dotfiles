@@ -47,7 +47,7 @@ def main [
 	let effective_system_session = if $runtime_kind == "nixos" {
 		$session
 	} else {
-	   $system_session
+		$system_session
 	}
 	let system = if $host_plan.system == null or $runtime_kind != $host_plan.system.kind {
 		null
@@ -61,7 +61,7 @@ def main [
 	let home = if $runtime_kind == "nixos" and $system != null {
 		null
 	} else {
-	   let target = $host_plan.home | key $account $theme $session
+		let target = $host_plan.home | key $account $theme $session
 		if $target == null {
 			error make $"home configuration is not defined for ($host): account=($account), theme=($theme), session=($session)"
 		}
@@ -69,9 +69,9 @@ def main [
 	}
 	let repository = pwd | path expand --strict
 	let targets = if $runtime_kind == "nixos" and $system != null {
-		 [$system]
+		[$system]
 	} else {
-	  [$home $system] | compact
+		[$home $system] | compact
 	}
 	run-operation $repository $SOURCE $targets
 }

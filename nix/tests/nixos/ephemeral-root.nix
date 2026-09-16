@@ -7,6 +7,24 @@
 let
   # Test fixture only.
   filesystemUuid = "11111111-2222-4333-8444-555555555555";
+  wrongFilesystemUuid = "22222222-3333-4444-8555-666666666666";
+  wrongUuidSystem = lib.nixosSystem {
+    system = pkgs.stdenv.hostPlatform.system;
+    modules = [
+      ../../modules/nixos/features/impermanence/ephemeral-root.nix
+      {
+        dotfiles.features.ephemeralRoot = {
+          enable = true;
+          device = btrfsDevice;
+          expectedFilesystemUuid = wrongFilesystemUuid;
+          subvolume = "@root";
+        };
+      }
+    ];
+  };
+  wrongUuidDeleteCommand =
+    wrongUuidSystem.config.boot.initrd.systemd.services.ephemeral-root-delete.serviceConfig.ExecStart;
+
   disk = "/dev/vdb";
   btrfsDevice = "/dev/disk/by-partlabel/test-system";
   diskoSystem = lib.nixosSystem {
@@ -81,6 +99,22 @@ pkgs.testers.runNixOSTest {
 
     machine.succeed("test -b /dev/vdb")
     machine.succeed("${diskoScript}")
+
+    machine.succeed("mkdir -p /run/ephemeral-root")
+    machine.succeed(
+        "mount -o subvolid=5 "
+        "${btrfsDevice} "
+        "/run/ephemeral-root"
+    )
+
+    mismatch_marker = "/run/ephemeral-root/@root/uuid-mismatch-must-survive"
+    machine.succeed(f"touch {mismatch_marker}")
+    machine.succeed(f"test -e {mismatch_marker}")
+
+    machine.fail("${wrongUuidDeleteCommand}")
+
+    machine.succeed(f"test -e {mismatch_marker}")
+    machine.succeed("umount /run/ephemeral-root")
 
     machine.succeed("mkdir -p /run/storage-top")
     machine.succeed(

@@ -1,14 +1,12 @@
 {
   lib,
   pkgs,
-  disko,
   ...
 }:
 let
   filesystemUuid = "11111111-2222-4333-8444-555555555555";
   importWith = subVolNamePrefix: [
     ../../modules/nixos/features/impermanence/impermanence.nix
-    disko.nixosModules.disko
     {
       dotfiles = {
         features = {

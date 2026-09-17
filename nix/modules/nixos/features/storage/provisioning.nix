@@ -6,7 +6,7 @@ let
 in
 {
   imports = [
-    ./default.nix
+    ./.
     disko.nixosModules.disko
   ];
 

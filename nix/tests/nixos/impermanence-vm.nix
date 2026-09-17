@@ -17,8 +17,7 @@ let
     };
 
     modules = [
-      disko.nixosModules.disko
-      ../../modules/nixos/features/impermanence
+      (import ../../modules/nixos/features/storage/provisioning.nix { inherit disko; })
       preservation.nixosModules.default
       home-manager.nixosModules.home-manager
 

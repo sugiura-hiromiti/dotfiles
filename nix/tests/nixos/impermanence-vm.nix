@@ -72,6 +72,7 @@ let
               partitionLabel = "test-system";
               provisioning = {
                 disk = "/dev/vda";
+                enable = true;
               };
             };
           };

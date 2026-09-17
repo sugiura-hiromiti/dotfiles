@@ -9,8 +9,7 @@ let
   diskoSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     modules = [
-      disko.nixosModules.disko
-      ../../modules/nixos/features/storage
+      (import ../../modules/nixos/features/storage/provisioning.nix { inherit disko; })
       {
         dotfiles = {
           features = {

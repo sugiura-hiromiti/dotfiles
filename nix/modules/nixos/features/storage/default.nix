@@ -3,15 +3,10 @@ let
   cfg = config.dotfiles.features.storage;
 in
 {
-  imports = [ ./provisioning.nix ];
   options = {
     dotfiles = {
       features = {
         storage = {
-          partitionLabel = lib.mkOption {
-            type = lib.types.str;
-            default = "nixos";
-          };
           filesystemUuid = lib.mkOption {
             type = lib.types.str;
             description = "UUID or the Btrfs filesystem";
@@ -20,10 +15,6 @@ in
             type = lib.types.str;
             readOnly = true;
             default = "/dev/disk/by-uuid/${cfg.filesystemUuid}";
-          };
-          provisioning = {
-            enable = lib.mkEnableOption "provisioning";
-            disk = lib.mkOption { type = lib.types.str; };
           };
           subvolumes = {
             root = lib.mkOption {

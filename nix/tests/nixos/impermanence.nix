@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  ...
 }:
 let
   filesystemUuid = "11111111-2222-4333-8444-555555555555";
@@ -12,10 +11,6 @@ let
         features = {
           storage = {
             inherit filesystemUuid;
-            partitionLabel = "test";
-            provisioning = {
-              disk = "/dev/test-disk";
-            };
             subvolumes = lib.mkIf (subVolNamePrefix != "") {
               root = "@${subVolNamePrefix}root";
               persist = "@${subVolNamePrefix}persist";
@@ -42,7 +37,8 @@ in
 assert fs."/persist".neededForBoot;
 assert fs."/nix".neededForBoot;
 
-assert !system.config.dotfiles.features.storage.provisioning.enable;
+assert !(system.options.dotfiles.features.storage ? provisioning);
+assert !(system.options ? disko);
 
 assert
   system.config.dotfiles.features.ephemeralRoot.subvolume

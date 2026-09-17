@@ -18,6 +18,7 @@ let
 
     modules = [
       (import ../../modules/nixos/features/storage/provisioning.nix { inherit disko; })
+      ../../modules/nixos/features/impermanence
       preservation.nixosModules.default
       home-manager.nixosModules.home-manager
 

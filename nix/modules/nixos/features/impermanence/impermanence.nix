@@ -31,11 +31,6 @@ in
     };
     dotfiles = {
       features = {
-        storage = {
-          provisioning = {
-            enable = true;
-          };
-        };
         ephemeralRoot = {
           enable = true;
           inherit (storage) device;

@@ -44,7 +44,7 @@ in
 assert fs."/persist".neededForBoot;
 assert fs."/nix".neededForBoot;
 
-assert system.config.dotfiles.features.storage.provisioning.enable;
+assert !system.config.dotfiles.features.storage.provisioning.enable;
 
 assert
   system.config.dotfiles.features.ephemeralRoot.subvolume

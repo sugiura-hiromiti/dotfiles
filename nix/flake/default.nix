@@ -42,7 +42,6 @@ let
     inherit lib home;
     inherit (inputs)
       nixpkgs
-      disko
       preservation
       catppuccin
       nix-agent

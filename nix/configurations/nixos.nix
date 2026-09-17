@@ -1,7 +1,6 @@
 {
   lib,
   nixpkgs,
-  disko,
   preservation,
   catppuccin,
   nix-agent,
@@ -55,7 +54,6 @@ let
   modulesFor =
     config:
     [
-      disko.nixosModules.disko
       preservation.nixosModules.default
       home-manager.nixosModules.home-manager
       (nixosProfileModule config)

@@ -235,9 +235,8 @@ After installation and after every ephemeral-root reconstruction, NixOS
 activation reads the same persistent hash file. The administrator does not need
 to run `passwd` after installation.
 
-The installed-system test MUST prove both local password authentication policy
-and non-interactive ability to obtain administrator privileges in the test
-fixture.
+The installed-system test MUST prove both local password authentication and
+successful sudo authentication using that password in the test fixture.
 
 ## Installer artifact
 

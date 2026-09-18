@@ -2,37 +2,36 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement a generic `build-installer --host HOST` flow that builds a host-specific ISO from the exact public `main` Git revision, generates fresh facter hardware state at install time, provisions one fixed Disko/impermanence layout, installs the final system with a persistent administrator password, and powers off for manual media removal.
+**Goal:** Implement generic `build-installer --host HOST` from the current filtered dotfiles filesystem snapshot, generate fresh facter data at install time, provision one fixed Disko/impermanence layout, install the final NixOS configuration, persist the resulting dotfiles tree, and power off for manual media removal.
 
-**Architecture:** NixOS final configurations require `facter.json` and have no legacy hardware fallback. Installer package generation uses only normalized host metadata, so ISO construction does not evaluate the final host. Runtime uses one clean raw Git checkout, one final remote/disk acceptance barrier, one fixed storage layout, direct NixOS password policy, and one full lifecycle E2E.
+**Architecture:** Installer correctness is independent of Git history. Operator commands use explicit `path:.`; a shared `nix-gitignore` filter converts the current filesystem tree into an immutable Nix store snapshot while excluding ignored local state. Final NixOS configurations exist only for hosts with facter data; the ISO embeds the snapshot and at runtime copies it writable, adds facter, evaluates it with `path:`, performs one disk acceptance barrier, installs, and persists that same tree.
 
-**Tech Stack:** NixOS/nixpkgs, flake-parts, Disko, nixos-facter, preservation, Nushell, Git, systemd-boot, NixOS VM tests.
+**Tech Stack:** NixOS/nixpkgs, flake-parts, Disko, nixos-facter, preservation, Nushell, nix-gitignore, systemd-boot, NixOS VM tests.
 
 **Spec:** `docs/superpowers/specs/2026-09-18-nixos-impermanence-bootstrap-design.md`
 
 ## Global Constraints
 
-- `build-installer --host HOST` remains generic for declared NixOS hosts.
-- Canonical installer origin is `https://github.com/sugiura-hiromiti/dotfiles.git`.
-- Builder identity is the revision reported by real Nix for the raw local Git flake.
-- Builder accepts that revision only when anonymous HTTPS `main` resolves to the same SHA.
-- Local branch name, detached state, local Git remotes, and untracked files are not installer invariants.
-- No installer flow uses explicit `path:` flake semantics.
-- Final NixOS evaluation requires `facter.json`; there is no `hardware-configuration.nix` fallback.
-- Existing legacy-host migration is user-owned and is not implemented by this plan.
-- Every installer-side Nix command consuming the cloned flake uses `--no-update-lock-file`.
-- Installer code does not use `--no-write-lock-file` and never runs `nix flake update`.
-- Storage topology is fixed: GPT + ESP + `dotfiles-system` Btrfs + `@root`, `@nix`, `@persist`.
-- Disko target is always `/dev/dotfiles-install-target`.
-- There is no storage device option, filesystem UUID identity, configurable partition label, configurable subvolume name, or provisioning enable flag.
-- There is no public `ephemeralRoot` feature interface.
-- Administrator password policy is declared directly with NixOS built-in user options.
-- Disk selection happens once, at the final destructive acceptance barrier.
-- The final barrier also re-reads anonymous remote `main` and requires the embedded commit.
-- Installer service exclusively owns tty1; tty2 remains available for diagnostics.
-- EFI-variable writes remain disabled; boot uses the standard fallback EFI loader.
-- Successful installation ends with sync, recursive unmount, and poweroff.
-- The implementation builds and tests the ISO but does not boot it on the real machine.
+- Generic command: `nix run path:.#build-installer -- --host HOST`.
+- Git history, commits, branches, remotes, index state, and cleanliness are outside installer correctness.
+- Shared source policy: `pkgs.nix-gitignore.gitignoreSource [ ] self.outPath`.
+- The root `.gitignore` is a source-filter policy; ignored local state and `.git` do not enter snapshots.
+- Final NixOS configurations require facter; there is no legacy hardware fallback.
+- Facter-less declared NixOS hosts still have installer packages.
+- Installer-side flake operations use `--no-update-lock-file`, not `--no-write-lock-file`.
+- Fixed storage: GPT + ESP + `dotfiles-system` Btrfs + `@root`, `@nix`, `@persist`.
+- Disko target alias: `/dev/dotfiles-install-target`.
+- No public storage device/UUID/label/subvolume/provisioning option surface.
+- Root reset is internal to impermanence.
+- Password policy is expressed directly with NixOS user options.
+- Exactly one disk scan is correctness-critical: the final destructive barrier.
+- Installer runtime dependencies are explicit Nix store paths.
+- tty1 installer units are fail-closed against getty/autovt recreation; tty2 remains diagnostic.
+- `boot.loader.efi.canTouchEfiVariables = false`.
+- Installed dotfiles are a plain filesystem snapshot; Git metadata is not required.
+- `path:.#update` must work without a Git repository.
+- Keep one deterministic impermanence boot/reboot VM plus one full installer lifecycle E2E.
+- Implementation does not boot the installer on the user's real machine.
 
 ---
 
@@ -40,8 +39,9 @@
 
 ```text
 nix/
+├── lib/
+│   └── source.nix
 ├── installer/
-│   ├── config.nix
 │   ├── iso.nix
 │   ├── script.nix
 │   └── install.nu
@@ -49,6 +49,10 @@ nix/
 │   ├── build-installer/
 │   │   ├── default.nix
 │   │   ├── build.nu
+│   │   └── tests/run.sh
+│   ├── update/
+│   │   ├── operation.nu
+│   │   ├── script.nix
 │   │   └── tests/run.sh
 │   └── test-installer-e2e/
 │       └── default.nix
@@ -67,34 +71,35 @@ nix/
 │   └── nixos/
 │       ├── storage-provisioning.nix
 │       ├── impermanence.nix
+│       ├── impermanence-vm.nix
 │       └── preservation.nix
+├── flake/
+│   ├── configurations.nix
+│   ├── installer.nix
+│   ├── apps.nix
+│   ├── checks.nix
+│   └── default.nix
 ├── configurations/nixos.nix
 ├── modules/nixos/default.nix
-├── flake/apps.nix
-├── flake/default.nix
 └── checks.nix
 ```
 
-Delete rather than preserve these historical interfaces/tests:
+Delete rather than preserve these historical layers:
 
 ```text
 nix/modules/nixos/features/storage/default.nix
 nix/modules/nixos/features/impermanence/ephemeral-root.nix
 nix/tests/nixos/ephemeral-root.nix
 nix/tests/nixos/storage-provisioning-vm.nix
-nix/tests/nixos/impermanence-vm.nix
 ```
 
-Do not create a bootstrap-credentials module, installer host-metadata flake
-output, default-target helper used only by the installer, migration selector,
-or additional storage abstraction.
+Keep exactly one behavioral impermanence VM: `nix/tests/nixos/impermanence-vm.nix`.
 
 ---
 
-### Task 1: Collapse the Final NixOS State to Facter + Fixed Storage + Direct Credentials
+### Task 1: Collapse Final NixOS State and Gate It on Facter
 
 **Files:**
-
 - Create: `nix/modules/nixos/features/storage/layout.nix`
 - Modify: `nix/modules/nixos/features/storage/provisioning.nix`
 - Delete: `nix/modules/nixos/features/storage/default.nix`
@@ -103,33 +108,33 @@ or additional storage abstraction.
 - Delete: `nix/modules/nixos/features/impermanence/ephemeral-root.nix`
 - Modify: `nix/modules/nixos/default.nix`
 - Modify: `nix/configurations/nixos.nix`
+- Modify: `nix/flake/configurations.nix`
+- Modify: `nix/flake/checks.nix`
 - Modify: `nix/flake/default.nix`
 - Modify: `nix/tests/nixos/storage-provisioning.nix`
 - Modify: `nix/tests/nixos/impermanence.nix`
+- Modify: `nix/tests/nixos/impermanence-vm.nix`
+- Delete: `nix/tests/nixos/ephemeral-root.nix`
+- Delete: `nix/tests/nixos/storage-provisioning-vm.nix`
 - Modify: `nix/checks.nix`
 
 **Precondition:**
-
-- The user's current legacy NixOS host migration to `facter.json` is complete before this task is executed.
-- If a currently evaluated NixOS host still depends on `hardware-configuration.nix`, stop and report that precondition instead of adding compatibility code.
+- Before executing this task against the current production host, the user has migrated `aarch64-linux-a` to a valid `facter.json`.
+- Do not add any `hardware-configuration.nix` fallback if that precondition is false.
 
 **Interfaces:**
-
-- Internal fixed layout from `storage/layout.nix`:
+- `layout.nix` is internal constants only:
   - `partitionLabel = "dotfiles-system"`
   - `rootSubvolume = "@root"`
   - `nixSubvolume = "@nix"`
   - `persistSubvolume = "@persist"`
   - `installDisk = "/dev/dotfiles-install-target"`
-- Final NixOS configuration directly owns:
-  - `hardware.facter.reportPath`
-  - `users.mutableUsers = false`
-  - `users.users.<primary>.hashedPasswordFile`
-  - preservation/impermanence enablement.
+- `nixosHostReady hostName -> bool`: true iff that host has `facter.json`.
+- Final exported NixOS configurations always have facter, fixed Disko topology, impermanence, preservation, and direct password-file policy.
 
-- [ ] **Step 1: Rewrite the structural tests first**
+- [ ] **Step 1: Rewrite the cheap structural tests**
 
-In `nix/tests/nixos/storage-provisioning.nix`, assert only the fixed topology:
+In `storage-provisioning.nix`, assert exactly:
 
 ```nix
 assert disk.device == "/dev/dotfiles-install-target";
@@ -142,33 +147,30 @@ assert disk.content.partitions.system.content.subvolumes ? "@nix";
 assert disk.content.partitions.system.content.subvolumes ? "@persist";
 ```
 
-Remove all filesystem-UUID, configurable-label, configurable-subvolume, and enable-option fixtures.
+Remove UUID/configurable-device/configurable-label/configurable-subvolume and
+enable-option fixtures.
 
-In `nix/tests/nixos/impermanence.nix`, assert:
+In `impermanence.nix`, assert the initrd configuration:
 
-```nix
-assert system.config.dotfiles.features.impermanence.enable;
-assert system.config.fileSystems."/nix".neededForBoot;
-assert system.config.fileSystems."/persist".neededForBoot;
-```
+- uses `PARTLABEL=dotfiles-system`;
+- requires exactly one unique block-device match before deleting anything;
+- deletes/recreates `@root`;
+- marks `/nix` and `/persist` needed for boot.
 
-Also inspect the initrd service configuration to prove root reset uses
-`PARTLABEL=dotfiles-system`, `@root`, and fails before deletion unless
-exactly one matching partition is found.
+- [ ] **Step 2: Run focused tests with filesystem semantics**
 
-- [ ] **Step 2: Run the focused checks and observe failure**
+Use explicit `path:.` so newly created paths are visible before commit:
 
 ```bash
-nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).storage-provisioning
-nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).impermanence
+nix build -L path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).storage-provisioning
+nix build -L path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).impermanence
 ```
 
-Expected: FAIL because the current modules still expose UUID/configurable
-storage and the separate ephemeral-root interface.
+Expected: FAIL against the current configurable storage/ephemeral-root design.
 
-- [ ] **Step 3: Add one internal fixed layout**
+- [ ] **Step 3: Create one internal storage layout**
 
-Create `nix/modules/nixos/features/storage/layout.nix`:
+Create:
 
 ```nix
 {
@@ -180,85 +182,58 @@ Create `nix/modules/nixos/features/storage/layout.nix`:
 }
 ```
 
-This is an internal constant set, not a NixOS option API.
+No NixOS options are introduced for these values.
 
-- [ ] **Step 4: Reduce Disko provisioning to the fixed layout**
+- [ ] **Step 4: Reduce Disko provisioning to that layout**
 
-Rewrite `storage/provisioning.nix` so importing it always declares:
+Rewrite `storage/provisioning.nix` to always declare:
 
 ```text
 /dev/dotfiles-install-target
   GPT
   ESP 512M EF00 -> vfat /boot
-  system label dotfiles-system -> btrfs
+  dotfiles-system -> btrfs
     @root    -> /
     @nix     -> /nix
     @persist -> /persist
 ```
 
-Remove:
-
-- `filesystemUuid`;
-- `dotfiles.features.storage.*` options;
-- Btrfs `-U` arguments;
-- `provisioning.enable`;
-- configurable disk/label/subvolume values.
+Remove `filesystemUuid`, all `dotfiles.features.storage.*` options,
+filesystem UUID arguments, configurable disk/label/subvolume fields, and
+`provisioning.enable`.
 
 Delete `storage/default.nix`.
 
-- [ ] **Step 5: Fold root reset directly into impermanence**
+- [ ] **Step 5: Fold root reset into impermanence**
 
-Move the initrd mount/delete/create behavior from `ephemeral-root.nix` into
+Move the initrd behavior from `ephemeral-root.nix` into
 `impermanence.nix`.
 
-Before mounting/deleting `@root`, execute the Nix-store path to `blkid`:
+Run the Nix store path for:
 
 ```text
 blkid -t PARTLABEL=dotfiles-system -o device
 ```
 
-Normalize unique non-empty results and require exactly one block device.
+Normalize non-empty unique results and require exactly one. Only then mount the
+Btrfs top level, delete existing `@root`, recreate `@root`, and allow
+`sysroot.mount`.
 
-Mount that device's Btrfs top level, delete `@root` when present, recreate it,
-then permit `sysroot.mount`.
+Delete the public `dotfiles.features.ephemeralRoot` options and
+`ephemeral-root.nix`.
 
-Delete the entire public `dotfiles.features.ephemeralRoot` option family and
-delete `ephemeral-root.nix`.
+- [ ] **Step 6: Require facter in the NixOS constructor**
 
-Update `impermanence/default.nix` to import only `impermanence.nix` and
-`preservation.nix`.
+Pass `disko` into `configurations/nixos.nix`.
 
-- [ ] **Step 6: Remove the obsolete global storage module import**
-
-Remove `./features/storage` from `nix/modules/nixos/default.nix`.
-
-The fixed Disko provisioning module is imported only by the final NixOS
-constructor.
-
-- [ ] **Step 7: Harden `configurations/nixos.nix` to require facter**
-
-Pass `disko` into the NixOS constructor from `nix/flake/default.nix`.
-
-For each NixOS target derive:
-
-```nix
-hostDir = ../profiles/hosts + "/${config.host}";
-facterPath = hostDir + "/facter.json";
-```
-
-Require `builtins.pathExists facterPath`; otherwise throw a message stating
-that the host requires committed facter data and there is no legacy fallback.
-
-Always include:
+Every configuration that is actually constructed imports:
 
 ```nix
 { hardware.facter.reportPath = facterPath; }
 (import ../modules/nixos/features/storage/provisioning.nix { inherit disko; })
 {
-  dotfiles.features = {
-    preservation.enable = true;
-    impermanence.enable = true;
-  };
+  dotfiles.features.preservation.enable = true;
+  dotfiles.features.impermanence.enable = true;
 
   users.mutableUsers = false;
   users.users.${config.primaryAccountName}.hashedPasswordFile =
@@ -266,132 +241,280 @@ Always include:
 }
 ```
 
-Do not inspect or import `hardware-configuration.nix`.
+There is no legacy conditional inside the constructor.
 
-- [ ] **Step 8: Remove the obsolete VM checks**
+- [ ] **Step 7: Omit facter-less hosts from final NixOS outputs**
 
-Delete:
+In `nix/flake/default.nix` define the single readiness predicate:
+
+```nix
+nixosHostReady =
+  hostName:
+  builtins.pathExists (../profiles/hosts + "/${hostName}/facter.json");
+```
+
+Pass it to `flake/configurations.nix` and `flake/checks.nix`.
+
+In `configurations.nix`, construct `nixosConfigurations` only from NixOS
+target entries whose `entry.config.host` passes that predicate.
+
+Home and Darwin outputs are unchanged.
+
+In `flake/checks.nix`, similarly exclude facter-less NixOS entries from
+final-system build checks. Installer package generation in Task 3 will use all
+declared NixOS hosts and does not use this predicate.
+
+- [ ] **Step 8: Retain one deterministic boot/reboot VM**
+
+Simplify `impermanence-vm.nix` so it tests only:
 
 ```text
-nix/tests/nixos/ephemeral-root.nix
-nix/tests/nixos/storage-provisioning-vm.nix
-nix/tests/nixos/impermanence-vm.nix
+fixed Disko layout
+→ boot
+→ disposable root marker + persistent marker
+→ reboot
+→ disposable marker gone
+→ persistent marker survives
+→ @root exists again
 ```
 
-Remove their entries from `nix/checks.nix`.
+No ISO, networking, Git, source snapshot, facter generation, or password flow
+belongs in this test.
 
-Keep the cheap structural storage/impermanence checks and the existing
-preservation check. Full boot/install behavior moves to Task 4's single E2E.
+Delete `storage-provisioning-vm.nix` and the standalone
+`ephemeral-root.nix` test.
 
-- [ ] **Step 9: Run deterministic checks**
+- [ ] **Step 9: Run all deterministic checks**
 
 ```bash
-nix flake check -L
+nix flake check -L path:.
 ```
 
-Expected: PASS with the user's facter migration present.
+Expected: PASS after the user's current-host facter migration.
 
 - [ ] **Step 10: Commit**
 
 ```bash
-git add -A nix/modules/nixos nix/configurations/nixos.nix nix/flake/default.nix nix/tests/nixos nix/checks.nix
+git add -A nix/modules/nixos nix/configurations/nixos.nix nix/flake nix/tests/nixos nix/checks.nix
 git commit -m "refactor: collapse nixos bootstrap state"
 ```
 
 ---
 
-### Task 2: Implement One Raw-Git Installer Transaction
+### Task 2: Define One Filtered Dotfiles Snapshot and Remove Git From Update
 
 **Files:**
-
-- Create: `nix/installer/install.nu`
-- Create: `nix/installer/script.nix`
-- Create: `nix/tests/installer/runtime.nix`
+- Create: `nix/lib/source.nix`
+- Modify: `nix/flake/apps.nix`
+- Modify: `nix/apps/update/operation.nu`
+- Modify: `nix/apps/update/script.nix`
+- Modify: `nix/apps/update/tests/run.sh`
+- Modify: `.gitignore`
+- Create: `nix/tests/source-snapshot.nix`
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+- `mkDotfilesSource { pkgs, root } -> store path`
+- Implementation:
+  `pkgs.nix-gitignore.gitignoreSource [ ] root`
+- Update lock:
+  `<runtime dotfiles directory>/.dotfiles-update.lock`
+- No Git executable is required by the update app.
 
-- `mkInstallerScript { host; target; primaryAccount; origin; commit; efiArch; }`
-- Runtime checkout: `/run/dotfiles-installer/repo`.
-- Destructive alias: `/dev/dotfiles-install-target`.
-- Exactly one acceptance barrier immediately before alias creation/Disko.
+- [ ] **Step 1: Add source-policy and update-lock tests**
 
-- [ ] **Step 1: Write transaction tests before the script**
+Add a source fixture containing:
 
-Use fake `git`, `nix`, Disko, and `nixos-install` executables.
-
-Cover:
-
-1. clone HEAD differs from embedded commit -> abort;
-2. final anonymous `main` SHA differs from embedded commit -> abort before
-   alias creation/Disko;
-3. zero eligible disks at the final barrier -> abort;
-4. two eligible disks at the final barrier -> abort;
-5. exactly one eligible disk -> select it;
-6. every runtime `nix eval`, `nix build`, and `nixos-install --flake`
-   command contains `--no-update-lock-file`;
-7. no command contains `--no-write-lock-file`, `nix flake update`, or
-   `path:`.
-
-The remote-race fixture returns commit C from clone/initial checkout and commit
-D from the final `ls-remote`; Disko must remain uncalled.
-
-- [ ] **Step 2: Implement the clone as the initial commit check**
-
-Use:
-
-```bash
-git clone --branch main --single-branch "$origin" "$repo"
+```text
+.gitignore: ignored-state/
+kept.txt
+ignored-state/secret.txt
 ```
 
-Then require:
+Assert the filtered source contains `kept.txt` and not
+`ignored-state/secret.txt`.
 
-```bash
-git -C "$repo" rev-parse HEAD == "$commit"
+The test also asserts the repository root policy excludes
+`.dotfiles-update.lock`.
+
+Rewrite update tests to use ordinary directories, not `git init`.
+
+For concurrency, start operation A in one directory, wait until its lock exists,
+then start operation B in the **same directory** and require B to fail with:
+
+```text
+dependency update is already running
 ```
 
-Do not run a separate initial fetch, `git switch -C`, or
-`branch --set-upstream-to`; clone already creates the local tracking branch.
+Delete the Git-worktree/common-dir concurrency case.
 
-- [ ] **Step 3: Capture and hash the administrator password**
+- [ ] **Step 2: Run tests through `path:.` and observe failure**
 
-Prompt twice with echo disabled. Reject empty/mismatched input.
+```bash
+nix flake check -L path:.
+```
 
-Pipe plaintext through the Nix-provided yescrypt-capable `mkpasswd` using
-stdin. Keep only the resulting hash in memory.
+Expected: source helper is missing and update still requires a Git working tree.
 
-- [ ] **Step 4: Generate and commit facter**
+- [ ] **Step 3: Implement the shared source filter**
+
+Create `nix/lib/source.nix`:
+
+```nix
+{ pkgs, root }:
+pkgs.nix-gitignore.gitignoreSource [ ] root
+```
+
+This deliberately uses gitignore **syntax/policy**, not Git repository state.
+
+Add:
+
+```text
+/.dotfiles-update.lock
+```
+
+to the root `.gitignore`.
+
+- [ ] **Step 4: Make the update app consume the filtered snapshot**
+
+In `flake/apps.nix`, derive:
+
+```nix
+dotfilesSource = import ../lib/source.nix {
+  inherit pkgs;
+  root = self.outPath;
+};
+```
+
+Pass `dotfilesSource` as the update app's `source` rather than raw
+`self.outPath`.
+
+When invoked with `nix run path:.#update`, this source therefore represents the
+current non-ignored filesystem contents.
+
+- [ ] **Step 5: Remove Git from update locking**
+
+Replace the Git-common-dir lock calculation with:
+
+```text
+<repository>/.dotfiles-update.lock
+```
+
+Use the existing atomic `mkdir` acquisition/finally-removal behavior.
+
+Remove the `GIT` constant and `pkgs.git` dependency from `script.nix`.
+
+Do not change candidate creation, `nix flake update`, evaluation,
+`flake.lock` publication, or activation behavior.
+
+- [ ] **Step 6: Run update/source regressions**
+
+```bash
+nix flake check -L path:.
+```
+
+Expected: PASS, including update tests in directories with no `.git`.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add .gitignore nix/lib/source.nix nix/flake/apps.nix nix/apps/update nix/tests/source-snapshot.nix nix/checks.nix
+git commit -m "refactor: make dotfiles source independent of git"
+```
+
+---
+
+### Task 3: Build and Run the Installer From the Embedded Snapshot
+
+**Files:**
+- Create: `nix/installer/install.nu`
+- Create: `nix/installer/script.nix`
+- Create: `nix/installer/iso.nix`
+- Create: `nix/flake/installer.nix`
+- Create: `nix/apps/build-installer/default.nix`
+- Create: `nix/apps/build-installer/build.nu`
+- Create: `nix/apps/build-installer/tests/run.sh`
+- Create: `nix/tests/installer/runtime.nix`
+- Modify: `nix/flake/default.nix`
+- Modify: `nix/flake/apps.nix`
+- Modify: `nix/checks.nix`
+
+**Interfaces:**
+- `mkInstallerScript { host; target; primaryAccount; source; efiArch; }`
+- `mkInstallerIso { host; target; primaryAccount; source; }`
+- Packages: `packages.installer-<host>` for every declared NixOS host on the
+  matching system, whether or not facter exists.
+- App: `nix run path:.#build-installer -- --host HOST`.
+- Result link: `result/installer-HOST`.
+- Writable runtime source: `/run/dotfiles-installer/source`.
+
+- [ ] **Step 1: Write runtime transaction tests**
+
+With fake external executables, prove:
+
+1. embedded source is copied to the writable runtime location;
+2. facter is written under the selected host path;
+3. all final flake references begin with
+   `path:/run/dotfiles-installer/source#`;
+4. every installer `nix eval`, `nix build`, and `nixos-install` flake
+   operation contains `--no-update-lock-file`;
+5. no command invokes Git or `nix flake update`;
+6. zero eligible disks abort before alias/Disko;
+7. multiple eligible disks abort before alias/Disko;
+8. exactly one eligible disk creates the alias and permits Disko.
+
+- [ ] **Step 2: Package an explicit installer runtime closure**
+
+`script.nix` embeds store-path constants for at least:
+
+```text
+nu              <- pkgs.nushell
+nixos-facter    <- pkgs.nixos-facter
+nix             <- pkgs.nix
+nixos-install   <- pkgs.nixos-install-tools/bin/nixos-install
+mkpasswd        <- pkgs.mkpasswd
+lsblk/findmnt   <- pkgs.util-linux
+cp/chmod/chown/ln/mkdir/rm/sync <- pkgs.coreutils
+systemctl       <- pkgs.systemd
+```
+
+The script does not rely on these commands being ambient ISO packages.
+
+Add a structural check that the generated script contains the expected store
+paths for `nu` and `nixos-facter`.
+
+- [ ] **Step 3: Implement writable snapshot preparation and password input**
+
+At boot:
+
+```text
+rm -rf /run/dotfiles-installer/source
+cp -a <embedded source> /run/dotfiles-installer/source
+chmod -R u+w /run/dotfiles-installer/source
+```
+
+Prompt twice with terminal echo suppressed, reject empty/mismatch, hash with
+yescrypt via stdin, and retain only the hash.
+
+- [ ] **Step 4: Generate facter directly into the snapshot**
 
 Run:
 
 ```text
-nixos-facter -o nix/profiles/hosts/<host>/facter.json
-git add nix/profiles/hosts/<host>/facter.json
+nixos-facter -o   /run/dotfiles-installer/source/nix/profiles/hosts/<host>/facter.json
 ```
 
-If the index differs, commit exactly that path with:
+No Git add/commit/status operation exists.
+
+- [ ] **Step 5: Evaluate the final configuration with `path:`**
+
+Use:
 
 ```text
-bootstrap: record hardware facts
+path:/run/dotfiles-installer/source#nixosConfigurations.<target>...
 ```
 
-and a fixed installer-local author identity.
-
-If it does not differ, create no empty commit.
-
-The checkout must be clean after this step.
-
-- [ ] **Step 5: Evaluate the final target from the raw Git checkout**
-
-Use raw absolute checkout references such as:
-
-```text
-/run/dotfiles-installer/repo#nixosConfigurations.<target>...
-```
-
-Never prefix the checkout with `path:`.
-
-With `--no-update-lock-file`, evaluate:
+with `--no-update-lock-file` to evaluate:
 
 ```text
 config.system.build.toplevel.drvPath
@@ -402,78 +525,65 @@ config.users.groups.<group>.gid
 config.users.users.<primary>.hashedPasswordFile
 ```
 
-Reject null/non-integer UID or GID and an empty group/hash-file path.
+Reject null/non-integer UID or GID and empty group/hash-file paths.
 
-Evaluating the toplevel drvPath is the pre-destructive full configuration
-validation; do not realize that toplevel yet.
+The successful toplevel drvPath evaluation proves fresh facter caused the final
+configuration output to exist.
 
-- [ ] **Step 6: Realize only the Disko script**
+- [ ] **Step 6: Realize only the Disko script before destruction**
 
 Build:
 
 ```text
-nixosConfigurations.<target>.config.system.build.diskoScript
+path:/run/dotfiles-installer/source#nixosConfigurations.<target>.config.system.build.diskoScript
 ```
 
-from the same raw checkout with `--no-update-lock-file --no-link
---print-out-paths`.
+with:
 
-- [ ] **Step 7: Implement the single destructive acceptance barrier**
-
-First read the public remote directly:
-
-```bash
-git ls-remote "$origin" refs/heads/main
+```text
+--no-update-lock-file --no-link --print-out-paths
 ```
 
-using the same anonymous/no-prompt Git environment as the builder. Require one
-SHA and require it to equal the embedded commit.
+Do not realize the final toplevel before target `/nix` exists.
 
-Then run:
+- [ ] **Step 7: Implement the single destructive disk barrier**
+
+Run:
 
 ```text
 lsblk --json --output PATH,TYPE,RM,HOTPLUG
 ```
 
-and require exactly one whole disk where `RM=0` and `HOTPLUG=0`.
+Require exactly one whole disk with `RM=0`, `HOTPLUG=0`.
 
-Only after both checks succeed:
+Only then:
 
 ```bash
 ln -sfn "$disk" /dev/dotfiles-install-target
 ```
 
-There is no earlier disk scan and no cross-time disk identity.
+There is no earlier disk scan and no source/network/Git acceptance check.
 
-- [ ] **Step 8: Provision and materialize the secret**
+- [ ] **Step 8: Provision, materialize password, and install**
 
 Run the Disko script and require `/mnt`, `/mnt/boot`, `/mnt/nix`, and
 `/mnt/persist` to be mountpoints.
 
-Write the password hash to:
-
-```text
-/mnt + <evaluated hashedPasswordFile>
-```
-
-with parent mode `0700` and file mode `0600`.
-
-- [ ] **Step 9: Install from the same raw checkout**
+Write the hash to `/mnt + <evaluated hashedPasswordFile>`, parent mode
+`0700`, file mode `0600`.
 
 Run:
 
 ```bash
 nixos-install \
   --root /mnt \
-  --flake "$repo#$target" \
+  --flake "path:/run/dotfiles-installer/source#$target" \
   --no-update-lock-file \
   --no-channel-copy \
   --no-root-password
 ```
 
-Do not add `--no-write-lock-file`.
-
-- [ ] **Step 10: Verify fallback boot and persist the checkout**
+- [ ] **Step 9: Verify fallback EFI and persist the same source**
 
 Require:
 
@@ -481,251 +591,158 @@ Require:
 /mnt/boot/EFI/BOOT/BOOT<UPPERCASE_EFI_ARCH>.EFI
 ```
 
-Copy the complete already-validated checkout including `.git` to:
+Copy the writable source tree to:
 
 ```text
 /mnt/persist + <evaluated home> + /dotfiles
 ```
 
-and recursively chown it to the evaluated UID:GID.
+and recursively chown to evaluated UID:GID.
 
-Do not add redundant post-copy Git branch/origin/revision verification.
+Do not copy or synthesize Git metadata.
 
-- [ ] **Step 11: Finish safely**
+- [ ] **Step 10: Finish safely**
 
 Run `sync`, recursively unmount `/mnt`, verify it is no longer mounted, then
-invoke `systemctl poweroff`.
+`systemctl poweroff`.
 
-Any earlier failure exits non-zero and leaves the installer running.
+Earlier failures exit non-zero and leave the installer running.
 
-- [ ] **Step 12: Run tests and commit**
+- [ ] **Step 11: Generate installer packages directly from host metadata**
 
-```bash
-nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).installer-runtime
-nix flake check -L
-git add nix/installer/install.nu nix/installer/script.nix nix/tests/installer/runtime.nix nix/checks.nix
-git commit -m "feat: implement raw-git nixos installer"
-```
+Create `nix/flake/installer.nix`.
 
----
-
-### Task 3: Build Generic Host ISOs From Public-Main Git Identity
-
-**Files:**
-
-- Create: `nix/installer/config.nix`
-- Create: `nix/installer/iso.nix`
-- Create: `nix/apps/build-installer/default.nix`
-- Create: `nix/apps/build-installer/build.nu`
-- Create: `nix/apps/build-installer/tests/run.sh`
-- Modify: `nix/flake/apps.nix`
-- Modify: `nix/flake/default.nix`
-- Modify: `nix/checks.nix`
-
-**Interfaces:**
-
-- `installer/config.nix`: `origin = "https://github.com/sugiura-hiromiti/dotfiles.git"`
-- Packages: `packages.installer-<host>` for every declared NixOS host on its
-  matching system.
-- App: `nix run .#build-installer -- --host HOST`.
-- Output link: `result/installer-HOST`.
-
-- [ ] **Step 1: Write the builder tests**
-
-Use a temporary clean Git repository for real Nix metadata behavior and fake
-only the network-facing `git ls-remote` call.
-
-Prove:
-
-- clean raw Git flake -> `metadata.revision == git HEAD`;
-- tracked/staged modification -> no acceptable concrete revision;
-- untracked file -> revision remains HEAD and does not block the builder;
-- remote-main SHA different from metadata revision -> reject;
-- matching remote-main SHA -> build command is
-  `nix build <raw-repo>#installer-<host>`;
-- no builder command contains `path:`;
-- no check depends on current branch, detached state, local `origin`, or
-  local remote-tracking refs.
-
-- [ ] **Step 2: Declare the canonical origin once**
-
-Create:
-
-```nix
-{
-  origin = "https://github.com/sugiura-hiromiti/dotfiles.git";
-}
-```
-
-in `nix/installer/config.nix`.
-
-Do not publish an installer-specific host metadata flake output.
-
-- [ ] **Step 3: Generate installer packages directly from normalized host metadata**
-
-In the flake wiring, select hosts where:
+For every declared host where:
 
 ```nix
 host.systemTargetKind == "nixos"
+host.system == system
 ```
 
-For each such host derive the target name directly with existing
-`targetNames.mkSystemTargetName` using:
+derive its target name directly with `targetNames.mkSystemTargetName` using
+the host's default theme/default session and target-axis policy.
 
-```nix
-host.targetHost
-host.runtime.defaultTheme
-host.runtime.defaultSession
-host.runtime.targetAxes
+Pass:
+
+```text
+host registry key
+target name
+primaryAccountName
+dotfilesSource
 ```
 
-Pass `host.primaryAccountName` directly to the ISO constructor.
+to the ISO constructor.
 
-Do not export `runtime.mkRuntimeContext`, add `mkDefaultHostTargetConfig`,
-or create `flake.installer.hosts.*`.
+Do not require facter and do not evaluate `nixosConfigurations.<target>`.
 
-- [ ] **Step 4: Construct the ISO without final-host evaluation**
+- [ ] **Step 12: Make tty1 ownership fail closed**
 
-`nix/installer/iso.nix` receives:
+The minimal ISO keeps tty2 as the wanted diagnostic console:
 
 ```nix
-{
-  host,
-  target,
-  primaryAccount,
-  origin,
-  commit,
-}
+systemd.targets.getty.wants =
+  lib.mkForce [ "autovt@tty2.service" ];
 ```
 
-and derives EFI architecture from the ISO platform.
-
-Use:
+Mask exact tty1 instances:
 
 ```nix
-commit =
-  if self ? rev then self.rev
-  else throw "installer ISO requires a clean Git flake revision";
+systemd.services."getty@tty1".enable = false;
+systemd.services."autovt@tty1".enable = false;
 ```
 
-ISO construction must not reference `nixosConfigurations.<target>`, so it can
-bootstrap a newly declared host before that host has facter data.
-
-- [ ] **Step 5: Give tty1 exclusively to the installer**
-
-Override the minimal installer profile so tty1 is not pulled into
-`getty.target` and tty2 remains diagnostic:
+Configure the installer:
 
 ```nix
-systemd.targets.getty.wants = lib.mkForce [ "autovt@tty2.service" ];
-```
+systemd.services.dotfiles-installer = {
+  wantedBy = [ "multi-user.target" ];
+  after = [ "network-online.target" ];
+  wants = [ "network-online.target" ];
 
-Configure `dotfiles-installer.service` with:
-
-```nix
-wantedBy = [ "multi-user.target" ];
-after = [ "network-online.target" ];
-wants = [ "network-online.target" ];
-conflicts = [
-  "getty@tty1.service"
-  "autovt@tty1.service"
-];
-
-serviceConfig = {
-  Type = "oneshot";
-  StandardInput = "tty-force";
-  StandardOutput = "tty";
-  StandardError = "tty";
-  TTYPath = "/dev/tty1";
-  TTYReset = true;
+  serviceConfig = {
+    Type = "exec";
+    StandardInput = "tty-force";
+    StandardOutput = "tty";
+    StandardError = "tty";
+    TTYPath = "/dev/tty1";
+    TTYReset = true;
+  };
 };
 ```
 
-- [ ] **Step 6: Implement the builder around one identity comparison**
+Do not rely on `Conflicts=` for tty1 ownership.
 
-Resolve the repository root and run real Nix:
+- [ ] **Step 13: Implement the thin generic builder**
 
-```bash
-nix flake metadata --json "$repo" --no-update-lock-file
-```
+The build app receives the immutable filtered `dotfilesSource` store path
+already captured when `nix run path:.#build-installer` was evaluated.
 
-Require a concrete `revision`.
-
-Read public `main` anonymously:
-
-```bash
-HOME="$empty_home" \
-XDG_CONFIG_HOME="$empty_home" \
-GIT_CONFIG_NOSYSTEM=1 \
-GIT_TERMINAL_PROMPT=0 \
-git -c credential.helper= \
-  ls-remote "$origin" refs/heads/main
-```
-
-Unset `GIT_ASKPASS` and `SSH_ASKPASS`.
-
-Require exactly one SHA and:
+For `--host HOST`, run:
 
 ```text
-metadata.revision == remote main SHA
+nix build path:<dotfilesSource>#installer-HOST
+  --out-link <current-directory>/result/installer-HOST
 ```
 
-Then build:
+The source path is immutable, so mutation of the original working directory
+after app startup cannot change the ISO being built.
 
-```text
-nix build <raw-repository>#installer-<host>
-  --out-link <repository>/result/installer-<host>
-```
+There are no Git, revision, publication, or remote checks.
 
-Do not inspect branch name, detached state, `git status`, local `origin`, or
-`origin/main`.
+- [ ] **Step 14: Test builder/ISO wiring**
 
-- [ ] **Step 7: Add deterministic ISO wiring checks**
+Builder tests prove:
 
-Assert:
+- requested host maps only to `installer-HOST`;
+- unknown/non-NixOS host fails;
+- build reference points at the embedded immutable source store path, not the
+  mutable current directory;
+- no command invokes Git.
 
-- package generation exists for every NixOS host and not Darwin-only hosts;
-- target name uses normalized default theme/session;
-- primary account comes directly from host normalization;
-- installer service owns tty1 and tty1 getty/autovt is not wanted;
-- ISO constructor does not depend on final NixOS configuration evaluation.
+ISO structural tests prove:
 
-- [ ] **Step 8: Run checks and commit**
+- a facter-less host can construct its installer package;
+- the embedded source is the filtered snapshot;
+- installer service is `Type=exec`;
+- exact tty1 getty/autovt units are masked;
+- tty2 remains available;
+- runtime script contains explicit required executable store paths.
+
+- [ ] **Step 15: Run checks and commit**
 
 ```bash
-nix flake check -L
-nix run .#build-installer -- --help
-git add nix/installer/config.nix nix/installer/iso.nix nix/apps/build-installer nix/flake/apps.nix nix/flake/default.nix nix/checks.nix
-git commit -m "feat: build generic nixos installer iso"
+nix flake check -L path:.
+nix run path:.#build-installer -- --help
+git add nix/installer nix/flake/installer.nix nix/apps/build-installer nix/flake/default.nix nix/flake/apps.nix nix/tests/installer/runtime.nix nix/checks.nix
+git commit -m "feat: build installer from dotfiles snapshot"
 ```
 
 ---
 
-### Task 4: Replace Intermediate VM Layers With One Installer Lifecycle E2E
+### Task 4: Verify the Complete Snapshot-Based Lifecycle
 
 **Files:**
-
 - Create: `nix/tests/installer/e2e.nix`
 - Create: `nix/apps/test-installer-e2e/default.nix`
 - Modify: `nix/flake/apps.nix`
 - Modify: `nix/checks.nix`
 - Modify: `README.org`
-- Modify: `flake.nix` comments
+- Modify: `flake.nix`
 
 **Interfaces:**
+- E2E app: `nix run path:.#test-installer-e2e`.
+- It boots the actual installer ISO generated from the current filtered
+  filesystem snapshot.
 
-- Manual networked test: `nix run .#test-installer-e2e`.
-- Networked lifecycle test is not executed inside the Nix build sandbox.
+- [ ] **Step 1: Expose the lifecycle driver as an app**
 
-- [ ] **Step 1: Expose the E2E driver as a runtime app**
+Construct the NixOS test driver as a derivation, but run
+`driverInteractive/bin/nixos-test-driver --no-interactive` from the app.
 
-Build the NixOS test driver deterministically, but execute
-`driverInteractive/bin/nixos-test-driver --no-interactive` from the app so
-the lifecycle test has normal network access.
+The test may use runtime network access for locked Nix dependencies. It has no
+Git-server/repository dependency.
 
-Do not add another VM integration layer.
-
-- [ ] **Step 2: Model only the supported machine**
+- [ ] **Step 2: Model only supported hardware**
 
 The VM has:
 
@@ -735,169 +752,155 @@ The VM has:
 - network;
 - no second `dotfiles-system` disk.
 
-- [ ] **Step 3: Verify the real ISO console contract**
+- [ ] **Step 3: Verify tty ownership under VT switching**
 
-Boot the ISO and wait for the installer password prompt.
+Boot to the installer password prompt.
 
-While it is active, assert:
+Assert:
 
 ```text
 dotfiles-installer.service = active
-getty@tty1.service         = inactive/non-running
-autovt@tty1.service        = inactive/non-running
+getty@tty1.service         = masked/inactive
+autovt@tty1.service        = masked/inactive
 ```
 
-Confirm tty2 remains usable for diagnostics.
+Switch tty1 -> tty2 -> tty1 and assert the installer remains active and the
+password prompt remains the tty1 owner.
 
-- [ ] **Step 4: Run the complete successful install**
-
-Use the declared anonymous HTTPS repository and the exact public `main`
-revision accepted by the builder.
+- [ ] **Step 4: Run the successful snapshot install**
 
 Feed a deterministic test password and verify:
 
-1. clone creates local `main`;
-2. cloned HEAD equals embedded commit;
-3. facter is generated and only conditionally committed;
-4. final target evaluates from the raw Git checkout with
+1. runtime source is copied from the embedded immutable snapshot;
+2. ignored fixture/local-state paths are absent;
+3. fresh host facter is generated;
+4. `nixosConfigurations.<target>` exists after facter generation;
+5. final evaluation and Disko-script build use `path:` plus
    `--no-update-lock-file`;
-5. final anonymous remote-main check equals the embedded commit;
-6. final block-device scan sees exactly one eligible disk;
-7. Disko creates the fixed `dotfiles-system` / `@root` / `@nix` /
-   `@persist` layout;
-8. password hash is outside Git/store under `/persist`;
+6. exactly-one-disk barrier succeeds;
+7. Disko creates `dotfiles-system`, `@root`, `@nix`, `@persist`;
+8. password hash is placed under `/persist`;
 9. target-store `nixos-install` succeeds;
 10. fallback EFI loader exists;
-11. checkout is copied with evaluated UID/GID;
+11. plain dotfiles tree is persisted with evaluated UID/GID;
 12. installer powers off.
 
-The remote-race failure path remains a deterministic Task 2 transaction test;
-do not add a controllable Git-server subsystem solely for E2E.
+- [ ] **Step 5: Boot installed disk without installer media**
 
-- [ ] **Step 5: Boot the installed disk with ISO media removed**
-
-Restart the VM without the installer CD.
-
-Require:
+Restart without the installer CD and require:
 
 ```text
 /        -> @root
 /nix     -> @nix
 /persist -> @persist
+multi-user.target reached
 ```
 
-and `multi-user.target`.
+- [ ] **Step 6: Verify authentication, impermanence, and update viability**
 
-- [ ] **Step 6: Verify authentication and impermanence**
+Using the deterministic password:
 
-With the deterministic fixture password:
+- local login works;
+- `sudo` works.
 
-- local password authentication succeeds;
-- `sudo` authentication succeeds.
+Create disposable and preserved state, reboot, and prove root reset/persistence.
 
-Create:
+Then from the installed plain dotfiles directory, run the update app's
+non-destructive test path or `--help`/fixture-backed invocation and prove it
+does not require `.git`. Do not perform an uncontrolled real dependency
+update inside the E2E.
 
-- a disposable root marker;
-- one marker covered by the preservation policy;
-- one file in the persisted dotfiles checkout.
+- [ ] **Step 7: Keep `nix flake check` deterministic**
 
-Reboot and prove:
+```bash
+nix flake check -L path:.
+```
 
-- disposable root state vanished;
-- preserved state survived;
-- checkout survived;
-- `@root` was recreated.
-
-- [ ] **Step 7: Keep deterministic checks cheap**
-
-`nix flake check` should contain structural/unit checks only plus construction
-of the E2E driver closure where useful. It must not execute the networked
-lifecycle.
-
-Verify the obsolete intermediate VM checks from Task 1 are absent.
+This executes structural/unit checks and the small deterministic impermanence VM
+only. It does not execute the full network-capable installer lifecycle.
 
 - [ ] **Step 8: Update operator documentation**
 
-Update `README.org` so the bootstrap path is:
+Document the source model explicitly:
 
 ```text
-1. declare host metadata
-2. nix run .#build-installer -- --host HOST
+dotfiles filesystem
+→ .gitignore-filtered immutable snapshot
+→ installer ISO
+→ writable copy + facter
+→ installed/persisted dotfiles
+```
+
+Document operator flow:
+
+```text
+1. edit dotfiles to desired state
+2. nix run path:.#build-installer -- --host HOST
 3. write/attach result/installer-HOST
 4. boot installer
-5. enter password
+5. enter administrator password
 6. wait for poweroff
 7. remove/eject installer media
 8. power on
 ```
 
-Document:
+Update `flake.nix` usage comments to use explicit `path:.` for dotfiles
+operations whose intended source is the current filesystem snapshot.
 
-- final NixOS configurations use facter only;
-- no legacy hardware fallback;
-- raw Git-flake semantics are used by installer flows;
-- `--no-update-lock-file` is the installer freeze control;
-- the fixed storage topology and unsupported cases.
+State explicitly that commits, branches, remotes, publication, and Git history
+are outside installer correctness.
 
-For commands operating directly on the user's Git checkout, replace historical
-`path:.#...` examples with ordinary Git-flake references such as `.#...`.
-Apply the same documentation cleanup to the usage comments at the top of
-`flake.nix`.
-
-Do not change the update implementation's private temporary `path:` flake:
-that copy is intentionally a non-Git snapshot and is a legitimate use of
-`path:`.
-
-- [ ] **Step 9: Run all checks**
+- [ ] **Step 9: Run lifecycle E2E**
 
 ```bash
-nix flake check -L
-nix run .#test-installer-e2e
+nix run path:.#test-installer-e2e
 ```
 
 Expected: PASS.
 
 If required KVM/virtualization support is unavailable, report that environmental
-limitation; do not add a slower fallback solely to make the E2E pass.
+limitation; do not introduce a slower fallback solely for the test.
 
-- [ ] **Step 10: Build the real ISO artifact but do not boot it**
-
-From a revision that the builder verifies equals public `main`:
+- [ ] **Step 10: Build the real ISO but do not boot it**
 
 ```bash
-nix run .#build-installer -- --host aarch64-linux-a
+nix run path:.#build-installer -- --host aarch64-linux-a
 test -e result/installer-aarch64-linux-a
 ```
 
-Verify the built ISO embeds the accepted revision.
+The artifact represents the current filtered filesystem snapshot; there is no
+commit/revision assertion.
 
-**STOP HERE. Do not boot the ISO on the real machine as part of this plan.**
+**STOP HERE. Do not boot the ISO on the real machine as part of implementation.**
 
 - [ ] **Step 11: Commit**
 
 ```bash
 git add nix/tests/installer/e2e.nix nix/apps/test-installer-e2e nix/flake/apps.nix nix/checks.nix README.org flake.nix
-git commit -m "test: cover installer lifecycle end to end"
+git commit -m "test: cover snapshot installer lifecycle"
 ```
 
 ---
 
 ## Plan Self-Review Checklist
 
-- [ ] Generic `build-installer --host HOST` is retained.
-- [ ] No legacy hardware selector or `hardware-configuration.nix` fallback.
-- [ ] No explicit `path:` flake reference in installer builder/runtime.
+- [ ] Generic `build-installer --host HOST` remains.
+- [ ] Installer source identity contains no Git history/revision/remote concept.
+- [ ] `path:.` is intentional operator semantics, not a compatibility workaround.
+- [ ] Source filtering excludes ignored local state and `.git`.
+- [ ] Newly created implementation files are visible to tests before commit.
+- [ ] Facter-less NixOS hosts keep installer packages without exporting final configurations.
+- [ ] No `hardware-configuration.nix` fallback.
+- [ ] No facter Git commit.
 - [ ] No `--no-write-lock-file` in installer commands.
-- [ ] No builder branch/detached/local-origin/untracked-file policy.
-- [ ] No installer-specific host metadata flake output.
-- [ ] No installer-only default-target/runtime-context abstraction.
-- [ ] No bootstrap-credentials module or duplicate hash-path option.
-- [ ] No initial disk preflight.
-- [ ] No post-copy Git revalidation.
-- [ ] No filesystem UUID or public storage device option.
-- [ ] No configurable partition label or subvolume names.
-- [ ] No public ephemeral-root option API.
-- [ ] No storage provisioning enable flag.
-- [ ] No redundant storage/ephemeral-root/impermanence VM stack beside the lifecycle E2E.
-- [ ] Final remote-main + disk check is the single destructive acceptance barrier.
+- [ ] No remote-main/source acceptance barrier; only the final disk barrier remains.
+- [ ] No filesystem UUID/public storage option/configurable topology.
+- [ ] No bootstrap-credentials wrapper.
+- [ ] No public ephemeral-root interface.
+- [ ] Installer runtime closure explicitly contains Nushell and nixos-facter.
+- [ ] tty1 instances are masked and installer uses `Type=exec`.
+- [ ] Exactly one deterministic impermanence VM remains.
+- [ ] Full E2E uses the actual snapshot-built ISO.
+- [ ] Persisted dotfiles contain no required Git metadata.
+- [ ] Update locking works without a Git repository.
 - [ ] Real-machine boot remains outside implementation scope.

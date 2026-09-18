@@ -75,21 +75,31 @@ the ISO was built.
 
 ### Installer-build invariant
 
+The canonical repository URL is declared once in Nix as repository-wide
+installer configuration:
+
+```nix
+installer.origin = "https://github.com/sugiura-hiromiti/dotfiles.git";
+```
+
+It is not host metadata.
+
 `build-installer` MUST require all of the following:
 
 ```text
+declared installer.origin is anonymously cloneable HTTPS
+local Git origin == declared installer.origin
 current branch = main
 working tree = clean, including untracked files
-origin URL = anonymously cloneable HTTPS
-git fetch origin succeeds
+git fetch origin main succeeds
 HEAD = origin/main
 ```
 
 The ISO records only:
 
 - host identity;
-- canonical HTTPS `origin` URL;
-- exact commit SHA.
+- the declared canonical HTTPS `installer.origin`;
+- exact commit SHA from the clean flake source.
 
 The installed NixOS target is deterministic for that host: it uses
 `runtime.defaultTheme` and `runtime.defaultSession`. The installer builder
@@ -511,9 +521,10 @@ These may be added later only when there is a demonstrated need.
 
 Implementation is complete when:
 
-1. installer build succeeds only from clean `main == origin/main` with an
-   anonymously cloneable HTTPS origin, and selects the host's declared default
-   theme/session;
+1. installer build succeeds only when the local Git origin exactly matches the
+   declarative HTTPS `installer.origin`, the worktree is clean,
+   `main == origin/main`, and the host's declared default theme/session is
+   selected;
 2. a stale ISO aborts before destructive work;
 3. installation never updates or rewrites dependency selection;
 4. final target evaluation occurs after facter generation and before Disko;

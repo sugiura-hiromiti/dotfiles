@@ -71,6 +71,7 @@ nix/
 ### Task 1: Model Bootstrap and Hardware Resolution in the Host Registry
 
 **Files:**
+
 - Modify: `nix/lib/hosts.nix`
 - Create: `nix/tests/fixtures/hosts/bootstrap-only/meta.nix`
 - Create: `nix/tests/fixtures/hosts/legacy/meta.nix`
@@ -81,6 +82,7 @@ nix/
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - Produces normalized host fields:
   - `installer.enable :: bool`
   - `installer.diskOverride :: null | string`
@@ -105,11 +107,11 @@ Minimal facter fixture:
 
 ```json
 {
-  "version": 2,
-  "system": "x86_64-linux",
-  "virtualisation": "qemu",
-  "hardware": {},
-  "smbios": {}
+	"version": 2,
+	"system": "x86_64-linux",
+	"virtualisation": "qemu",
+	"hardware": {},
+	"smbios": {}
 }
 ```
 
@@ -141,6 +143,7 @@ git commit -m "feat: model host bootstrap hardware state"
 ### Task 2: Centralize Final Hardware Source Selection
 
 **Files:**
+
 - Modify: `nix/configurations/common.nix`
 - Modify: `nix/configurations/nixos.nix`
 - Modify: `nix/lib/targets.nix`
@@ -149,6 +152,7 @@ git commit -m "feat: model host bootstrap hardware state"
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - Facter is preferred when `hardware.source == "facter"`.
 - Legacy generated hardware is migration-only fallback.
 - Unresolved NixOS hosts do not appear in normal final `nixosConfigurations`.
@@ -199,6 +203,7 @@ git commit -m "feat: prefer facter hardware configuration"
 ### Task 3: Make Disko the Production Storage Owner
 
 **Files:**
+
 - Create: `nix/lib/stable-uuid.nix`
 - Modify: `nix/configurations/nixos.nix`
 - Modify: `nix/flake/default.nix`
@@ -208,6 +213,7 @@ git commit -m "feat: prefer facter hardware configuration"
 - Modify: `nix/tests/nixos/impermanence-vm.nix`
 
 **Interfaces:**
+
 - Production NixOS construction imports the Disko provisioning module.
 - Btrfs UUID is deterministic from host identity.
 - `provisioning.disk` defaults to `/dev/dotfiles-install-target`.
@@ -270,12 +276,14 @@ git commit -m "feat: make disko own production storage"
 ### Task 4: Declare Persistent Administrator Credentials in Nix
 
 **Files:**
+
 - Create: `nix/modules/nixos/features/bootstrap-credentials.nix`
 - Modify: `nix/modules/nixos/default.nix`
 - Create: `nix/tests/nixos/bootstrap-credentials.nix`
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - Option: `dotfiles.features.bootstrapCredentials.enable :: bool`
 - Read-only option: `dotfiles.features.bootstrapCredentials.hashFile :: string`
 - When enabled:
@@ -314,6 +322,7 @@ git commit -m "feat: declare persistent administrator credentials"
 ### Task 5: Implement Fail-Closed Disk Selection
 
 **Files:**
+
 - Create: `nix/installer/disk-selector.nu`
 - Create: `nix/tests/installer/disk-selector.nix`
 - Create: `nix/tests/installer/fixtures/one-disk.json`
@@ -322,6 +331,7 @@ git commit -m "feat: declare persistent administrator credentials"
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - Function: `select-install-disk lsblk_json disk_override installer_parent -> string`
 - Automatic candidate:
   - `TYPE=disk`
@@ -356,12 +366,14 @@ git commit -m "feat: add fail-closed installer disk selection"
 ### Task 6: Implement the Installer Transaction Without Dependency Updates
 
 **Files:**
+
 - Create: `nix/installer/install.nu`
 - Create: `nix/installer/script.nix`
 - Create: `nix/tests/installer/operation.nix`
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - Installer constants:
   - host
   - targetName
@@ -377,6 +389,7 @@ git commit -m "feat: add fail-closed installer disk selection"
 - [ ] **Step 1: Write failing operation tests**
 
 Cover:
+
 1. password mismatch;
 2. target build failure;
 3. ambiguous disk;
@@ -394,6 +407,7 @@ Success asserts the local installer commit changes `facter.json` but not `flake.
 - [ ] **Step 2: Package runtime binaries**
 
 Include exact Nix-store paths for:
+
 - Git;
 - Nix;
 - nixos-facter;
@@ -409,6 +423,7 @@ Include exact Nix-store paths for:
 Use `systemd-ask-password` twice.
 
 Reject:
+
 - empty password;
 - mismatch.
 
@@ -438,6 +453,7 @@ Do not stage or change `flake.lock`.
 - [ ] **Step 6: Build using the embedded lock**
 
 Build:
+
 - final `system.build.toplevel`;
 - final `system.build.diskoScript`.
 
@@ -499,11 +515,13 @@ git commit -m "feat: add locked bootstrap transaction"
 ### Task 7: Add Boot Handoff and Same-ISO Re-entry Protection
 
 **Files:**
+
 - Create: `nix/installer/handoff.nu`
 - Create: `nix/tests/installer/handoff.nix`
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - Marker directory on target ESP:
   - `/.dotfiles-installer/`
 - Completion marker:
@@ -515,6 +533,7 @@ git commit -m "feat: add locked bootstrap transaction"
 - [ ] **Step 1: Write marker-policy tests**
 
 Test pure helper behavior:
+
 - blank disk: no block;
 - marker for same ID: destructive install denied;
 - marker for another ID: install allowed.
@@ -540,6 +559,7 @@ containing host and embedded Git commit for diagnostics.
 Include `efibootmgr` in installer tooling.
 
 After installation:
+
 1. identify the target ESP partition;
 2. create or find a UEFI boot entry for the installed removable/systemd-boot EFI loader;
 3. set that entry as `BootNext`;
@@ -565,6 +585,7 @@ git commit -m "feat: guard installer reentry and hand off boot"
 ### Task 8: Build the Host-Specific Installer ISO
 
 **Files:**
+
 - Create: `nix/installer/iso.nix`
 - Create: `nix/installer/default.nix`
 - Create: `nix/installer/build.nix`
@@ -574,6 +595,7 @@ git commit -m "feat: guard installer reentry and hand off boot"
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - `self.lib.mkInstallerIso { host; repositoryBundle; installerId; }`
 - ISO evaluates without `facter.json`.
 - Installer uses the host's existing default theme/session target naming.
@@ -582,6 +604,7 @@ git commit -m "feat: guard installer reentry and hand off boot"
 - [ ] **Step 1: Write failing ISO evaluation assertions**
 
 Assert:
+
 - bootstrap-only host ISO evaluates;
 - `nix-command` and `flakes` are in `nix.settings.experimental-features`;
 - installer script receives the host and installer ID.
@@ -600,6 +623,7 @@ nix.settings.experimental-features = [
 ```
 
 Include:
+
 - Git;
 - Nix;
 - nixos-facter;
@@ -623,6 +647,7 @@ Expose `lib.mkInstallerIso`; do not expose a static ISO package that cannot carr
 - [ ] **Step 5: Add impure bridge `build.nix`**
 
 It accepts:
+
 - repository path;
 - host;
 - bundle path;
@@ -642,6 +667,7 @@ git commit -m "feat: add host-specific installer iso"
 ### Task 9: Add Clean-Tree `build-installer`
 
 **Files:**
+
 - Create: `nix/apps/build-installer/default.nix`
 - Create: `nix/apps/build-installer/script.nix`
 - Create: `nix/apps/build-installer/build.nu`
@@ -651,6 +677,7 @@ git commit -m "feat: add host-specific installer iso"
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - Command:
   - `nix run .#build-installer -- --host HOST`
 - Output link:
@@ -661,6 +688,7 @@ git commit -m "feat: add host-specific installer iso"
 - [ ] **Step 1: Write failing wrapper tests**
 
 Test:
+
 - clean repository succeeds;
 - tracked modification fails;
 - staged modification fails;
@@ -715,11 +743,13 @@ git commit -m "feat: add clean installer build entry point"
 ### Task 10: Preserve `.#update` as the Only Dependency-Update Path
 
 **Files:**
+
 - Modify: `nix/apps/update/tests/run.sh`
 - Modify only if demonstrated necessary: `nix/apps/update/operation.nu`
 - Modify installer operation tests to reject any `flake update` invocation
 
 **Interfaces:**
+
 - Local `HEAD` may be ahead of origin.
 - Installer does not update dependencies.
 - `.#update` continues to update `flake.lock`.
@@ -748,6 +778,7 @@ Only include `operation.nu` if the regression proves a production bug.
 ### Task 11: Add Non-Vacuous Production and Offline Lifecycle Tests
 
 **Files:**
+
 - Create: `nix/tests/nixos/production-host-impermanence.nix`
 - Create: `nix/tests/installer/e2e-vm.nix`
 - Create: `nix/tests/installer/fixture-flake.nix`
@@ -756,6 +787,7 @@ Only include `operation.nu` if the regression proves a production bug.
 - Modify only when needed for arguments: `nix/flake/checks.nix`
 
 **Interfaces:**
+
 - Production migration test uses the actual `aarch64-linux-a` host/profile composition with fixture facter state.
 - E2E VM requires no GitHub/network input resolution.
 - E2E uses real Nix build, Disko, nixos-install, preservation, impermanence, authentication, and boot handoff.
@@ -786,6 +818,7 @@ Do not skip the host because the checked-in repository is still legacy.
 The VM fixture flake contains no remote inputs.
 
 Its `flake.nix` is generated by the outer Nix test and imports the already-resolved store paths for:
+
 - nixpkgs;
 - Disko;
 - preservation;
@@ -804,6 +837,7 @@ with network disabled.
 - [ ] **Step 3: Use real installer transaction with deterministic test inputs**
 
 Use real:
+
 - Git bundle clone;
 - Nix final-system build;
 - Disko;
@@ -817,6 +851,7 @@ Replace only physical facter probing with a deterministic facter fixture generat
 Provide a known test password through the same `systemd-ask-password` mechanism or its test agent.
 
 After installed boot assert:
+
 - the user can authenticate using the fixture password;
 - `sudo` succeeds using that password or the configured test PAM interaction;
 - no password setup command is required after boot.
@@ -828,6 +863,7 @@ Use a UEFI VM with ISO and target disk both attached.
 Let the installer finish and shut down/reboot via its real handoff logic.
 
 Restart/reconnect the same VM state with:
+
 - same disk;
 - same ISO still attached;
 - same firmware/NVRAM state.
@@ -845,6 +881,7 @@ Assert the matching installer-ID marker causes the installer to refuse Disko.
 - [ ] **Step 7: Verify storage/reset/persistence**
 
 Check:
+
 - `/@root`;
 - `/@nix`;
 - `/@persist`;
@@ -886,6 +923,7 @@ git commit -m "test: cover production and installer lifecycle"
 ### Task 12: Enable the Real Host and Verify the Rollout Boundary
 
 **Files:**
+
 - Modify: `nix/profiles/hosts/aarch64-linux-a/meta.nix`
 - Modify: `nix/profiles/hosts/aarch64-linux-a/nixos.nix`
 - Keep during migration: `nix/profiles/hosts/aarch64-linux-a/hardware-configuration.nix`
@@ -894,6 +932,7 @@ git commit -m "test: cover production and installer lifecycle"
 - Modify: `flake.nix` comments
 
 **Interfaces:**
+
 - Pre-bootstrap ext4 system remains evaluable through legacy hardware fallback.
 - Once installer-generated facter exists, real target enables Disko, preservation, impermanence, credentials, and handoff support.
 
@@ -940,6 +979,7 @@ Maintain:
 ```
 
 Document:
+
 - install uses embedded lock and never updates dependencies;
 - same ISO cannot destructively reinstall the completed target;
 - building a fresh ISO creates a new installer ID and permits deliberate reinstall;

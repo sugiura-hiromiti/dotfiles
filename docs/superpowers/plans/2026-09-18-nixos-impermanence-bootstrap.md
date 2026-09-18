@@ -22,8 +22,16 @@
 - Disko is the only owner of installed filesystem topology.
 - Impermanence owns only root-reset behavior.
 - Preservation remains intentionally narrow.
-- Default disk selection is the only internal, non-removable, non-hotplug whole disk other than the installer medium.
-- Disk ambiguity fails before destructive work.
+- Persistent destructive-disk overrides use only stable `/dev/disk/by-id/...`
+  identity; enumeration names such as `/dev/sdb` are never valid metadata.
+- Default disk selection is the only internal, non-removable, non-hotplug whole
+  disk other than the installer medium.
+- Disk identity is snapshotted and revalidated immediately before Disko.
+- Disk ambiguity or inability to identify the live installer backing device
+  fails before destructive work.
+- Installer Nix operations use both `--no-update-lock-file` and
+  `--no-write-lock-file`; a required lock mutation is a hard failure.
+- A host-derived Btrfs UUID must not exist on a non-target attached filesystem.
 - The same installer ISO must never destructively install twice on the same completed target.
 - A newly built ISO may deliberately reinstall and wipe the target.
 - Installer result symlinks live under the already ignored `result/` directory.
@@ -93,7 +101,7 @@ nix/
 
 - Produces normalized host fields:
   - `installer.enable :: bool`
-  - `installer.diskOverride :: null | string`
+  - `installer.disk.byId :: null | string`
   - `hardware.factsPath :: null | path`
   - `hardware.legacyConfigPath :: null | path`
   - `hardware.source :: "facter" | "legacy" | "unresolved"`
@@ -137,7 +145,10 @@ Expected: FAIL before the new fields exist.
 
 - [ ] **Step 4: Implement normalization**
 
-Derive facter/legacy paths with `builtins.pathExists`. Prefer facter over legacy. Validate a non-null disk override as an absolute path.
+Derive facter/legacy paths with `builtins.pathExists`. Prefer facter over
+legacy. Normalize `installer.disk.byId` to null or a non-empty
+`/dev/disk/by-id/...` whole-disk identity string. Reject persistent
+`/dev/sdX`, `/dev/vdX`, `/dev/nvmeXnY`, and other enumeration paths.
 
 - [ ] **Step 5: Rerun and commit**
 
@@ -224,6 +235,8 @@ git commit -m "feat: prefer facter hardware configuration"
 
 - Production NixOS construction imports the Disko provisioning module.
 - Btrfs UUID is deterministic from host identity.
+- Duplicate use of that UUID is detected fail-closed before provisioning and in
+  initrd before ephemeral-root mutation.
 - `provisioning.disk` defaults to `/dev/dotfiles-install-target`.
 
 - [ ] **Step 1: Add deterministic UUID helper**
@@ -259,7 +272,19 @@ disk = lib.mkOption {
 
 Pass the Disko flake input into `nix/configurations/nixos.nix`.
 
-- [ ] **Step 6: Update VM fixtures without changing their disk topology**
+- [ ] **Step 6: Add duplicate-filesystem-UUID safety**
+
+Before provisioning, use `blkid -t UUID=<uuid> -o device` (or an equivalent
+multi-result query) to enumerate all matching filesystems. A match on a
+non-target device aborts.
+
+In the ephemeral-root initrd path, require the configured Btrfs UUID to resolve
+to exactly one block filesystem before mounting/deleting the root subvolume.
+Zero or multiple matches fail boot closed.
+
+Add focused tests for duplicate UUID detection.
+
+- [ ] **Step 7: Update VM fixtures without changing their disk topology**
 
 Preserve each fixture's existing blank-disk mapping. Do not introduce a global
 `/dev/vda` assumption.
@@ -281,7 +306,7 @@ impermanence-vm installer:
 Any future fixture creates the logical symlink to its own existing blank target
 disk.
 
-- [ ] **Step 7: Run storage and impermanence checks, then commit**
+- [ ] **Step 8: Run storage and impermanence checks, then commit**
 
 ```bash
 nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).storage-provisioning
@@ -360,7 +385,7 @@ git commit -m "feat: declare facter-gated bootstrap policy"
 
 ---
 
-### Task 5: Implement Fail-Closed Disk Selection
+### Task 5: Implement Fail-Closed Physical-Disk Identity Selection
 
 **Files:**
 
@@ -373,33 +398,96 @@ git commit -m "feat: declare facter-gated bootstrap policy"
 
 **Interfaces:**
 
-- Function: `select-install-disk lsblk_json disk_override installer_parent -> string`
+- Configured selector: `installer.disk.byId :: null | /dev/disk/by-id/...`.
+- Persistent overrides using enumeration paths are rejected.
 - Automatic candidate:
-  - `TYPE=disk`
-  - non-removable
-  - non-hotplug
-  - not installer parent
-- Explicit overrides are canonicalized with `readlink -f`.
+  - whole disk;
+  - non-removable;
+  - non-hotplug;
+  - not the live installer backing device.
+- Selection returns an identity snapshot, not just a pathname:
+  - stable by-id when configured/discovered;
+  - resolved node;
+  - sysfs path;
+  - major:minor;
+  - serial/WWN when available.
+- Final revalidation proves physical identity, not merely device-node validity.
 
-- [ ] **Step 1: Add lsblk fixtures and failing assertions**
+- [ ] **Step 1: Add disk/identity fixtures**
 
-```nu
-assert equal (select-install-disk $one null null) "/dev/vda"
-assert error { select-install-disk $none null null }
-assert error { select-install-disk $two null null }
-assert equal (select-install-disk $two "/dev/vdb" null) "/dev/vdb"
-assert error { select-install-disk $two "/dev/vda" "/dev/vda" }
+Fixtures model one, zero, and two eligible disks plus stable
+`/dev/disk/by-id/test-*` aliases.
+
+- [ ] **Step 2: Write failing selection assertions**
+
+Cover:
+- automatic one-disk selection;
+- zero/multiple candidates abort;
+- configured stable by-id chooses the intended disk among multiple candidates;
+- `/dev/sdb` and other enumeration-path overrides are rejected;
+- configured by-id must resolve to a whole disk;
+- configured target must not be the installer backing identity.
+
+- [ ] **Step 3: Define live-installer backing identity**
+
+Resolve the source backing the live ISO mount, walk block-device ancestry to one
+whole-disk/optical ancestor, then snapshot sysfs + major:minor.
+
+If the live mount is block-backed but a unique parent identity cannot be
+derived, fail closed.
+
+- [ ] **Step 4: Implement target identity snapshot**
+
+For a configured by-id, resolve it and capture the identity tuple.
+
+For automatic single-disk selection, capture the same tuple for the sole
+candidate. Do not treat the current `/dev/sdX` spelling as identity.
+
+- [ ] **Step 5: Implement immediate-before-Disko revalidation**
+
+Configured case:
+
+```text
+resolve the same by-id again
+→ require same sysfs path
+→ require same major:minor
+→ require whole-disk eligibility
+→ require target != live-medium identity
 ```
 
-- [ ] **Step 2: Implement selection and explicit error messages**
+Automatic case:
 
-Ambiguity errors list the eligible candidates.
+```text
+rediscover eligible disks
+→ require exactly one
+→ require its sysfs/major:minor identity == captured identity
+```
 
-- [ ] **Step 3: Run and commit**
+- [ ] **Step 6: Add mandatory device-renumbering falsification test**
+
+Initial state:
+
+```text
+/dev/sdb -> DISK-B
+stable by-id target -> DISK-B
+```
+
+Before final validation swap enumeration:
+
+```text
+/dev/sdb -> DISK-A
+/dev/sda -> DISK-B
+stable by-id target -> DISK-B
+```
+
+Expected: installer continues to DISK-B by stable identity or aborts. It must
+never select DISK-A because it inherited the old kernel name.
+
+- [ ] **Step 7: Run and commit**
 
 ```bash
 git add nix/installer/disk-selector.nu nix/tests/installer nix/checks.nix
-git commit -m "feat: add fail-closed installer disk selection"
+git commit -m "feat: select installer target by physical identity"
 ```
 
 ---
@@ -419,12 +507,17 @@ git commit -m "feat: add fail-closed installer disk selection"
   - host
   - targetName
   - primaryAccount
-  - diskOverride
+  - diskById
   - installerId
+  - gitBranch
+  - canonicalOriginUrl
 - Embedded repository bundle: `/iso/dotfiles.bundle`.
 - Installer queries the final NixOS config for:
   - primary user home;
-  - bootstrap credential hash-file path.
+  - bootstrap credential hash-file path;
+  - primary UID;
+  - primary group;
+  - resolved primary-group GID.
 - Installer never invokes `nix flake update`.
 - Before Disko: evaluate correctness, but do not realize the large final system closure.
 - After Disko: `nixos-install` realizes/fetches the final closure directly into the target store at `/mnt/nix/store`.
@@ -463,10 +556,13 @@ Use `systemd-ask-password` twice, reject empty/mismatched input, hash with
 yescrypt, then discard plaintext. Do not write the hash until Disko has mounted
 the target persistence filesystem.
 
-- [ ] **Step 4: Implement clean embedded-repository setup**
+- [ ] **Step 4: Restore explicit Git branch and canonical remote**
 
-Clone the bundle, configure only a local installer commit identity, and verify
-embedded `HEAD`.
+Clone the embedded branch ref, require the expected local branch to be checked
+out at the embedded `HEAD`, set `origin` to the build-time canonical remote
+URL, and verify both before generating facts.
+
+Configure only a local installer commit identity for any facter commit.
 
 - [ ] **Step 5: Regenerate hardware facts without requiring a commit**
 
@@ -488,12 +584,15 @@ Do not stage or modify `flake.lock`.
 
 - [ ] **Step 6: Evaluate the final configuration before wipe**
 
-Use `nix eval` against the path flake and existing lock to force evaluation of
-at least:
+Use `nix eval --no-update-lock-file --no-write-lock-file` against the path
+flake and existing lock to force evaluation of at least:
 
 ```text
 nixosConfigurations.<target>.config.system.build.toplevel.drvPath
 nixosConfigurations.<target>.config.users.users.<primary>.home
+nixosConfigurations.<target>.config.users.users.<primary>.uid
+nixosConfigurations.<target>.config.users.users.<primary>.group
+nixosConfigurations.<target>.config.users.groups.<resolved-group>.gid
 nixosConfigurations.<target>.config.dotfiles.features.bootstrapCredentials.hashFile
 ```
 
@@ -502,15 +601,17 @@ not realize the full final system closure.
 
 - [ ] **Step 7: Realize only the Disko provisioning script before wipe**
 
-Build `config.system.build.diskoScript`. This is the comparatively small
+Build `config.system.build.diskoScript` with both `--no-update-lock-file` and `--no-write-lock-file`. This is the comparatively small
 provisioning closure needed to cross the destructive boundary; do not build
 `system.build.toplevel` here.
 
-- [ ] **Step 8: Resolve and revalidate the safe target disk**
+- [ ] **Step 8: Resolve/revalidate physical identity and UUID uniqueness**
 
-Use Task 5's selector. Immediately before destructive work, verify the selected
-device is still the same allowed whole disk and is still not the installer
-medium.
+Use Task 5's identity selector/revalidator. Immediately before destruction:
+- prove the selected physical identity is unchanged;
+- prove it differs from the live-medium identity;
+- enumerate filesystems with the deterministic Btrfs UUID and abort if any
+  matching filesystem is attached outside the selected target.
 
 - [ ] **Step 9: Execute Disko and materialize the secret**
 
@@ -530,6 +631,7 @@ Run the final install from the live repository:
 nixos-install \
   --root /mnt \
   --flake "path:$repo#$target" \
+  --no-update-lock-file \
   --no-write-lock-file \
   --no-channel-copy \
   --no-root-password
@@ -550,7 +652,9 @@ Copy the Git checkout to:
 /mnt/persist + resolved-home + /dotfiles
 ```
 
-and chown it to the resolved primary UID/GID.
+and chown it using the UID and primary-group GID evaluated from the final NixOS
+configuration. Verify the persisted checkout remains on `gitBranch` and
+`origin` equals `canonicalOriginUrl`.
 
 Do not delete `/mnt` or `/mnt/nix/store`; these are the mounted target
 filesystems. Final cleanup is sync + unmount, not wiping.
@@ -624,9 +728,20 @@ containing host and embedded Git commit.
 Then flush the marker and ESP filesystem before attempting any boot-variable
 changes. Only a successfully installed system receives the completion marker.
 
-- [ ] **Step 4: Configure persistent and immediate UEFI handoff**
+- [ ] **Step 4: Derive and prove exact UEFI handoff inputs**
 
-Using `efibootmgr`:
+Before touching NVRAM require:
+- UEFI boot and writable efivarfs;
+- the target ESP is a child partition of the already-proven target disk;
+- the ESP GPT type/partition number is known;
+- an architecture-matching installed EFI loader actually exists on that ESP.
+
+Derive the firmware loader path from the installed ESP contents; do not assume a
+pathname that was not verified.
+
+- [ ] **Step 5: Configure persistent and immediate UEFI handoff**
+
+Using the proven target disk, ESP partition number, and loader path:
 
 1. create or locate the installed target's UEFI boot entry;
 2. place it first in persistent `BootOrder`;
@@ -636,7 +751,7 @@ Using `efibootmgr`:
 Persistent `BootOrder` handles ordinary later reboots even while the USB/CD
 remains attached. `BootNext` handles the immediate first reboot.
 
-- [ ] **Step 5: Define safe fallback**
+- [ ] **Step 6: Define safe fallback**
 
 If UEFI handoff cannot be verified, do not blind-reboot.
 
@@ -645,7 +760,7 @@ nor kexec is possible, leave the installer stopped/failed. Because the marker
 was flushed first, another boot of the same ISO cannot wipe the completed
 target and will retry handoff.
 
-- [ ] **Step 6: Sync/unmount only after durable completion state**
+- [ ] **Step 7: Sync/unmount only after durable completion state**
 
 After marker + handoff state are safe:
 
@@ -658,7 +773,7 @@ sync
 Never wipe `/mnt`; it is only the live installer's mount namespace for the
 future installed filesystems.
 
-- [ ] **Step 7: Run tests and commit**
+- [ ] **Step 8: Run tests and commit**
 
 ```bash
 git add nix/installer/handoff.nu nix/installer/install.nu nix/tests/installer/handoff.nix nix/checks.nix
@@ -736,7 +851,9 @@ It accepts:
 - repository path;
 - host;
 - bundle path;
-- installer ID.
+- installer ID;
+- Git branch name;
+- canonical origin URL.
 
 It calls the flake's `mkInstallerIso`.
 
@@ -768,7 +885,9 @@ git commit -m "feat: add host-specific installer iso"
 - Output link:
   - `result/installer-HOST`
 - Each build receives a fresh installer UUID.
-- Bundle contains exact `HEAD` and reachable history.
+- Bundle contains the explicit current branch ref and exact `HEAD`.
+- Build metadata also carries the current branch name and canonical `origin`
+  URL.
 
 - [ ] **Step 1: Write failing wrapper tests**
 
@@ -778,7 +897,10 @@ Test:
 - tracked modification fails;
 - staged modification fails;
 - untracked file fails;
-- bundle verifies and contains exact HEAD;
+- detached HEAD is rejected;
+- missing canonical `origin` is rejected;
+- bundle verifies and contains the explicit current branch ref at exact HEAD;
+- branch name and canonical origin URL are passed into ISO construction;
 - installer IDs differ between two successful fixture invocations;
 - output link is under `result/` and therefore does not appear in `git status --porcelain --untracked-files=all`.
 
@@ -790,12 +912,25 @@ Reject any output from:
 git status --porcelain=v1 --untracked-files=all
 ```
 
-- [ ] **Step 3: Create bundle**
+- [ ] **Step 3: Capture Git provenance and create a branch bundle**
+
+Require:
 
 ```bash
-git bundle create "$tmp/dotfiles.bundle" HEAD
+branch="$(git symbolic-ref --quiet --short HEAD)"
+origin_url="$(git remote get-url origin)"
+```
+
+Fail if either is unavailable.
+
+Create:
+
+```bash
+git bundle create "$tmp/dotfiles.bundle" "refs/heads/$branch"
 git bundle verify "$tmp/dotfiles.bundle"
 ```
+
+Verify the bundled branch resolves to the exact build-time `HEAD`.
 
 - [ ] **Step 4: Generate installer ID**
 
@@ -813,6 +948,8 @@ nix build --impure \
   --argstr host "$host" \
   --argstr repositoryBundle "$tmp/dotfiles.bundle" \
   --argstr installerId "$installer_id" \
+  --argstr gitBranch "$branch" \
+  --argstr canonicalOriginUrl "$origin_url" \
   --out-link "$repository/result/installer-$host"
 ```
 
@@ -843,9 +980,14 @@ git commit -m "feat: add clean installer build entry point"
 
 Create a remote baseline, add a local-only commit, run the update fixture, and assert update succeeds.
 
-- [ ] **Step 2: Add installer no-update regression**
+- [ ] **Step 2: Add installer frozen-lock regressions**
 
-The installer fake `nix` command fails the test if arguments match `flake update` or any lock-writing update operation.
+The installer fake `nix` command fails the test if arguments match
+`flake update` or omit either `--no-update-lock-file` or
+`--no-write-lock-file` on installation-flake evaluation/build/install paths.
+
+Add a real fixture whose `flake.nix` would require a lock mutation. Evaluation
+and installation must fail rather than resolve an updated in-memory graph.
 
 - [ ] **Step 3: Run update and installer operation checks**
 
@@ -970,8 +1112,10 @@ Use one UEFI VM state with:
 Allow the installer to reboot itself. Do not simulate success by manually
 assigning another node's `state_dir`.
 
-Assert persistent `BootOrder` and immediate `BootNext` lead to the installed
-system.
+Assert the ESP and installed loader path were derived from the selected target,
+efivarfs/NVRAM were writable, and persistent `BootOrder` plus immediate
+`BootNext` lead to the installed system with firmware variables surviving
+reboot.
 
 - [ ] **Step 7: Exercise same-ISO re-entry**
 
@@ -990,7 +1134,16 @@ Changed facter data creates one local installer commit.
 Regenerating byte-identical facter data creates no empty commit and still
 permits installation/reinstallation.
 
-- [ ] **Step 9: Verify storage and custom-home behavior**
+- [ ] **Step 9: Verify storage identity, UUID uniqueness, Git provenance, and custom-home behavior**
+
+Add lifecycle assertions that:
+- device-node renumbering cannot redirect the selected physical target;
+- a non-target duplicate deterministic Btrfs UUID aborts before Disko;
+- the installed checkout is on the embedded branch and `origin` is the
+  canonical build-time remote;
+- checkout ownership equals the evaluated primary UID/GID.
+
+Then verify storage and custom-home behavior.
 
 Check `/@root`, `/@nix`, `/@persist`, persistence/reset behavior, and a
 fixture user with:
@@ -1056,7 +1209,7 @@ git commit -m "test: cover production and networked installer lifecycle"
 ```nix
 installer = {
   enable = true;
-  diskOverride = null;
+  disk.byId = null;
 };
 ```
 
@@ -1085,7 +1238,8 @@ Full networked installer E2E:
 ```
 
 Also document:
-- install uses the embedded lock and never updates dependencies;
+- install uses the embedded lock, passes `--no-update-lock-file`, and never
+  resolves a graph requiring lock mutation;
 - pre-wipe work evaluates the final config but does not build the full system;
 - after Disko, `nixos-install` realizes directly into the future `/nix/store`;
 - `/mnt` is only the live installer's mount point and is unmounted, not wiped;
@@ -1162,7 +1316,8 @@ boot installer
 → facter
 → optional facter commit
 → evaluate final configuration
-→ fail-closed disk validation
+→ stable physical-disk identity validation
+→ duplicate-filesystem-UUID rejection
 → Disko wipe/mount
 → persistent password hash
 → nixos-install builds/fetches into /mnt/nix/store

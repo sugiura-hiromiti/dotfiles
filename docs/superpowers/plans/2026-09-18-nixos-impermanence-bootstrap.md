@@ -569,6 +569,7 @@ git commit -m "feat: add two-phase bootstrap transaction"
 **Files:**
 
 - Create: `nix/installer/handoff.nu`
+- Modify: `nix/installer/install.nu`
 - Create: `nix/tests/installer/handoff.nix`
 - Modify: `nix/checks.nix`
 
@@ -592,9 +593,10 @@ Cover:
 - completion marker must be written/flushed before any firmware handoff command;
 - handoff failure after marker creation leaves the target guarded.
 
-- [ ] **Step 2: Detect same-ISO completion before destructive installation**
+- [ ] **Step 2: Integrate same-ISO detection before password/reinstall work**
 
-After selecting the target disk, inspect its existing ESP read-only.
+Move the installer's initial target selection ahead of password acquisition and
+inspect the selected disk's existing ESP read-only.
 
 If the same installer ID is present:
 
@@ -659,7 +661,7 @@ future installed filesystems.
 - [ ] **Step 7: Run tests and commit**
 
 ```bash
-git add nix/installer/handoff.nu nix/tests/installer/handoff.nix nix/checks.nix
+git add nix/installer/handoff.nu nix/installer/install.nu nix/tests/installer/handoff.nix nix/checks.nix
 git commit -m "feat: guard reentry and persist boot handoff"
 ```
 

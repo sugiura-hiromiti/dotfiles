@@ -1,73 +1,123 @@
 # NixOS Impermanence Bootstrap and Installer Design
 
 Date: 2026-09-18
+Revised: 2026-09-19
 
 ## Status
 
-Proposed design for review.
+Approved design, revised after implementation-plan review.
 
 ## Purpose
 
-Complete the NixOS impermanence implementation so that storage layout,
-hardware discovery, installation, and steady-state updates have clear ownership
-and can be automated without relying on remembered manual installation steps.
+Complete the NixOS impermanence implementation so storage layout, hardware
+discovery, installation, authentication, boot handoff, and steady-state updates
+have clear ownership and do not depend on remembered manual procedures.
 
-The design intentionally separates machine creation/recreation from daily
-configuration updates:
+The design separates machine creation/recreation from daily configuration
+updates:
 
 - a host-specific installer ISO creates or recreates a machine;
 - `nix run .#update` evolves an already managed machine.
 
+## Nix boundary
+
+The complete workflow is Nix-managed, but not every operation is a pure Nix
+expression.
+
+Nix owns:
+
+- installer ISO construction;
+- the exact Git revision and `flake.lock` used by the installer;
+- packages and scripts used by the installer;
+- systemd service ordering and failure behavior;
+- NixOS user/authentication policy;
+- Disko storage topology;
+- preservation and impermanence policy;
+- tests for the installation lifecycle.
+
+Runtime installer code built by Nix performs operations that inherently require
+the live machine:
+
+- hardware discovery;
+- interactive secret entry;
+- disk discovery;
+- destructive formatting;
+- writing runtime secret material outside the Nix store;
+- UEFI boot handoff and reboot/kexec.
+
+Runtime behavior MUST NOT introduce a second configuration model independent of
+Nix.
+
 ## Goals
 
-1. Make the dotfiles repository the declarative source of truth.
-2. Remove generated `hardware-configuration.nix` filesystem declarations from
+1. Make the dotfiles repository at installer-build time the declarative source
+   of truth.
+2. Freeze dependency selection at installer-build time through the committed
+   `flake.lock`.
+3. Remove generated `hardware-configuration.nix` filesystem declarations from
    the storage ownership model.
-3. Store discovered hardware facts in the repository.
-4. Give Disko sole ownership of the installed disk and filesystem topology.
-5. Give impermanence sole ownership of ephemeral-root lifecycle behavior.
-6. Make first installation and reinstallation unattended and fail-closed.
-7. Minimize human memory and ad-hoc installation procedure.
-8. Keep the normal update path non-destructive and conceptually separate from
-   installation.
-9. Preserve the existing narrow persistence policy rather than broadening it as
-   part of this work.
-10. Test both the lower-level impermanence/storage modules and the real
-    host/bootstrap integration path.
+4. Store discovered non-secret hardware facts in the repository.
+5. Give Disko sole ownership of installed disk/filesystem topology.
+6. Give impermanence sole ownership of ephemeral-root lifecycle behavior.
+7. Automate installation except for deliberate secret entry.
+8. Make destructive behavior fail-closed and safe against accidental installer
+   re-entry.
+9. Ensure the primary administrator can log in locally and use sudo immediately
+   after the first installed boot without running `passwd`.
+10. Keep `.#update` non-destructive and separate from installation.
+11. Preserve the existing narrow persistence policy.
+12. Test lower-level storage/impermanence behavior, the real production profile,
+    and the complete installer lifecycle.
 
 ## Non-goals
 
-- Preserving data from an existing installation when the installer ISO is
-  booted.
-- Recovering unpushed commits or other state from the target disk before a
-  reinstall.
-- Requiring installation to work without network access for Nix fetches.
+- Preserving data from an existing target installation during reinstall.
+- Recovering unpushed commits or other state from the old target disk.
+- Updating flake inputs during installation.
 - Making GitHub the authoritative source at installation time.
 - Automatically pushing installer-created commits.
+- Storing password hashes or other secrets in Git or the Nix store.
 - Folding destructive bootstrap behavior into `.#update`.
 
 ## Source-of-truth model
 
-The source of truth for an installer image is the dotfiles repository state on
-the machine that builds that image.
+The source of truth for an installer image is the clean committed dotfiles
+repository on the machine that builds that image.
 
-A host-specific ISO is a deployment artifact derived from one exact committed
-Git revision.
+A host-specific ISO is a deployment artifact derived from:
 
-The running target machine is a realization of that artifact. It may later
-advance its local Git history through normal work and `.#update`, but booting
-an installer ISO again deliberately recreates the target from the state
-captured by that ISO plus installer-generated hardware/dependency updates.
+- one exact Git `HEAD`;
+- the `flake.lock` committed at that `HEAD`;
+- host identity and installer policy from that repository.
+
+Installation MUST NOT run `nix flake update`.
+
+The installer may fetch locked Nix inputs or substitutes when they are not
+already available, but it MUST use the dependency graph described by the
+embedded `flake.lock`.
+
+Therefore:
+
+```text
+clean Git HEAD + flake.lock
+          ↓
+      host ISO
+          ↓
+generate facter.json only
+          ↓
+evaluate/build with same flake.lock
+          ↓
+install
+```
 
 ### Clean-tree invariant
 
-A host ISO MUST be built only from a clean Git working tree.
+A host ISO MUST be built only from a clean Git worktree.
 
-The ISO builder MUST fail if tracked or untracked changes would make the image
-different from the committed revision it claims to represent.
+The ISO builder MUST fail when tracked, staged, or untracked state would make
+the artifact differ from the committed revision it claims to represent.
 
-The embedded repository state MUST therefore begin installation clean and at a
-known commit.
+The embedded repository starts installation clean and at a known commit.
 
 ## Host lifecycle
 
@@ -75,30 +125,25 @@ A host has two valid declarative phases.
 
 ### Bootstrap-capable host
 
-The repository contains enough static information to build its installer ISO,
-for example:
+Static repository state is sufficient to build an installer ISO:
 
 - host identity;
 - architecture/system;
-- users and accounts;
-- roles and variants;
+- users/accounts;
+- roles/variants;
 - runtime policy;
-- impermanence policy;
-- storage policy;
+- impermanence/storage policy;
 - target-disk selector;
-- host-specific installer options.
+- installer policy.
 
 Hardware facts may be absent.
 
 ### Resolved host
 
-The bootstrap-capable host plus committed hardware facts is sufficient to
-evaluate the final installed NixOS configuration.
+The bootstrap-capable host plus `facter.json` is sufficient to evaluate the
+final installed NixOS configuration.
 
-The hardware-facts artifact is `facter.json`, generated by `nixos-facter`.
-
-The repository layout should make this distinction explicit. A representative
-host directory is:
+Representative layout:
 
 ```text
 nix/profiles/hosts/<host>/
@@ -107,75 +152,92 @@ nix/profiles/hosts/<host>/
 └── facter.json
 ```
 
-`facter.json` may be absent before the first installation of a host.
+`facter.json` may be absent before first installation.
 
 ## Hardware ownership
 
 `nixos-facter` owns observed hardware facts.
 
-Those facts are committed to the host's directory in the dotfiles repository.
+The installer regenerates the host's `facter.json` on every installation.
+Hardware facts are observed non-secret state and are committed locally to the
+embedded dotfiles Git history.
 
-The installer MUST regenerate `facter.json` on every installation, even when
-a previous version is already embedded in the ISO. Hardware facts are observed
-state and are allowed to change when hardware changes.
+The final host configuration uses:
 
-The final host configuration MUST use the generated facts rather than a copied
-`hardware-configuration.nix`.
-
-The installer/bootstrap configuration MUST NOT require `facter.json` in order
-to build the ISO. The final installed host configuration may require it.
-
-This creates two separate evaluation products:
-
-```text
-static host specification
-        │
-        ├──> bootstrap ISO configuration
-        │       (does not require facter.json)
-        │
-        └──> final host configuration
-                (requires facter.json)
+```nix
+hardware.facter.reportPath = ./facter.json;
 ```
+
+rather than generated `hardware-configuration.nix`.
+
+A legacy `hardware-configuration.nix` may remain temporarily as a migration
+fallback for the currently running pre-bootstrap installation, but it is not
+the final storage/hardware ownership model.
+
+The bootstrap ISO must evaluate without `facter.json`; the final target must
+be evaluated only after facts have been generated.
 
 ## Storage ownership
 
-Disko is the single owner of the installed storage topology.
+Disko is the only owner of the installed storage topology.
 
-The current target layout remains:
+Target layout:
 
-- GPT disk;
-- EFI system partition mounted at `/boot`;
+- GPT;
+- EFI System Partition mounted at `/boot`;
 - Btrfs system filesystem;
-- root subvolume mounted at `/`;
-- Nix subvolume mounted at `/nix`;
-- persistence subvolume mounted at `/persist`.
+- `@root` mounted at `/`;
+- `@nix` mounted at `/nix`;
+- `@persist` mounted at `/persist`.
 
-The existing storage options remain the canonical names for the Btrfs device
-and subvolumes unless implementation work shows a concrete reason to rename
-them.
+The final NixOS `fileSystems` definitions come from Disko, not generated
+hardware configuration.
 
-The final installed NixOS configuration MUST obtain its `fileSystems`
-configuration from Disko rather than from generated
-`hardware-configuration.nix` declarations.
+The physical disk is chosen at runtime. Nix evaluation refers to a fixed logical
+device path such as `/dev/dotfiles-install-target`; the installer creates that
+symlink only after safe target selection.
 
 ## Impermanence ownership
 
-The impermanence feature owns runtime ephemeral-root semantics, not disk
-partitioning.
+Impermanence owns runtime ephemeral-root behavior, not partitioning.
 
 When enabled it:
 
 - enables ephemeral root;
-- points ephemeral-root logic at the storage module's Btrfs device and root
-  subvolume;
-- marks `/nix` and `/persist` as needed for boot;
-- relies on the preservation feature for explicitly persisted state.
+- uses the storage module's Btrfs device/root subvolume;
+- marks `/nix` and `/persist` needed for boot;
+- relies on preservation for the explicit persistence set.
 
-The existing initrd behavior that deletes and recreates the root subvolume
-before mounting the real root remains the core reset mechanism.
+The current initrd behavior that deletes and recreates the root subvolume before
+mounting the real root remains the reset mechanism.
 
-The storage layer must already describe a Btrfs root layout before that runtime
-behavior is valid.
+## Authentication model
+
+The primary administrator password is chosen interactively during installation.
+
+Nix declares the policy:
+
+- the primary account has a `hashedPasswordFile` under `/persist`;
+- user state is immutable/declarative with `users.mutableUsers = false`;
+- SSH authorized keys remain declared in repository metadata;
+- the password hash file is outside Git and outside the Nix store.
+
+The installer performs only secret materialization:
+
+1. prompt for the password twice before destructive work;
+2. reject mismatch/empty input;
+3. hash the password in installer RAM;
+4. keep plaintext only in memory for the shortest possible duration;
+5. after `/persist` exists, write exactly the hash to the configured persistent
+   path with restrictive permissions.
+
+After installation and after every ephemeral-root reconstruction, NixOS
+activation reads the same persistent hash file. The administrator does not need
+to run `passwd` after installation.
+
+The installed-system test MUST prove both local password authentication policy
+and non-interactive ability to obtain administrator privileges in the test
+fixture.
 
 ## Installer artifact
 
@@ -183,266 +245,312 @@ There is one custom installer ISO per host.
 
 The ISO carries:
 
-- the host identity;
-- the exact clean Git repository state from which the ISO was built;
-- enough installer configuration and tooling to perform hardware discovery,
-  Git operations, Disko provisioning, and NixOS installation.
+- host identity;
+- exact clean Git repository history from the build machine;
+- the committed `flake.lock`;
+- Nix-built installer tooling;
+- a unique installer artifact ID used only for destructive re-entry safety.
 
-The ISO does NOT need to contain the complete final Nix store closure.
-Installation may use the network for Nix fetches and substitutes.
+The artifact ID is safety metadata, not configuration state.
 
-The installer may run `nix flake update`.
+The ISO explicitly enables:
 
-GitHub write credentials are not required.
+```nix
+nix.settings.experimental-features = [
+  "nix-command"
+  "flakes"
+];
+```
+
+No per-command experimental-feature flag is required.
+
+The ISO does not need to contain the complete final closure; installation may
+fetch objects addressed by the existing lock file.
 
 ## Target-disk policy
 
-The default target selector is:
+Default target selection is:
 
-> the only internal, non-removable whole-disk device.
+> the only internal, non-removable, non-hotplug whole disk that is not the live
+> installer backing disk.
 
 Selection is fail-closed:
 
-- exactly one candidate: use it;
-- zero candidates: abort before any destructive operation;
-- multiple candidates: abort unless the host declares an explicit override.
+- one candidate: select it;
+- zero: abort;
+- multiple: abort unless host metadata supplies an explicit override.
 
-A host-specific override may identify the intended whole disk with a stable
-device path or other explicit selector.
+An explicit override is canonicalized before comparison and must resolve to a
+whole disk that is not the installer medium.
 
-The implementation MUST exclude the live installer medium and non-disk devices
-from consideration.
-
-The exact device-discovery mechanism is an implementation detail, but it must
-be testable independently from destructive provisioning.
+The selected physical device is linked to the logical Disko device only after
+all non-destructive preflight checks have succeeded.
 
 ## Installation semantics
 
-Booting the host-specific installer ISO means:
+Booting the host-specific ISO means:
 
-> recreate this host from the declarative state represented by this ISO.
+> create/recreate this host from the exact repository and dependency lock
+> represented by this installer.
 
-It has factory-reset semantics.
+A deliberate reinstall wipes the target disk completely. Existing `/persist`,
+old Git state, and other target state are not merged.
 
-The existing target installation, including an existing `/persist`, is not
-authoritative and is not preserved.
+The installer transaction is:
 
-The installer performs the following transaction:
+1. start from the clean repository embedded in the ISO;
+2. identify the host from the ISO;
+3. prompt for and hash the primary administrator password;
+4. regenerate `facter.json`;
+5. stage `facter.json`;
+6. evaluate/build the complete target configuration using the embedded
+   `flake.lock`;
+7. evaluate the resolved primary user's home directory and password-hash path
+   from the final NixOS configuration;
+8. build the Disko provisioning script;
+9. commit only `facter.json` as installer-generated Git state;
+10. resolve exactly one safe target disk;
+11. check destructive re-entry guards before touching the disk;
+12. create `/dev/dotfiles-install-target`;
+13. run Disko, wiping/recreating the target;
+14. materialize the password hash under `/persist`;
+15. install the already-built NixOS system;
+16. copy the modified Git checkout to the persistent backing path corresponding
+    to the resolved user home;
+17. establish and verify automatic boot handoff;
+18. record handoff/re-entry safety state;
+19. reboot or kexec only after the handoff state is safe.
 
-1. Start from the clean repository revision embedded in the ISO.
-2. Identify the host from the ISO; no runtime host guessing is performed.
-3. Discover the target hardware with `nixos-facter`.
-4. Regenerate the host's `facter.json` unconditionally.
-5. Run `nix flake update`.
-6. Evaluate the complete target host configuration using the new hardware facts
-   and updated lock file.
-7. Create a local Git commit containing the installer-generated declarative
-   changes, normally `facter.json` and `flake.lock`.
-8. Resolve the target disk according to the host disk-selection policy.
-9. Abort unless the configuration evaluation and disk selection both succeed.
-10. Run destructive Disko provisioning, wiping and recreating the complete
-    target disk.
-11. Install the already evaluated target NixOS configuration.
-12. Place the modified dotfiles Git checkout, including its `.git` history and
-    installer-created commit, onto persistent storage in the installed system.
-13. Reboot into the installed system.
+The installer MUST NOT modify `flake.lock` and MUST NOT push Git state.
 
-The installer MUST NOT push the generated commit.
+## Boot handoff and destructive re-entry safety
 
-A failure before the destructive Disko step leaves the target disk untouched.
-Failures after destructive provisioning are recoverable by booting the same ISO
-and reinstalling; no attempt is made to recover the partially modified target.
+Automatic reboot must not allow firmware that prefers USB/CD to start another
+destructive installation.
+
+Safety uses two layers.
+
+### Firmware/runtime handoff
+
+The installer attempts an automatic handoff to the installed system using UEFI
+boot variables/one-shot boot selection where available. A Nix-built kexec
+handoff may be used as a fallback for the immediate first boot.
+
+The installer verifies a handoff mechanism before issuing an ordinary reboot.
+
+### Re-entry guard
+
+The ISO carries a unique installer artifact ID.
+
+After successful provisioning/install, the target stores a marker containing
+that installer ID on persistent boot-visible storage.
+
+If the same ISO boots again and finds its completion/pending marker on the
+selected target, it MUST refuse to run Disko again.
+
+A newly built ISO has a new installer artifact ID and may deliberately reinstall
+the host.
+
+This makes repeated boot of the same attached installation medium safe without
+requiring manual removal for correctness.
+
+## Persistent checkout path
+
+The installer MUST NOT assume `/home/<user>`.
+
+It evaluates the resolved final NixOS value:
+
+```text
+config.users.users.<primary>.home
+```
+
+and places the repository in the corresponding persistent backing path:
+
+```text
+/mnt/persist + resolved-home + /dotfiles
+```
+
+This matches preservation's use of the resolved NixOS user home and avoids
+duplicating home-directory policy in installer code.
 
 ## Installer-generated Git state
 
-The installer starts from a clean commit captured by the ISO.
+The installer starts from a clean embedded Git commit.
 
-Therefore unrelated pre-existing working-tree changes are impossible by
-construction.
+Its only repository mutation is the generated host `facter.json`.
 
-The installer is allowed to modify only files that are outputs of the
-bootstrap process. Initially these are:
+The installer commit does not need to exist on a remote.
 
-- the host's `facter.json`;
-- `flake.lock`.
+A local branch ahead of its remote is valid and MUST NOT prevent `.#update`
+from working.
 
-Those changes are committed locally before provisioning.
-
-The commit does not need to exist on a remote before installation proceeds.
-
-After boot, the resulting checkout may be ahead of `origin/main`. That is a
-valid steady state and MUST NOT prevent `.#update` from running.
-
-Pushing is synchronization/backup, not a prerequisite for machine management.
+Pushing remains synchronization/backup, not a prerequisite for machine
+management.
 
 ## Steady-state update path
 
-`nix run .#update` remains a non-destructive steady-state operation.
+`nix run .#update` remains the only dependency-update path.
 
-Its responsibility is to evolve an already managed machine, not to bootstrap
-or repartition one.
-
-The current high-level behavior remains:
+Its responsibilities remain:
 
 1. create a candidate source tree;
 2. update flake inputs;
 3. evaluate selected targets;
-4. require authorization where needed;
-5. publish the resulting `flake.lock` into the working repository;
-6. activate the selected Home Manager, NixOS, or nix-darwin targets.
+4. authorize where necessary;
+5. publish the resulting `flake.lock`;
+6. activate Home Manager/NixOS/nix-darwin targets.
 
-For NixOS, activation continues to use `nixos-rebuild switch`.
+For NixOS activation it continues to use `nixos-rebuild switch`.
 
-`.#update` MUST tolerate a local branch that is ahead of its remote and MUST
-NOT require installer-created commits to have been pushed.
-
-## Relationship to the current implementation
-
-The repository already contains most lower-level mechanisms:
-
-- Disko-backed storage provisioning;
-- Btrfs `@root`, `@nix`, and `@persist` layout;
-- ephemeral-root deletion/recreation in initrd;
-- preservation integration;
-- evaluation tests for impermanence/storage;
-- VM tests that provision a blank disk and boot an impermanent system.
-
-The missing architectural layer is host-aware bootstrap:
-
-- replace host dependence on generated `hardware-configuration.nix` with
-  committed `nixos-facter` facts;
-- add a bootstrap/ISO output that can exist before facts exist;
-- add host-specific installer ISO generation;
-- add deterministic disk selection;
-- add installer orchestration;
-- preserve the installer-mutated Git checkout on the installed host;
-- exercise this path using a real host/profile configuration rather than only
-  hand-built test fixtures.
+The installer never takes over these responsibilities.
 
 ## Safety model
 
-The installer is intentionally destructive, so safety comes from deterministic
-preconditions rather than interactive confirmation.
-
-Before the first destructive operation, all of the following MUST have
-succeeded:
+Before Disko is allowed to run, all of the following must have succeeded:
 
 - host identity is known from the ISO;
-- repository state is known;
-- hardware discovery completed;
-- `facter.json` was generated;
-- flake inputs were updated successfully;
-- the final host configuration evaluated successfully;
-- the target disk selector resolved to exactly one allowed whole disk;
-- the selected disk is not the live installer medium.
+- embedded repository state is valid;
+- password entry succeeded and only its in-memory hash remains;
+- hardware discovery succeeded;
+- `facter.json` exists;
+- final target evaluation/build succeeded using the embedded lock;
+- resolved administrator home/password paths were obtained from the final
+  configuration;
+- Disko script build succeeded;
+- target disk selection resolved exactly one permitted whole disk;
+- live installer medium exclusion succeeded;
+- same-installer re-entry protection says destructive installation is allowed.
 
-Any ambiguity is an error.
-
-No destructive action is taken as a fallback.
+Any ambiguity is an error. No destructive action is a fallback.
 
 ## Testing strategy
 
-Testing is layered so each responsibility can fail independently.
-
 ### Existing lower-level tests
 
-Retain and extend the existing tests for:
+Retain and extend:
 
 - preservation;
-- ephemeral root;
+- ephemeral-root;
 - impermanence evaluation;
 - storage provisioning evaluation;
-- storage provisioning VM behavior;
-- impermanence VM behavior.
+- storage provisioning VM;
+- impermanence VM.
 
-These prove the storage and runtime-reset mechanisms independently of the
-installer.
+### Hardware/source tests
 
-### Hardware-facts tests
+Prove:
 
-Add tests that prove:
+- bootstrap ISO evaluates without facts;
+- final target consumes facter facts;
+- facter takes precedence over legacy hardware configuration;
+- hardware facts do not own filesystem topology.
 
-- final host evaluation requires/consumes `facter.json`;
-- bootstrap ISO evaluation does not require `facter.json`;
-- regeneration can replace an existing facts file;
-- hardware facts do not become a second owner of storage topology.
+### Authentication tests
 
-### Disk-selector tests
+Prove:
 
-Test the selector as a pure/non-destructive unit where possible:
+- Nix declares the primary user's persistent `hashedPasswordFile`;
+- mutable user state is disabled;
+- installer secret input never enters Git/store fixtures;
+- after installed boot, the configured password works;
+- administrative sudo works in the test fixture;
+- the same authentication survives an ephemeral-root reboot.
 
-- one eligible disk -> select it;
-- no eligible disks -> fail;
-- multiple eligible disks -> fail;
-- explicit host override -> select the override;
-- installer medium -> excluded.
+### Production migration test
 
-### Host-profile integration test
+Do not skip the real host merely because it is currently legacy.
 
-Add a top-level test that evaluates an actual production host/profile through
-the same module assembly used by normal flake outputs.
+Construct a temporary target using the actual `aarch64-linux-a` host/profile
+metadata and module composition, override only hardware state with fixture
+`facter.json`, then evaluate all production runtime targets.
 
-This closes the gap where isolated fixtures can pass while a real host still
-imports conflicting filesystem configuration.
+Assert Disko/facter/impermanence ownership there before real rollout.
 
-### Installer end-to-end VM test
+### Installer end-to-end VM
 
-Build a host-specific installer artifact for a test host and exercise the full
-bootstrap lifecycle in a VM:
+The VM test must be network-independent.
 
-1. boot installer;
-2. generate hardware facts;
-3. update/evaluate target configuration;
-4. resolve the intended test disk;
-5. provision it;
-6. install;
-7. reboot from the installed disk;
-8. verify Btrfs mount roots for `/`, `/nix`, and `/persist`;
-9. verify root-disposable state disappears after reboot;
-10. verify explicitly persisted state survives;
-11. verify the installed dotfiles checkout contains the installer-created
-    commit.
+Use a fixture repository whose locked inputs point to local/store-backed source
+fixtures and ensure required source/build closures are dependencies of the test.
 
-Add a multi-disk negative test proving unattended installation aborts before
-destruction when the selector is ambiguous.
+Run real:
 
-## Migration from the current repository
+- final Nix evaluation/build;
+- Disko;
+- `nixos-install`;
+- preservation;
+- ephemeral-root behavior.
 
-Migration should proceed without changing the semantics of the already working
-impermanence core.
+Hardware probing may be replaced by a deterministic test facter generator.
 
-At a high level:
+The test must:
 
-1. Introduce `nixos-facter` support and a host facts path.
-2. Split host bootstrap evaluation from final host evaluation so ISO generation
-   does not require facts.
-3. Move the real host away from importing generated
-   `hardware-configuration.nix` as its hardware source.
-4. Ensure Disko is the only filesystem topology owner in the final host.
-5. Add the disk-selector abstraction.
-6. Add host-specific installer ISO output and orchestration.
-7. Add real-host evaluation coverage.
-8. Add installer end-to-end coverage.
-9. Only after the new bootstrap path is proven, use the installer to recreate a
-   real machine with the impermanent layout.
+1. boot the installer ISO;
+2. supply a test password through the installer interaction path;
+3. generate hardware facts;
+4. build from the existing lock without `flake update`;
+5. install to a blank disk;
+6. leave the installer ISO attached;
+7. exercise the installer's automatic handoff/reboot rather than manually
+   switching VM state;
+8. prove the installed system boots;
+9. prove Disko was not executed twice;
+10. verify Btrfs `@root`, `@nix`, `@persist`;
+11. verify persisted/disposable state across another reboot;
+12. verify administrator authentication/sudo;
+13. verify the installed repository contains the facter commit;
+14. verify a custom-home fixture places the checkout under the correct persistent
+    backing path.
+
+Add negative tests for zero/multiple target disks and same-ISO destructive
+re-entry.
+
+## Build output hygiene
+
+The installer result symlink lives under the repository's already ignored
+`result/` directory, for example:
+
+```text
+result/installer-aarch64-linux-a
+```
+
+A successful installer build therefore does not make the clean-tree check fail
+on the next invocation.
+
+## Migration from current repository
+
+1. model bootstrap/facter state in host metadata;
+2. centralize facter-vs-legacy hardware selection;
+3. make Disko available in production NixOS construction;
+4. add persistent administrator credential policy;
+5. add disk selection;
+6. add installer transaction without `flake update`;
+7. add re-entry protection and automatic boot handoff;
+8. add host-specific ISO construction;
+9. add clean-tree installer build app;
+10. add real-host-with-fixture-facts migration coverage;
+11. add offline full-lifecycle installer VM coverage;
+12. gate the real host's Btrfs/impermanence policy on facter migration;
+13. only then perform destructive real-machine rollout.
 
 ## Design invariants
 
-The implementation is complete when these statements are true:
+Implementation is complete when:
 
-1. A host ISO can be built from a clean committed repository even if that host
-   has no `facter.json` yet.
-2. Booting that ISO can complete installation without asking the user to choose
-   a host or, on a normal single-disk machine, a target disk.
-3. The final installed host configuration is evaluated only after hardware
-   facts exist.
-4. Hardware facts are committed in the repository.
-5. Disko is the only owner of installed filesystem topology.
-6. Impermanence does not provision disks; it only manages ephemeral runtime
-   behavior.
-7. Reinstalling from the ISO wipes the target disk completely.
-8. Existing target state is never merged into the new installation.
-9. `.#update` never performs destructive bootstrap work.
-10. A local unpushed installer commit does not block daily updates.
-11. Ambiguous disk selection fails before destructive action.
-12. Tests exercise both isolated mechanisms and the real host/bootstrap path.
+1. a host ISO builds from clean committed state without `facter.json`;
+2. installer dependency selection is exactly the embedded `flake.lock`;
+3. installation never runs `nix flake update`;
+4. the user chooses the administrator password during installation and never
+   needs a post-install `passwd` step;
+5. the password hash remains outside Git and the Nix store;
+6. final target evaluation occurs only after hardware facts exist;
+7. only `facter.json` is committed by the installer;
+8. Disko is the sole filesystem topology owner;
+9. impermanence owns only runtime root reset;
+10. target selection fails closed;
+11. repeated boot of the same installer artifact cannot wipe the target again;
+12. installer result links do not dirty the repository;
+13. repository persistence follows the resolved NixOS home directory;
+14. `.#update` remains the steady-state dependency-update/activation path;
+15. tests exercise lower-level mechanisms, the actual production profile with
+    fixture facts, and the complete offline installer lifecycle.

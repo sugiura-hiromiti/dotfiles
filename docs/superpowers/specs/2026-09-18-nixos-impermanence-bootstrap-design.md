@@ -92,9 +92,15 @@ A host-specific ISO is a deployment artifact derived from:
 
 Installation MUST NOT run `nix flake update`.
 
+Every installer-side Nix command that consumes the installation flake MUST pass
+both `--no-update-lock-file` and `--no-write-lock-file`. The first forbids
+Nix from resolving a graph that would require lock changes; the second forbids
+writing any generated lock state. A required lock change is therefore a hard
+pre-destructive failure.
+
 The installer may fetch locked Nix inputs or substitutes when they are not
-already available, but it MUST use the dependency graph described by the
-embedded `flake.lock`.
+already available, but it MUST use exactly the dependency graph described by
+the embedded `flake.lock`.
 
 Therefore:
 
@@ -117,14 +123,28 @@ The installer may use the network to fetch locked flake inputs, substitutes, and
 build dependencies. Network availability does not permit dependency selection
 to change: the embedded `flake.lock` remains authoritative.
 
-### Clean-tree invariant
+### Clean-tree and Git-provenance invariant
 
-A host ISO MUST be built only from a clean Git worktree.
+A host ISO MUST be built only from a clean Git worktree that is attached to an
+explicit local branch and has a canonical `origin` URL.
 
-The ISO builder MUST fail when tracked, staged, or untracked state would make
-the artifact differ from the committed revision it claims to represent.
+The ISO builder MUST fail when:
 
-The embedded repository starts installation clean and at a known commit.
+- tracked, staged, or untracked state would make the artifact differ from the
+  committed revision it claims to represent;
+- `HEAD` is detached;
+- the current branch cannot be named;
+- the canonical `origin` URL is absent.
+
+The builder embeds:
+
+- the exact committed `HEAD`;
+- the explicit current branch ref, not anonymous `HEAD` only;
+- the canonical `origin` URL.
+
+The installer clones that branch from the bundle, restores `origin` to the
+canonical URL, and verifies branch/HEAD before generating installer state. The
+persisted checkout therefore has a normal branch/remote relationship.
 
 ## Host lifecycle
 
@@ -200,9 +220,19 @@ Target layout:
 The final NixOS `fileSystems` definitions come from Disko, not generated
 hardware configuration.
 
+The current design keeps a deterministic host-derived Btrfs filesystem UUID.
+Because an old clone of the same host can carry the same UUID, uniqueness is a
+required safety invariant:
+
+- before Disko, any matching filesystem on a non-target attached device aborts
+  installation;
+- a matching filesystem on the selected target may be replaced by reinstall;
+- at boot/initrd time, the configured UUID must resolve to exactly one block
+  filesystem or boot fails closed before ephemeral-root mutation.
+
 The physical disk is chosen at runtime. Nix evaluation refers to a fixed logical
 device path such as `/dev/dotfiles-install-target`; the installer creates that
-symlink only after safe target selection.
+symlink only after safe target-identity proof.
 
 ## Impermanence ownership
 
@@ -273,9 +303,21 @@ No per-command experimental-feature flag is required.
 The ISO does not need to contain the complete final closure; installation may
 fetch objects addressed by the existing lock file.
 
-## Target-disk policy
+## Target-disk identity and selection policy
 
-Default target selection is:
+A destructive target is a physical-disk identity, not a kernel device pathname.
+
+Host metadata may specify:
+
+```nix
+installer.disk.byId = "/dev/disk/by-id/...";
+```
+
+The configured value MUST identify a whole disk through `/dev/disk/by-id/`.
+Persistent overrides using enumeration paths such as `/dev/sda`,
+`/dev/vda`, or `/dev/nvme0n1` are rejected.
+
+Without an explicit `byId`, automatic selection is:
 
 > the only internal, non-removable, non-hotplug whole disk that is not the live
 > installer backing disk.
@@ -284,13 +326,30 @@ Selection is fail-closed:
 
 - one candidate: select it;
 - zero: abort;
-- multiple: abort unless host metadata supplies an explicit override.
+- multiple: abort unless host metadata supplies `installer.disk.byId`.
 
-An explicit override is canonicalized before comparison and must resolve to a
-whole disk that is not the installer medium.
+At initial selection the installer captures an identity snapshot containing:
 
-The selected physical device is linked to the logical Disko device only after
-all non-destructive preflight checks have succeeded.
+- configured/discovered stable by-id path when available;
+- resolved device node;
+- sysfs device path;
+- major:minor device number;
+- serial/WWN when exposed.
+
+Immediately before Disko it resolves the stable identifier again when one
+exists and proves the selected disk still matches the captured sysfs and
+major:minor identity. In the automatic one-disk case it repeats candidate
+discovery and proves the sole candidate is the same captured device. Merely
+proving that the old `/dev/sdX` pathname is still a valid disk is insufficient.
+
+The live installer medium is derived independently for the current boot:
+resolve the block source backing the mounted live ISO, walk block-device
+ancestry to its unique whole-disk or optical ancestor, and capture its
+sysfs/major:minor identity. If the live medium cannot be reduced to one
+trustworthy backing identity, destructive installation aborts.
+
+The selected physical device is linked to `/dev/dotfiles-install-target` only
+after this identity proof succeeds.
 
 ## Installation semantics
 
@@ -314,29 +373,33 @@ The installer transaction is:
 7. regenerate and stage `facter.json`;
 8. evaluate the complete final target configuration using the embedded
    `flake.lock`, without realizing the full system closure;
-9. evaluate the resolved primary user's home directory and password-hash path
-   from that final configuration;
+9. evaluate the resolved primary user's home directory, password-hash path,
+   UID, primary group, and that group's GID from the final configuration;
 10. realize the comparatively small Disko provisioning script required for the
     destructive step;
 11. if staged `facter.json` differs from embedded `HEAD`, commit it; if facts
     are unchanged, continue from the embedded commit without creating an empty
     commit;
-12. revalidate immediately before destruction that the selected device is still
-    the same allowed whole disk and is still not the installer medium;
-13. create `/dev/dotfiles-install-target`;
-14. run Disko, wiping/recreating the target and mounting it below `/mnt`;
-15. materialize the password hash under the mounted target `/persist`;
-16. run `nixos-install --root /mnt --flake ...` with lock writing disabled;
-    it fetches/builds as needed and realizes the final system directly into the
-    target store at `/mnt/nix/store`;
-17. copy the Git checkout to the persistent backing path corresponding to the
-    resolved user home;
-18. write the installer completion marker to the target ESP;
-19. durably flush the marker and ESP before attempting boot handoff;
-20. create/find the installed UEFI boot entry, make it first in persistent
-    `BootOrder`, set it as `BootNext`, and verify both settings;
-21. sync and unmount the target filesystems;
-22. reboot once into the installed system, or use the defined safe fallback
+12. reject any non-target attached filesystem that already carries the
+    deterministic host Btrfs UUID;
+13. revalidate immediately before destruction that the selected physical-disk
+    identity is unchanged and differs from the captured installer-medium
+    identity;
+14. create `/dev/dotfiles-install-target`;
+15. run Disko, wiping/recreating the target and mounting it below `/mnt`;
+16. materialize the password hash under the mounted target `/persist`;
+17. run `nixos-install --root /mnt --flake ... --no-update-lock-file
+    --no-write-lock-file`; it fetches/builds as needed and realizes the final
+    system directly into the target store at `/mnt/nix/store`;
+18. copy the Git checkout to the persistent backing path corresponding to the
+    resolved user home and chown it using the evaluated UID/GID;
+19. write the installer completion marker to the target ESP;
+20. durably flush the marker and ESP before attempting boot handoff;
+21. derive and verify the target ESP/loader, create/find the installed UEFI boot
+    entry, make it first in persistent `BootOrder`, set it as `BootNext`,
+    and verify both settings;
+22. sync and unmount the target filesystems;
+23. reboot once into the installed system, or use the defined safe fallback
     when verified UEFI handoff is unavailable.
 
 The installer MUST NOT modify `flake.lock` and MUST NOT push Git state.
@@ -350,12 +413,27 @@ Safety uses two layers.
 
 ### Firmware/runtime handoff
 
-The normal UEFI path configures both persistent and immediate boot selection:
+The installer does not rely on `boot.loader.efi.canTouchEfiVariables`; the
+installed system may keep that option false. The installer owns this one-time
+handoff operation explicitly.
 
-- the installed boot entry is placed first in persistent `BootOrder`;
-- the same installed entry is selected as one-shot `BootNext` for the
-  immediate reboot;
-- both settings are read back and verified before reboot.
+Before changing NVRAM it MUST prove:
+
+- the target is booted in UEFI mode and efivarfs is present and writable;
+- the ESP is exactly the EFI System Partition belonging to the already-proven
+  target physical disk;
+- its partition number is known;
+- an architecture-matching installed EFI loader exists on that ESP;
+- the loader path used for the firmware entry is the path actually present on
+  the target ESP, not a guessed pathname.
+
+The normal UEFI path then:
+
+1. creates or locates the firmware entry using the proven target disk, ESP
+   partition number, and installed loader path;
+2. places that entry first in persistent `BootOrder`;
+3. sets the same entry as one-shot `BootNext`;
+4. reads NVRAM back and verifies both values before reboot.
 
 A Nix-built kexec handoff may be used as a fallback for the immediate first boot
 when verified UEFI handoff is unavailable. The installer does not perform an
@@ -409,10 +487,13 @@ system closure before formatting.
 
 The installer MUST NOT assume `/home/<user>`.
 
-It evaluates the resolved final NixOS value:
+It evaluates the resolved final NixOS account values:
 
 ```text
 config.users.users.<primary>.home
+config.users.users.<primary>.uid
+config.users.users.<primary>.group
+config.users.groups.<resolved-group>.gid
 ```
 
 and places the repository in the corresponding persistent backing path:
@@ -422,11 +503,13 @@ and places the repository in the corresponding persistent backing path:
 ```
 
 This matches preservation's use of the resolved NixOS user home and avoids
-duplicating home-directory policy in installer code.
+duplicating account policy in installer code. Ownership is applied with the
+evaluated UID/GID rather than reconstructed from metadata.
 
 ## Installer-generated Git state
 
-The installer starts from a clean embedded Git commit.
+The installer starts from the exact embedded branch at the exact embedded Git
+commit, with `origin` restored to the canonical build-time remote URL.
 
 Its only permitted repository mutation is the generated host `facter.json`.
 
@@ -468,12 +551,16 @@ Before Disko is allowed to run, all of the following must have succeeded:
 - password entry succeeded and only its in-memory hash remains;
 - hardware discovery succeeded;
 - `facter.json` exists;
+- every Nix flake operation forbids lock updates and lock writes;
 - final target evaluation succeeded using the embedded lock;
-- resolved administrator home/password paths were obtained from the final
-  configuration;
+- resolved administrator home/password/UID/GID values were obtained from the
+  final configuration;
 - the Disko provisioning script was realized successfully;
-- target disk selection resolved exactly one permitted whole disk;
-- live installer medium exclusion succeeded;
+- target disk selection resolved one intended physical-disk identity;
+- the selected identity is unchanged at final revalidation;
+- live installer medium identity was derived unambiguously and differs from the
+  target;
+- no non-target attached filesystem duplicates the configured Btrfs UUID;
 - same-installer re-entry protection says destructive installation is allowed.
 
 Any ambiguity is an error. No destructive action is a fallback.
@@ -565,7 +652,19 @@ The networked test must:
 15. verify a custom-home fixture places the checkout under the correct
     persistent backing path;
 16. force the same ISO to boot again and prove it automatically hands off
-    without formatting.
+    without formatting;
+17. swap kernel device-node assignments between selection and final validation
+    and prove the physical target identity is preserved or the installer aborts
+    before Disko;
+18. prove an unstable configured path such as `/dev/sdb` is rejected;
+19. prove a flake requiring a lock mutation fails under
+    `--no-update-lock-file`;
+20. attach a non-target filesystem with the same deterministic Btrfs UUID and
+    prove installation aborts;
+21. verify the persisted Git checkout is on the embedded branch and its
+    `origin` is the canonical remote;
+22. prove ESP/partition/loader/NVRAM handoff inputs are derived from the selected
+    target and persistent NVRAM survives reboot.
 
 Add negative tests for zero/multiple target disks.
 
@@ -605,7 +704,8 @@ on the next invocation.
 Implementation is complete when:
 
 1. a host ISO builds from clean committed state without `facter.json`;
-2. installer dependency selection is exactly the embedded `flake.lock`;
+2. installer dependency selection is exactly the embedded `flake.lock`, and
+   any operation requiring lock mutation fails;
 3. installation never runs `nix flake update`;
 4. the user chooses the administrator password during installation and never
    needs a post-install `passwd` step;
@@ -616,12 +716,21 @@ Implementation is complete when:
 8. only changed `facter.json` may be committed by the installer;
 9. Disko is the sole filesystem topology owner;
 10. impermanence owns only runtime root reset;
-11. target selection fails closed;
-12. the completion marker is durably stored before boot handoff begins;
-13. persistent boot priority favors the installed disk, and same-ISO re-entry
+11. destructive selection follows stable physical-disk identity, never a
+    persistent `/dev/sdX`-style name;
+12. the live installer medium is identified unambiguously and cannot be the
+    destructive target;
+13. the host-derived Btrfs UUID is unique among attached non-target filesystems,
+    and initrd boot fails closed if it is ambiguous;
+14. the completion marker is durably stored before boot handoff begins;
+15. persistent boot priority favors the installed disk, and same-ISO re-entry
     automatically hands off without formatting;
-14. installer result links do not dirty the repository;
-15. repository persistence follows the resolved NixOS home directory;
-16. `.#update` remains the steady-state dependency-update/activation path;
-17. tests exercise lower-level mechanisms, the actual production profile with
-    fixture facts, and the complete networked installer lifecycle.
+16. the installed checkout is on the build-time branch with the canonical
+    `origin`, and installer facter commits may leave it ahead of that remote;
+17. installer result links do not dirty the repository;
+18. repository persistence and ownership follow resolved NixOS home/UID/GID
+    values;
+19. `.#update` remains the steady-state dependency-update/activation path;
+20. tests exercise lower-level mechanisms, destructive identity falsification,
+    the actual production profile with fixture facts, and the complete
+    networked installer lifecycle.

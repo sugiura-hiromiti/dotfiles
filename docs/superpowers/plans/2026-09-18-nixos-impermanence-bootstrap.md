@@ -764,6 +764,7 @@ Keep tty2 as the diagnostic autologin console. Configure
 `dotfiles-installer.service` with:
 
 ```nix
+wantedBy = [ "multi-user.target" ];
 after = [ "network-online.target" ];
 wants = [ "network-online.target" ];
 conflicts = [
@@ -772,13 +773,12 @@ conflicts = [
 ];
 
 serviceConfig = {
+  Type = "oneshot";
   StandardInput = "tty-force";
   StandardOutput = "tty";
   StandardError = "tty";
   TTYPath = "/dev/tty1";
   TTYReset = true;
-  TTYVHangup = true;
-  TTYVTDisallocate = true;
 };
 ```
 
@@ -832,7 +832,7 @@ Do **not** prefix the repository with `path:`. The already-ignored
 Add checks proving:
 
 - the ISO package evaluates/builds without `facter.json`;
-- installer service is enabled;
+- installer service is enabled and wanted by `multi-user.target`;
 - `getty.target` does not pull tty1 and instead keeps tty2 available;
 - installer service is configured for `/dev/tty1` with `tty-force`;
 - no Git bundle or repository snapshot is embedded as source state.

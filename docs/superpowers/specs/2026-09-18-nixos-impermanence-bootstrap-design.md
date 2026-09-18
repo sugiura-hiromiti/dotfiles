@@ -306,34 +306,37 @@ The installer transaction is:
 
 1. start from the clean repository embedded in the ISO;
 2. identify the host from the ISO;
-3. prompt for and hash the primary administrator password;
-4. regenerate `facter.json`;
-5. stage `facter.json`;
-6. evaluate the complete final target configuration using the embedded
+3. resolve the intended target disk using static host policy;
+4. inspect that disk for the same installer artifact's completion marker;
+5. if the same marker exists, skip all reinstall/password work and immediately
+   repair/verify boot handoff to the installed system;
+6. otherwise prompt for and hash the primary administrator password;
+7. regenerate and stage `facter.json`;
+8. evaluate the complete final target configuration using the embedded
    `flake.lock`, without realizing the full system closure;
-7. evaluate the resolved primary user's home directory and password-hash path
+9. evaluate the resolved primary user's home directory and password-hash path
    from that final configuration;
-8. realize the comparatively small Disko provisioning script required for the
-   destructive step;
-9. if staged `facter.json` differs from embedded `HEAD`, commit it; if facts
-   are unchanged, continue from the embedded commit without creating an empty
-   commit;
-10. resolve exactly one safe target disk;
-11. check destructive re-entry guards before touching the disk;
-12. create `/dev/dotfiles-install-target`;
-13. run Disko, wiping/recreating the target and mounting it below `/mnt`;
-14. materialize the password hash under the mounted target `/persist`;
-15. run `nixos-install --root /mnt --flake ...` with lock writing disabled;
+10. realize the comparatively small Disko provisioning script required for the
+    destructive step;
+11. if staged `facter.json` differs from embedded `HEAD`, commit it; if facts
+    are unchanged, continue from the embedded commit without creating an empty
+    commit;
+12. revalidate immediately before destruction that the selected device is still
+    the same allowed whole disk and is still not the installer medium;
+13. create `/dev/dotfiles-install-target`;
+14. run Disko, wiping/recreating the target and mounting it below `/mnt`;
+15. materialize the password hash under the mounted target `/persist`;
+16. run `nixos-install --root /mnt --flake ...` with lock writing disabled;
     it fetches/builds as needed and realizes the final system directly into the
     target store at `/mnt/nix/store`;
-16. copy the Git checkout to the persistent backing path corresponding to the
+17. copy the Git checkout to the persistent backing path corresponding to the
     resolved user home;
-17. write the installer completion marker to the target ESP;
-18. durably flush the marker and ESP before attempting boot handoff;
-19. create/find the installed UEFI boot entry, make it first in persistent
+18. write the installer completion marker to the target ESP;
+19. durably flush the marker and ESP before attempting boot handoff;
+20. create/find the installed UEFI boot entry, make it first in persistent
     `BootOrder`, set it as `BootNext`, and verify both settings;
-20. sync and unmount the target filesystems;
-21. reboot once into the installed system, or use the defined safe fallback
+21. sync and unmount the target filesystems;
+22. reboot once into the installed system, or use the defined safe fallback
     when verified UEFI handoff is unavailable.
 
 The installer MUST NOT modify `flake.lock` and MUST NOT push Git state.

@@ -16,15 +16,19 @@ The installer consumes the **current dotfiles filesystem snapshot**. Git
 history, commits, branches, remotes, staging state, and repository cleanliness
 are outside the installer correctness model.
 
-The two operator workflows are:
+The installer operator workflow is:
 
 ```text
-nix run path:.#build-installer -- --host HOST
-nix run path:.#update
+nix run .#build-installer -- --host HOST
 ```
 
-The explicit `path:.` is intentional: operational commands use the current
-filesystem contents rather than Git-flake visibility rules.
+The app itself snapshots the current working directory at runtime. The
+installer does not derive source identity from the flake revision used to load
+the app.
+
+The existing `.#update` workflow is not redesigned here. Making a persisted
+plain snapshot independently usable by that workflow without VCS metadata is a
+separate follow-up.
 
 ## Supported environment
 
@@ -49,30 +53,39 @@ boot handoff, kexec fallback, installer re-entry protocol, or
 
 ## Dotfiles source snapshot
 
-The build input is a filtered immutable Nix store snapshot of the current
-filesystem tree.
+The installer payload is a filtered immutable Nix store snapshot of the
+operator's current dotfiles directory.
 
-For each system, derive:
+`build-installer` determines the source root from its current working
+directory and invokes an impure Nix evaluation whose only impurity is that
+filesystem path. The pinned nixpkgs used to build the app provides:
 
 ```nix
-dotfilesSource =
-  pkgs.nix-gitignore.gitignoreSource [ ] self.outPath;
+pkgs.nix-gitignore.gitignoreSource [ ] root
 ```
 
-When the operator invokes the flake with `path:.`, `self.outPath` represents
-the current filesystem contents. `nix-gitignore` then applies the root
-`.gitignore` plus its built-in `.git` exclusion.
+The resulting path is copied to the Nix store before the ISO build.
 
-The `.gitignore` file is therefore reused only as a declarative source-filter
-policy. No Git executable, index, commit, branch, remote, or history is consulted
-to construct the snapshot.
+This ordering is important: the source filter runs **before** the dotfiles tree
+is added to the store. The builder must not use top-level `path:.` as its
+bootstrap invocation, because Nix's path fetcher would first copy ignored local
+state into the store and only then allow later filtering.
 
-This prevents ignored local state such as credentials, histories, caches,
-build outputs, `.jj`, and `.direnv` from entering the installer source.
+The root `.gitignore` is reused only as a declarative source-filter policy.
+`nix-gitignore` also excludes `.git`. No Git executable, index, commit,
+branch, remote, or history is consulted to construct the installer snapshot.
 
-The snapshot is immutable once copied to the Nix store. The builder and ISO use
-that exact store path, so there is no source TOCTOU between validation and
-build.
+Therefore:
+
+- current non-ignored tracked files are included;
+- current non-ignored untracked files are included;
+- ignored local state such as credentials, histories, caches, build outputs,
+  `.jj`, and `.direnv` is excluded;
+- Git metadata is excluded.
+
+Once produced, the store snapshot is immutable. The ISO build consumes that
+exact store path, so later mutation of the working directory cannot change the
+artifact being built.
 
 ## Generic installer target
 
@@ -409,31 +422,14 @@ and assigns the evaluated UID/GID.
 The installed dotfiles directory is a plain filesystem snapshot. It contains no
 required Git metadata and makes no promise about branch, remote, or history.
 
-## Update workflow without Git metadata
+## Update workflow boundary
 
-The existing update transaction remains responsible for:
+The existing update workflow is not modified by this installer project.
 
-- copying the current dotfiles source to a temporary candidate;
-- running `nix flake update` on that candidate;
-- validating target evaluations;
-- publishing the new `flake.lock`;
-- activating validated targets.
-
-Its operation lock must not depend on a Git common directory.
-
-Use a repository-local transient lock directory:
-
-```text
-<dotfiles>/.dotfiles-update.lock
-```
-
-and include that path in the source-ignore policy so it never enters an
-installer/update snapshot.
-
-Concurrency guarantees are scoped to one dotfiles directory. Cross-copy Git
-worktree coordination is no longer part of the contract.
-
-The update app also consumes the same filtered dotfiles snapshot policy.
+The installed dotfiles directory is deliberately a plain snapshot with no
+required Git metadata. If the user wants `.#update` to operate directly from
+that directory without recreating VCS metadata, that is a separate design and
+implementation task.
 
 ## Testing strategy
 
@@ -454,10 +450,12 @@ Keep four complementary levels of coverage.
 - frozen-lock rejection;
 - explicit installer runtime executable closure;
 - tty1 masks and `Type=exec`;
-- Git-independent update locking.
+- snapshot construction includes non-ignored current files and excludes
+  ignore-policy files.
 
-Because tests use explicit `path:.`, newly created implementation files are
-visible before they are committed.
+Development-time raw-flake tests may require newly created implementation paths
+to be made visible to Nix before evaluation. That is a development workflow
+concern, not part of installer source identity.
 
 ### Deterministic impermanence VM
 
@@ -505,12 +503,6 @@ boots the actual generated ISO and verifies:
 The E2E may require network access for locked Nix dependencies, but it does not
 contact a Git repository or require a public commit.
 
-### Update regression
-
-The existing update tests are converted to ordinary directories rather than Git
-repositories. They continue to prove candidate isolation, failure behavior,
-activation ordering, and single-directory mutual exclusion.
-
 ## Non-goals
 
 The installer does not support or reason about:
@@ -535,13 +527,15 @@ The installer does not support or reason about:
 - EFI-variable writes;
 - automatic firmware handoff;
 - kexec;
-- dependency updates during installation.
+- dependency updates during installation;
+- redesigning the existing update workflow or reconstructing VCS metadata after
+  installation.
 
 ## Completion invariants
 
 Implementation is complete when:
 
-1. `nix run path:.#build-installer -- --host HOST` works generically;
+1. `nix run .#build-installer -- --host HOST` works generically;
 2. the ISO embeds the exact filtered current dotfiles snapshot;
 3. Git metadata/history is absent from installer source identity and runtime;
 4. ignored local state is excluded from the embedded snapshot;
@@ -561,6 +555,7 @@ Implementation is complete when:
 14. systemd-boot fallback boot works without EFI-variable writes;
 15. successful installation ends with sync, unmount, and poweroff;
 16. persisted dotfiles work without Git metadata;
-17. `path:.#update` no longer requires a Git working tree;
+17. update/VCS setup for the persisted plain snapshot remains explicitly
+    outside this installer project's scope;
 18. structural checks, one deterministic impermanence VM, and one lifecycle E2E
     cover the supported contract.

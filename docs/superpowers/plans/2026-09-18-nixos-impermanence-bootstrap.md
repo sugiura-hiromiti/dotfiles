@@ -358,7 +358,7 @@ The embedded expression is:
 
 ```nix
 let
-  pkgs = import <PINNED_NIXPKGS_STORE_PATH> { };
+  pkgs = import ${pkgs.path} { };
   root = builtins.toPath (builtins.getEnv "DOTFILES_SOURCE_ROOT");
 in
 toString (pkgs.nix-gitignore.gitignoreSource [ ] root)
@@ -422,9 +422,16 @@ is exactly the immutable filtered source that the ISO must embed.
 
 It derives EFI architecture from the ISO platform.
 
-At this task boundary, wire a placeholder test executable from the Nix store
-that prints its immutable inputs and exits non-zero; Task 3 replaces it with
-the real installer script.
+At this task boundary, wire this explicit temporary executable from the Nix
+store; Task 3 replaces it with the real installer script:
+
+```nix
+pkgs.writeShellScript "dotfiles-installer-unimplemented" ''
+  echo "installer transaction not implemented" >&2
+  echo "host=${host} target=${target} source=${source}" >&2
+  exit 1
+''
+```
 
 This permits testing package generation/source embedding/console wiring without
 coupling Task 2 to transaction implementation.

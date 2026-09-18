@@ -297,6 +297,9 @@ git commit -m "feat: add nixos installer transaction"
 - Create: `nix/apps/build-installer/{default.nix,build.nu,tests/run.sh}`
 - Create: `nix/tests/installer/e2e.nix`
 - Create: `nix/apps/test-installer-e2e/default.nix`
+- Create: `nix/tests/fixtures/source-filter/.gitignore`
+- Create: `nix/tests/fixtures/source-filter/kept.txt`
+- Create: `nix/tests/fixtures/source-filter/ignored/secret.txt`
 - Modify: `nix/flake/{apps,default}.nix`
 - Modify: `nix/checks.nix`
 - Modify: `README.org`, `flake.nix`
@@ -319,7 +322,18 @@ dotfilesSource =
 
 Pass `sourceRoot` and `dotfilesSource` to both apps.
 
-Add a tiny fixture check proving an ordinary file is present and an ignored file is absent from the filtered result.
+Create this fixture:
+
+```text
+nix/tests/fixtures/source-filter/.gitignore     -> /ignored/
+nix/tests/fixtures/source-filter/kept.txt       -> kept
+nix/tests/fixtures/source-filter/ignored/secret.txt -> secret
+```
+
+Force-add the ignored fixture file when preparing the implementation worktree so
+the development flake can see it. Add a check applying
+`pkgs.nix-gitignore.gitignoreSource [ ]` to the fixture and assert
+`kept.txt` exists while `ignored/secret.txt` does not.
 
 - [ ] **Step 2: Generate installer packages**
 
@@ -437,6 +451,6 @@ If virtualization is unavailable, report it rather than weakening the E2E. Do no
 - [ ] **Step 8: Commit**
 
 ```bash
-git add nix/installer/iso.nix nix/flake/installer.nix nix/apps/build-installer nix/tests/installer/e2e.nix nix/apps/test-installer-e2e nix/flake/apps.nix nix/flake/default.nix nix/checks.nix README.org flake.nix
+git add nix/installer/iso.nix nix/flake/installer.nix nix/apps/build-installer nix/tests/installer/e2e.nix nix/apps/test-installer-e2e nix/tests/fixtures/source-filter nix/flake/apps.nix nix/flake/default.nix nix/checks.nix README.org flake.nix
 git commit -m "feat: add snapshot-based nixos installer"
 ```

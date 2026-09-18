@@ -58,7 +58,6 @@ nix/
 │   └── stable-uuid.nix
 ├── modules/nixos/features/
 │   ├── bootstrap-credentials.nix
-│   ├── installer-handoff.nix
 │   ├── storage/
 │   └── impermanence/
 └── tests/
@@ -501,8 +500,6 @@ git commit -m "feat: add locked bootstrap transaction"
 
 **Files:**
 - Create: `nix/installer/handoff.nu`
-- Create: `nix/modules/nixos/features/installer-handoff.nix`
-- Modify: `nix/modules/nixos/default.nix`
 - Create: `nix/tests/installer/handoff.nix`
 - Modify: `nix/checks.nix`
 
@@ -556,14 +553,10 @@ If UEFI one-shot handoff cannot be established, do not perform an unsafe blind r
 
 Use a Nix-built kexec handoff when the target exposes a usable kexec script/tree. If neither verified UEFI handoff nor kexec is available, leave the installer failed/stopped without rerunning Disko; the same-ID marker makes subsequent accidental ISO boots non-destructive.
 
-- [ ] **Step 6: Add installed-system marker awareness module**
-
-The installed module does not delete the same-ID completion marker. It may expose the marker path/status for diagnostics, but the persistent guard remains so the same physical ISO cannot wipe the completed installation later.
-
-- [ ] **Step 7: Run tests and commit**
+- [ ] **Step 6: Run tests and commit**
 
 ```bash
-git add nix/installer/handoff.nu nix/modules/nixos/features/installer-handoff.nix nix/modules/nixos/default.nix nix/tests/installer/handoff.nix nix/checks.nix
+git add nix/installer/handoff.nu nix/tests/installer/handoff.nix nix/checks.nix
 git commit -m "feat: guard installer reentry and hand off boot"
 ```
 
@@ -922,7 +915,6 @@ dotfiles.features.storage.provisioning.enable = true;
 dotfiles.features.preservation.enable = true;
 dotfiles.features.impermanence.enable = true;
 dotfiles.features.bootstrapCredentials.enable = true;
-dotfiles.features.installerHandoff.enable = true;
 ```
 
 The current legacy installation therefore never interprets its ext4 root as the future Btrfs layout during a normal `.#update`.

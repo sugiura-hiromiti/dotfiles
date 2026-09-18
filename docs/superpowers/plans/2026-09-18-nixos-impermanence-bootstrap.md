@@ -681,7 +681,7 @@ Run `sync`, recursively unmount `/mnt`, verify it is no longer mounted, then
 
 Earlier failures remain on the installer for diagnosis.
 
-- [ ] **Step 12: Replace ISO placeholder with real installer**
+- [ ] **Step 12: Replace the temporary failing stub with the real installer**
 
 Wire `mkInstallerScript` into `iso.nix`.
 

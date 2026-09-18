@@ -99,7 +99,7 @@ Each meta.nix contains:
 
 ~~~nix
 {
-  system = builtins.currentSystem;
+  system = "x86_64-linux";
   accounts = {
     primary = "tester";
     users.tester = {
@@ -355,7 +355,6 @@ git commit -m "feat: prefer facter hardware configuration"
 Create nix/lib/stable-uuid.nix:
 
 ~~~nix
-{ lib }:
 name:
 let
   hex = builtins.substring 0 32 (
@@ -573,6 +572,7 @@ Order:
 
 ~~~text
 clone /iso/dotfiles.bundle
+→ configure local Git author as "dotfiles installer" <installer@localhost.invalid>
 → regenerate host facter.json
 → git add facter.json
 → nix flake update
@@ -600,9 +600,11 @@ let disko_script = (
 )
 ~~~
 
-- [ ] **Step 5: Exclude the live installer disk**
+- [ ] **Step 5: Exclude the live installer disk and canonicalize overrides**
 
 Read /iso's source with findmnt. If it is a partition, use lsblk to resolve its whole-disk parent. If /iso is not backed by a block device, use null; removable/hotplug filtering still applies.
+
+When diskOverride is non-null, resolve it with readlink -f before validating it against lsblk. Reject an override that does not resolve to TYPE=disk or resolves to the installer backing disk.
 
 - [ ] **Step 6: Implement destructive tail**
 
@@ -666,11 +668,11 @@ Do not create a separate installer naming convention for NixOS targets.
 Use the minimal installer module:
 
 ~~~nix
-nixpkgs.lib.nixosSystem {
+(nixpkgs.lib.nixosSystem {
   inherit (hostConfig) system;
   modules = [
     (nixpkgs + "/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix")
-    {
+    ({ pkgs, ... }: {
       isoImage.contents = [
         {
           source = repositoryBundle;
@@ -693,14 +695,15 @@ nixpkgs.lib.nixosSystem {
         serviceConfig = {
           Type = "oneshot";
           ExecStart = installerScript;
+          ExecStartPost = "${pkgs.systemd}/bin/systemctl reboot";
         };
       };
-    }
+    })
   ];
-}
+}).config.system.build.isoImage
 ~~~
 
-The script reboots only on success. A failed service remains in the live installer environment.
+ExecStartPost runs only after a successful installer command, so failed installs remain in the live installer environment for diagnosis.
 
 - [ ] **Step 4: Export mkInstallerIso through a flake lib output**
 
@@ -791,7 +794,7 @@ for logging and verification.
 - [ ] **Step 4: Create the bundle**
 
 ~~~bash
-git bundle create "$tmp/dotfiles.bundle" --all
+git bundle create "$tmp/dotfiles.bundle" HEAD
 git bundle verify "$tmp/dotfiles.bundle"
 ~~~
 

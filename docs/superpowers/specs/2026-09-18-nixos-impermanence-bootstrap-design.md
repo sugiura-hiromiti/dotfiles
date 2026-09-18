@@ -26,8 +26,9 @@ machinery.
 
 The first implementation supports only:
 
-- UEFI machines with writable EFI variables;
-- systemd-boot;
+- UEFI machines whose firmware can boot the standard fallback EFI loader from
+  the sole internal disk;
+- systemd-boot with EFI-variable writes disabled;
 - network access during installation;
 - installer media that cannot qualify as the install target:
   removable/hotplug USB, optical media, or virtual CD;
@@ -61,7 +62,7 @@ The runtime installer performs only live-machine effects:
 - Disko execution;
 - persistent secret materialization;
 - `nixos-install`;
-- verification that the installed systemd-boot/EFI entry exists;
+- verification that systemd-boot installed the standard fallback EFI loader;
 - syncing, unmounting, and powering off.
 
 Runtime code MUST NOT introduce a second configuration model independent of
@@ -256,21 +257,31 @@ The installed system uses systemd-boot and declares:
 
 ```nix
 boot.loader.systemd-boot.enable = true;
-boot.loader.efi.canTouchEfiVariables = true;
+boot.loader.efi.canTouchEfiVariables = false;
 ```
 
-Writable EFI variables are therefore part of the supported installation
-environment.
+The design intentionally does not write UEFI NVRAM variables.
 
 Bootloader installation is owned by the final NixOS configuration and
-`nixos-install`. The custom installer does not create or reorder firmware
-entries itself and does not use `BootOrder`, `BootNext`, or kexec logic.
+`nixos-install`. With EFI-variable writes disabled, systemd-boot is installed
+to the ESP including the standard architecture-specific fallback loader under:
 
-After `nixos-install`, the installer verifies that the declared systemd-boot
-installation and an EFI firmware entry for the installed system exist. Failure
-is an installation failure; it does not fall back to custom handoff logic.
+```text
+/EFI/BOOT/BOOT<ARCH>.EFI
+```
 
-Successful installation still ends with poweroff. The user removes/ejects the
+For the current aarch64 host this is `BOOTAA64.EFI`.
+
+The supported firmware contract is therefore:
+
+> after installer media is removed, firmware can boot the standard fallback
+> EFI loader from the sole internal disk.
+
+After `nixos-install`, the installer verifies that the expected fallback loader
+exists on the target ESP. It does not inspect or modify EFI variables and does
+not use `BootOrder`, `BootNext`, firmware-entry creation, or kexec logic.
+
+Successful installation ends with poweroff. The user removes/ejects the
 installer medium before powering the machine on.
 
 ## Impermanence
@@ -339,7 +350,7 @@ nixos-install --root /mnt --flake ...
   --no-update-lock-file
   --no-write-lock-file
 ↓
-verify systemd-boot + installed EFI firmware entry
+verify systemd-boot fallback EFI loader on the target ESP
 ↓
 persist Git checkout under the resolved home backing path
 ↓
@@ -428,7 +439,7 @@ It covers:
 7. Disko provisioning;
 8. target-store `nixos-install`;
 9. persistent checkout and UID/GID ownership;
-10. systemd-boot installation and persistent EFI firmware entry;
+10. systemd-boot installation and fallback EFI loader on the target ESP;
 11. installer poweroff;
 12. boot of the installed system after installer media removal;
 13. password login and sudo;
@@ -481,7 +492,8 @@ The first implementation does not support:
 - private/authenticated Git origins;
 - detached or dirty installer-build worktrees;
 - custom installer-side firmware boot-order manipulation or boot handoff;
-- firmware environments where EFI variables are not writable;
+- firmware that cannot boot the standard fallback EFI loader from the sole
+  internal disk;
 - automatic same-media re-entry recovery;
 - kexec fallback;
 - simultaneous attached clones of one host;
@@ -509,8 +521,9 @@ Implementation is complete when:
 9. the administrator password hash remains outside Git and the Nix store;
 10. the full final closure is realized only after the target `/nix` exists;
 11. the persistent checkout uses evaluated home/UID/GID values;
-12. systemd-boot and its EFI firmware entry are installed by the final NixOS
-    configuration through `nixos-install`;
+12. systemd-boot and the standard fallback EFI loader are installed by the
+    final NixOS configuration through `nixos-install`, without EFI-variable
+    writes;
 13. successful installation ends with sync, unmount, and poweroff;
 14. first boot requires the user to remove/eject installer media and power on;
 15. `.#update` remains the only normal dependency-update path;

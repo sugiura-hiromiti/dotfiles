@@ -27,9 +27,8 @@ evaluation and immediately converts it to an immutable filtered store path:
 pkgs.nix-gitignore.gitignoreSource [ ] sourceRoot
 ```
 
-The repository's `.gitignore` is the source-selection policy. This includes
-current non-ignored files, including non-ignored untracked files, while
-excluding ignored local state and `.git`.
+The repository's `.gitignore` is the source-selection policy. All current
+non-ignored files are included; ignored local state and `.git` are excluded.
 
 The filter runs before the source enters the Nix store. ISO construction uses
 only that immutable store path.

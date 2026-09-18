@@ -6,7 +6,7 @@
     };
   };
   #Temporary until Task 1 replaces this with the fixed Disko layout
-  filesystems = {
+  fileSystems = {
     "/" = {
       device = "/dev/disk/by-uuid/9f65f627-94ca-48b5-8f2d-bd2221dc6707";
       fsType = "ext4";

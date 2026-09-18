@@ -94,6 +94,7 @@ or additional storage abstraction.
 ### Task 1: Collapse the Final NixOS State to Facter + Fixed Storage + Direct Credentials
 
 **Files:**
+
 - Create: `nix/modules/nixos/features/storage/layout.nix`
 - Modify: `nix/modules/nixos/features/storage/provisioning.nix`
 - Delete: `nix/modules/nixos/features/storage/default.nix`
@@ -108,10 +109,12 @@ or additional storage abstraction.
 - Modify: `nix/checks.nix`
 
 **Precondition:**
+
 - The user's current legacy NixOS host migration to `facter.json` is complete before this task is executed.
 - If a currently evaluated NixOS host still depends on `hardware-configuration.nix`, stop and report that precondition instead of adding compatibility code.
 
 **Interfaces:**
+
 - Internal fixed layout from `storage/layout.nix`:
   - `partitionLabel = "dotfiles-system"`
   - `rootSubvolume = "@root"`
@@ -300,12 +303,14 @@ git commit -m "refactor: collapse nixos bootstrap state"
 ### Task 2: Implement One Raw-Git Installer Transaction
 
 **Files:**
+
 - Create: `nix/installer/install.nu`
 - Create: `nix/installer/script.nix`
 - Create: `nix/tests/installer/runtime.nix`
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - `mkInstallerScript { host; target; primaryAccount; origin; commit; efiArch; }`
 - Runtime checkout: `/run/dotfiles-installer/repo`.
 - Destructive alias: `/dev/dotfiles-install-target`.
@@ -507,6 +512,7 @@ git commit -m "feat: implement raw-git nixos installer"
 ### Task 3: Build Generic Host ISOs From Public-Main Git Identity
 
 **Files:**
+
 - Create: `nix/installer/config.nix`
 - Create: `nix/installer/iso.nix`
 - Create: `nix/apps/build-installer/default.nix`
@@ -517,6 +523,7 @@ git commit -m "feat: implement raw-git nixos installer"
 - Modify: `nix/checks.nix`
 
 **Interfaces:**
+
 - `installer/config.nix`: `origin = "https://github.com/sugiura-hiromiti/dotfiles.git"`
 - Packages: `packages.installer-<host>` for every declared NixOS host on its
   matching system.
@@ -697,6 +704,7 @@ git commit -m "feat: build generic nixos installer iso"
 ### Task 4: Replace Intermediate VM Layers With One Installer Lifecycle E2E
 
 **Files:**
+
 - Create: `nix/tests/installer/e2e.nix`
 - Create: `nix/apps/test-installer-e2e/default.nix`
 - Modify: `nix/flake/apps.nix`
@@ -705,6 +713,7 @@ git commit -m "feat: build generic nixos installer iso"
 - Modify: `flake.nix` comments
 
 **Interfaces:**
+
 - Manual networked test: `nix run .#test-installer-e2e`.
 - Networked lifecycle test is not executed inside the Nix build sandbox.
 

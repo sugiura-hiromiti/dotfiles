@@ -702,6 +702,7 @@ git commit -m "feat: build generic nixos installer iso"
 - Modify: `nix/flake/apps.nix`
 - Modify: `nix/checks.nix`
 - Modify: `README.org`
+- Modify: `flake.nix` comments
 
 **Interfaces:**
 - Manual networked test: `nix run .#test-installer-e2e`.
@@ -829,7 +830,14 @@ Document:
 - `--no-update-lock-file` is the installer freeze control;
 - the fixed storage topology and unsupported cases.
 
-Do not introduce new `path:` examples for installer workflows.
+For commands operating directly on the user's Git checkout, replace historical
+`path:.#...` examples with ordinary Git-flake references such as `.#...`.
+Apply the same documentation cleanup to the usage comments at the top of
+`flake.nix`.
+
+Do not change the update implementation's private temporary `path:` flake:
+that copy is intentionally a non-Git snapshot and is a legitimate use of
+`path:`.
 
 - [ ] **Step 9: Run all checks**
 
@@ -859,7 +867,7 @@ Verify the built ISO embeds the accepted revision.
 - [ ] **Step 11: Commit**
 
 ```bash
-git add nix/tests/installer/e2e.nix nix/apps/test-installer-e2e nix/flake/apps.nix nix/checks.nix README.org
+git add nix/tests/installer/e2e.nix nix/apps/test-installer-e2e nix/flake/apps.nix nix/checks.nix README.org flake.nix
 git commit -m "test: cover installer lifecycle end to end"
 ```
 

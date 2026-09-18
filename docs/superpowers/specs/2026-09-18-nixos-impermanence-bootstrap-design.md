@@ -171,8 +171,8 @@ If evaluation would require a lock change, it fails before destructive work.
 Missing already-locked inputs, substitutes, and build dependencies may be
 fetched from the network.
 
-`nix run path:.#update` remains the workflow that intentionally changes
-`flake.lock`.
+The existing update workflow remains the place where `flake.lock` may be
+intentionally changed; its VCS/source model is outside this installer design.
 
 ## Fixed storage topology
 

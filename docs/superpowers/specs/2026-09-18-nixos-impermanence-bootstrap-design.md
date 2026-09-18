@@ -103,12 +103,19 @@ clean Git HEAD + flake.lock
           ↓
       host ISO
           ↓
-generate facter.json only
+generate facter.json
           ↓
-evaluate/build with same flake.lock
+evaluate final configuration
           ↓
-install
+      Disko target
+          ↓
+nixos-install realizes the final closure
+directly into the target /nix store
 ```
+
+The installer may use the network to fetch locked flake inputs, substitutes, and
+build dependencies. Network availability does not permit dependency selection
+to change: the embedded `flake.lock` remains authoritative.
 
 ### Clean-tree invariant
 
@@ -302,23 +309,32 @@ The installer transaction is:
 3. prompt for and hash the primary administrator password;
 4. regenerate `facter.json`;
 5. stage `facter.json`;
-6. evaluate/build the complete target configuration using the embedded
-   `flake.lock`;
+6. evaluate the complete final target configuration using the embedded
+   `flake.lock`, without realizing the full system closure;
 7. evaluate the resolved primary user's home directory and password-hash path
-   from the final NixOS configuration;
-8. build the Disko provisioning script;
-9. commit only `facter.json` as installer-generated Git state;
+   from that final configuration;
+8. realize the comparatively small Disko provisioning script required for the
+   destructive step;
+9. if staged `facter.json` differs from embedded `HEAD`, commit it; if facts
+   are unchanged, continue from the embedded commit without creating an empty
+   commit;
 10. resolve exactly one safe target disk;
 11. check destructive re-entry guards before touching the disk;
 12. create `/dev/dotfiles-install-target`;
-13. run Disko, wiping/recreating the target;
-14. materialize the password hash under `/persist`;
-15. install the already-built NixOS system;
-16. copy the modified Git checkout to the persistent backing path corresponding
-    to the resolved user home;
-17. establish and verify automatic boot handoff;
-18. record handoff/re-entry safety state;
-19. reboot or kexec only after the handoff state is safe.
+13. run Disko, wiping/recreating the target and mounting it below `/mnt`;
+14. materialize the password hash under the mounted target `/persist`;
+15. run `nixos-install --root /mnt --flake ...` with lock writing disabled;
+    it fetches/builds as needed and realizes the final system directly into the
+    target store at `/mnt/nix/store`;
+16. copy the Git checkout to the persistent backing path corresponding to the
+    resolved user home;
+17. write the installer completion marker to the target ESP;
+18. durably flush the marker and ESP before attempting boot handoff;
+19. create/find the installed UEFI boot entry, make it first in persistent
+    `BootOrder`, set it as `BootNext`, and verify both settings;
+20. sync and unmount the target filesystems;
+21. reboot once into the installed system, or use the defined safe fallback
+    when verified UEFI handoff is unavailable.
 
 The installer MUST NOT modify `flake.lock` and MUST NOT push Git state.
 
@@ -331,27 +347,60 @@ Safety uses two layers.
 
 ### Firmware/runtime handoff
 
-The installer attempts an automatic handoff to the installed system using UEFI
-boot variables/one-shot boot selection where available. A Nix-built kexec
-handoff may be used as a fallback for the immediate first boot.
+The normal UEFI path configures both persistent and immediate boot selection:
 
-The installer verifies a handoff mechanism before issuing an ordinary reboot.
+- the installed boot entry is placed first in persistent `BootOrder`;
+- the same installed entry is selected as one-shot `BootNext` for the
+  immediate reboot;
+- both settings are read back and verified before reboot.
+
+A Nix-built kexec handoff may be used as a fallback for the immediate first boot
+when verified UEFI handoff is unavailable. The installer does not perform an
+unsafe blind reboot.
 
 ### Re-entry guard
 
 The ISO carries a unique installer artifact ID.
 
-After successful provisioning/install, the target stores a marker containing
-that installer ID on persistent boot-visible storage.
+After successful `nixos-install`, the target stores a marker containing that
+installer ID on the ESP. The marker is flushed durably before any boot-handoff
+operation begins.
 
-If the same ISO boots again and finds its completion/pending marker on the
-selected target, it MUST refuse to run Disko again.
+If the same ISO boots again and finds its completion marker on the selected
+target, it MUST NOT run Disko. Instead it automatically attempts the installed
+system handoff again by repairing/verifying persistent boot priority and
+`BootNext`, then rebooting or using the safe fallback.
 
 A newly built ISO has a new installer artifact ID and may deliberately reinstall
 the host.
 
 This makes repeated boot of the same attached installation medium safe without
-requiring manual removal for correctness.
+requiring manual removal for correctness. Persistent `BootOrder` prevents
+ordinary later reboots from returning to the ISO in normal firmware behavior;
+the marker-driven handoff path covers firmware that still starts the ISO.
+
+## Target store lifecycle
+
+During installation, `/mnt` is only the live installer's mount point for the
+future installed root. With the Disko layout:
+
+```text
+/mnt          -> future /
+/mnt/nix      -> future /nix
+/mnt/persist  -> future /persist
+/mnt/boot     -> future /boot
+```
+
+Therefore `/mnt/nix/store` is not temporary scratch space. It is the future
+installed `/nix/store`. `nixos-install --root /mnt` realizes/fetches the
+large final closure into that target store after Disko has created it.
+
+The installer MUST NOT wipe `/mnt` after installation. It only syncs and
+unmounts the target before reboot; the same filesystems are mounted at their
+normal paths by the installed system.
+
+This avoids requiring the live ISO's writable store/RAM to hold the full final
+system closure before formatting.
 
 ## Persistent checkout path
 
@@ -376,9 +425,13 @@ duplicating home-directory policy in installer code.
 
 The installer starts from a clean embedded Git commit.
 
-Its only repository mutation is the generated host `facter.json`.
+Its only permitted repository mutation is the generated host `facter.json`.
 
-The installer commit does not need to exist on a remote.
+If regenerated facts differ from embedded `HEAD`, the installer creates one
+local facter commit. If the regenerated file is byte-for-byte unchanged, the
+installer creates no commit and continues from embedded `HEAD`.
+
+Any installer-created facter commit does not need to exist on a remote.
 
 A local branch ahead of its remote is valid and MUST NOT prevent `.#update`
 from working.
@@ -412,10 +465,10 @@ Before Disko is allowed to run, all of the following must have succeeded:
 - password entry succeeded and only its in-memory hash remains;
 - hardware discovery succeeded;
 - `facter.json` exists;
-- final target evaluation/build succeeded using the embedded lock;
+- final target evaluation succeeded using the embedded lock;
 - resolved administrator home/password paths were obtained from the final
   configuration;
-- Disko script build succeeded;
+- the Disko provisioning script was realized successfully;
 - target disk selection resolved exactly one permitted whole disk;
 - live installer medium exclusion succeeded;
 - same-installer re-entry protection says destructive installation is allowed.
@@ -467,42 +520,54 @@ Assert Disko/facter/impermanence ownership there before real rollout.
 
 ### Installer end-to-end VM
 
-The VM test must be network-independent.
+The full installer lifecycle is a dedicated networked integration test rather
+than an ordinary sandboxed `nix flake check` derivation.
 
-Use a fixture repository whose locked inputs point to local/store-backed source
-fixtures and ensure required source/build closures are dependencies of the test.
+The test definition/driver is still built by Nix, but QEMU/test-driver execution
+runs outside the Nix build sandbox and may assume network access, matching the
+production installer's allowed behavior. The installer uses the real embedded
+`flake.lock`; it never runs `flake update`.
 
 Run real:
 
-- final Nix evaluation/build;
+- final Nix evaluation;
+- network fetch/substitution/build after Disko;
 - Disko;
 - `nixos-install`;
 - preservation;
-- ephemeral-root behavior.
+- ephemeral-root behavior;
+- UEFI handoff/re-entry behavior.
 
 Hardware probing may be replaced by a deterministic test facter generator.
 
-The test must:
+The networked test must:
 
 1. boot the installer ISO;
 2. supply a test password through the installer interaction path;
 3. generate hardware facts;
-4. build from the existing lock without `flake update`;
+4. evaluate the final target before wipe;
 5. install to a blank disk;
-6. leave the installer ISO attached;
-7. exercise the installer's automatic handoff/reboot rather than manually
+6. prove the final closure is realized under the target `/mnt/nix/store`, not
+   as a required full pre-format closure in the live installer store;
+7. leave the installer ISO attached;
+8. exercise the installer's automatic handoff/reboot rather than manually
    switching VM state;
-8. prove the installed system boots;
-9. prove Disko was not executed twice;
-10. verify Btrfs `@root`, `@nix`, `@persist`;
-11. verify persisted/disposable state across another reboot;
-12. verify administrator authentication/sudo;
-13. verify the installed repository contains the facter commit;
-14. verify a custom-home fixture places the checkout under the correct persistent
-    backing path.
+9. prove the installed system boots;
+10. prove Disko was not executed twice;
+11. verify Btrfs `@root`, `@nix`, `@persist`;
+12. verify persisted/disposable state across another reboot;
+13. verify administrator authentication/sudo;
+14. verify changed facts produce a local facter commit and unchanged facts do
+    not require an empty commit;
+15. verify a custom-home fixture places the checkout under the correct
+    persistent backing path;
+16. force the same ISO to boot again and prove it automatically hands off
+    without formatting.
 
-Add negative tests for zero/multiple target disks and same-ISO destructive
-re-entry.
+Add negative tests for zero/multiple target disks.
+
+Deterministic module/unit/production-evaluation tests remain in
+`nix flake check`; Internet-dependent lifecycle execution does not.
 
 ## Build output hygiene
 
@@ -528,7 +593,7 @@ on the next invocation.
 8. add host-specific ISO construction;
 9. add clean-tree installer build app;
 10. add real-host-with-fixture-facts migration coverage;
-11. add offline full-lifecycle installer VM coverage;
+11. add dedicated networked full-lifecycle installer VM coverage;
 12. gate the real host's Btrfs/impermanence policy on facter migration;
 13. only then perform destructive real-machine rollout.
 
@@ -543,13 +608,17 @@ Implementation is complete when:
    needs a post-install `passwd` step;
 5. the password hash remains outside Git and the Nix store;
 6. final target evaluation occurs only after hardware facts exist;
-7. only `facter.json` is committed by the installer;
-8. Disko is the sole filesystem topology owner;
-9. impermanence owns only runtime root reset;
-10. target selection fails closed;
-11. repeated boot of the same installer artifact cannot wipe the target again;
-12. installer result links do not dirty the repository;
-13. repository persistence follows the resolved NixOS home directory;
-14. `.#update` remains the steady-state dependency-update/activation path;
-15. tests exercise lower-level mechanisms, the actual production profile with
-    fixture facts, and the complete offline installer lifecycle.
+7. the full final closure is realized only after Disko creates the target
+   `/nix` store;
+8. only changed `facter.json` may be committed by the installer;
+9. Disko is the sole filesystem topology owner;
+10. impermanence owns only runtime root reset;
+11. target selection fails closed;
+12. the completion marker is durably stored before boot handoff begins;
+13. persistent boot priority favors the installed disk, and same-ISO re-entry
+    automatically hands off without formatting;
+14. installer result links do not dirty the repository;
+15. repository persistence follows the resolved NixOS home directory;
+16. `.#update` remains the steady-state dependency-update/activation path;
+17. tests exercise lower-level mechanisms, the actual production profile with
+    fixture facts, and the complete networked installer lifecycle.

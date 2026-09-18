@@ -227,6 +227,7 @@ git commit -m "feat: prefer facter hardware configuration"
 - Modify: `nix/configurations/nixos.nix`
 - Modify: `nix/flake/default.nix`
 - Modify: `nix/modules/nixos/features/storage/provisioning.nix`
+- Modify: `nix/modules/nixos/features/impermanence/ephemeral-root.nix`
 - Modify: `nix/tests/nixos/storage-provisioning.nix`
 - Modify: `nix/tests/nixos/storage-provisioning-vm.nix`
 - Modify: `nix/tests/nixos/impermanence-vm.nix`
@@ -278,11 +279,14 @@ Before provisioning, use `blkid -t UUID=<uuid> -o device` (or an equivalent
 multi-result query) to enumerate all matching filesystems. A match on a
 non-target device aborts.
 
-In the ephemeral-root initrd path, require the configured Btrfs UUID to resolve
-to exactly one block filesystem before mounting/deleting the root subvolume.
-Zero or multiple matches fail boot closed.
+In the ephemeral-root initrd path, add a systemd initrd validation service that
+runs before the top-level Btrfs mount used by ephemeral-root. It enumerates all
+block filesystems matching the configured UUID and requires exactly one unique
+device before any root-subvolume deletion/mount operation. Zero or multiple
+matches fail boot closed.
 
-Add focused tests for duplicate UUID detection.
+Reference `blkid` from its Nix store path so the initrd includes the required
+tool. Add focused/VM tests for duplicate UUID detection.
 
 - [ ] **Step 7: Update VM fixtures without changing their disk topology**
 
@@ -312,7 +316,7 @@ disk.
 nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).storage-provisioning
 nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).storage-provisioning-vm
 nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).impermanence-vm
-git add nix/lib/stable-uuid.nix nix/configurations/nixos.nix nix/flake/default.nix nix/modules/nixos/features/storage/provisioning.nix nix/tests/nixos
+git add nix/lib/stable-uuid.nix nix/configurations/nixos.nix nix/flake/default.nix nix/modules/nixos/features/storage/provisioning.nix nix/modules/nixos/features/impermanence/ephemeral-root.nix nix/tests/nixos
 git commit -m "feat: make disko own production storage"
 ```
 
@@ -796,7 +800,7 @@ git commit -m "feat: guard reentry and persist boot handoff"
 
 **Interfaces:**
 
-- `self.lib.mkInstallerIso { host; repositoryBundle; installerId; }`
+- `self.lib.mkInstallerIso { host; repositoryBundle; installerId; gitBranch; canonicalOriginUrl; }`
 - ISO evaluates without `facter.json`.
 - Installer uses the host's existing default theme/session target naming.
 - ISO enables flakes declaratively.
@@ -807,7 +811,8 @@ Assert:
 
 - bootstrap-only host ISO evaluates;
 - `nix-command` and `flakes` are in `nix.settings.experimental-features`;
-- installer script receives the host and installer ID.
+- installer script receives the host, installer ID, Git branch, and canonical
+  origin URL.
 
 - [ ] **Step 2: Construct the minimal ISO**
 
@@ -854,6 +859,9 @@ It accepts:
 - installer ID;
 - Git branch name;
 - canonical origin URL.
+
+Pass all six values unchanged into `mkInstallerIso`; the ISO embeds the Git
+provenance metadata alongside the bundle.
 
 It calls the flake's `mkInstallerIso`.
 

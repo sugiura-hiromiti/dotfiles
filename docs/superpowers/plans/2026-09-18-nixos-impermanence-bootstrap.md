@@ -622,13 +622,21 @@ Assert success only when every invariant passes and the requested package is exa
 
 - [ ] **Step 2: Verify anonymous origin without credentials**
 
-Reject non-HTTPS declared origins. Probe with prompting/helpers disabled:
+Reject non-HTTPS declared origins. Run the probe from an empty temporary
+directory with an empty temporary HOME/XDG config and system Git config
+disabled:
 
 ```bash
-GIT_TERMINAL_PROMPT=0 git -c credential.helper=   ls-remote "$declared_origin" refs/heads/main
+HOME="$empty_home" \
+XDG_CONFIG_HOME="$empty_home" \
+GIT_CONFIG_NOSYSTEM=1 \
+GIT_TERMINAL_PROMPT=0 \
+git -c credential.helper= \
+  ls-remote "$declared_origin" refs/heads/main
 ```
 
-A cached credential must not be required.
+Unset `GIT_ASKPASS` and `SSH_ASKPASS` for the probe. A caller's credential
+helper, URL rewrite, or cached credential must not be necessary for success.
 
 - [ ] **Step 3: Enforce the local Git invariant**
 

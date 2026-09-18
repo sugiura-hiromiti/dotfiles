@@ -91,6 +91,10 @@ The ISO records only:
 - canonical HTTPS `origin` URL;
 - exact commit SHA.
 
+The installed NixOS target is deterministic for that host: it uses
+`runtime.defaultTheme` and `runtime.defaultSession`. The installer builder
+does not expose theme/session selection flags.
+
 It does not embed a Git bundle or repository history.
 
 ### Installer Git invariant
@@ -508,7 +512,8 @@ These may be added later only when there is a demonstrated need.
 Implementation is complete when:
 
 1. installer build succeeds only from clean `main == origin/main` with an
-   anonymously cloneable HTTPS origin;
+   anonymously cloneable HTTPS origin, and selects the host's declared default
+   theme/session;
 2. a stale ISO aborts before destructive work;
 3. installation never updates or rewrites dependency selection;
 4. final target evaluation occurs after facter generation and before Disko;

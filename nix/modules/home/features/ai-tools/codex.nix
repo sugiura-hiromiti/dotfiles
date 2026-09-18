@@ -71,6 +71,7 @@ let
       status_line = [
         "model-with-reasoning"
         "context-remaining"
+        "five-hour-limit"
         "current-dir"
       ];
     };

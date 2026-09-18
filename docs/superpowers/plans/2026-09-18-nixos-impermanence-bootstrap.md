@@ -369,6 +369,8 @@ git commit -m "feat: add nixos installer transaction"
 - `packages.installer-<host>` exists for every declared NixOS host on its system.
 - `nix run --impure .#build-installer -- --host HOST`.
 - `nix run --impure .#test-installer-e2e`.
+- `packages.installer-e2e-driver` exposes the NixOS test driver's
+  `driverInteractive` for the filtered source.
 - Both apps receive the same filtered immutable source path from `flake/apps.nix`.
 
 - [ ] **Step 1: Add the filtered source at app evaluation**
@@ -462,11 +464,20 @@ Builder tests assert the immutable source path is used and no Git command is inv
 
 - [ ] **Step 5: Add the lifecycle E2E**
 
-The E2E app builds its driver from the same immutable source:
+Create `nix/tests/installer/e2e.nix` with `pkgs.testers.runNixOSTest`.
+Expose its `driverInteractive` from `flake/installer.nix` as:
+
+```text
+packages.installer-e2e-driver
+```
+
+The E2E app builds that package from the same immutable source:
 
 ```text
 nix build path:<dotfilesSource>#installer-e2e-driver
 ```
+
+and executes its `bin/nixos-test-driver --no-interactive`.
 
 The VM has UEFI, the actual installer ISO as CD media, one blank non-removable internal disk, and network access for locked Nix dependencies.
 

@@ -2,18 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build same-system NixOS installation media from the current filtered dotfiles filesystem, generate facter on the target, install one fixed impermanent layout, and verify the lifecycle.
+**Goal:** Build same-system NixOS installation media from the current dotfiles filesystem snapshot, generate facter on the target, install one fixed impermanent layout, and verify the lifecycle.
 
-**Architecture:** The flake remains pure. `build-installer` snapshots its runtime working directory through one narrow impure Nix evaluation, then builds the ISO only from that immutable filtered store path. The ISO copies that source writable, adds facter, evaluates the final configuration, validates one target disk, installs, and persists the same tree.
+**Architecture:** Every operator/test command uses an explicit `path:` flake. Nix freezes the current directory as `self.outPath`; the builder, ISO, runtime installer, and E2E all use that same immutable snapshot. The ISO copies it writable, adds facter, evaluates the final configuration, validates one target disk, installs, and persists the same tree.
 
-**Tech Stack:** NixOS/nixpkgs, flake-parts, Disko, nixos-facter, preservation, Nushell, nix-gitignore, systemd-boot, NixOS VM tests.
+**Tech Stack:** NixOS/nixpkgs, flake-parts, Disko, nixos-facter, preservation, Nushell, systemd-boot, NixOS VM tests.
 
 **Spec:** `docs/superpowers/specs/2026-09-18-nixos-impermanence-bootstrap-design.md`
 
 ## Global Constraints
 
-- Build command: `nix run .#build-installer -- --host HOST`.
-- Ordinary `nix flake check -L` stays pure.
+- Build command: `nix run path:.#build-installer -- --host HOST`.
+- Check command: `nix flake check -L path:.`.
+- `self.outPath` is the installer source snapshot; do not create another source snapshot/filter layer.
 - `host` always means registry key; `hostName` means OS/network hostname.
 - Installer target uses `runtime.defaultTheme` and `runtime.defaultSession`, never runtime-list order.
 - Builder supports declared NixOS hosts whose `system` matches the current `perSystem` system.
@@ -25,8 +26,6 @@
 - EFI-variable writes stay disabled.
 - Keep one impermanence VM and one installer E2E.
 - Do not boot the ISO on the real machine.
-
-**Executor note:** newly created files may need `git add -N path` before ordinary development-flake evaluation can import them. This is development-only and not part of installer correctness.
 
 ---
 
@@ -79,7 +78,7 @@ assert disk.content.partitions.system.content.subvolumes ? "@persist";
 
 `impermanence.nix` must assert `/nix` and `/persist` are needed for boot and the root-reset unit uses `dotfiles-system` / `@root`.
 
-Run both focused checks and confirm failure.
+Run both focused checks through `path:.` and confirm failure.
 
 - [ ] **Step 2: Replace storage options with constants**
 
@@ -123,12 +122,9 @@ In `configurations/nixos.nix`, every constructed NixOS target includes:
 }
 ```
 
-In `nix/profiles/hosts/aarch64-linux-a/nixos.nix`, remove:
-- local `hardware.facter.reportPath`;
-- all `fileSystems`;
-- `swapDevices`.
-
-Keep only genuinely host-specific policy such as performance tuning.
+In `nix/profiles/hosts/aarch64-linux-a/nixos.nix`, remove local
+`hardware.facter.reportPath`, all `fileSystems`, and `swapDevices`.
+Keep only host-specific policy such as performance tuning.
 
 - [ ] **Step 5: Gate final configurations by the registry key**
 
@@ -140,19 +136,19 @@ nixosHostReady =
   builtins.pathExists (../profiles/hosts + "/${host}/facter.json");
 ```
 
-Filter NixOS target entries explicitly with:
+Filter NixOS target entries with:
 
 ```nix
 entry: nixosHostReady entry.config.host
 ```
 
-in `flake/configurations.nix` and `flake/checks.nix`. Home/Darwin targets are unchanged.
+in `flake/configurations.nix` and `flake/checks.nix`.
 
-Add an evaluation check for each ready NixOS target asserting its primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Do not add a new group field to host metadata: NixOS normal-user policy already resolves the current user to the built-in `users` group.
+Add an evaluation check for each ready NixOS target asserting the primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Use the evaluated NixOS values; do not add group metadata.
 
 - [ ] **Step 6: Keep one behavioral impermanence VM**
 
-`impermanence-vm.nix` proves only:
+`impermanence-vm.nix` proves:
 
 ```text
 fixed layout -> boot -> disposable + persistent markers
@@ -164,7 +160,7 @@ Delete `storage-provisioning-vm.nix` and the standalone `ephemeral-root.nix` tes
 - [ ] **Step 7: Verify and commit**
 
 ```bash
-nix flake check -L
+nix flake check -L path:.
 git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/tests/nixos nix/checks.nix
 git commit -m "refactor: fix nixos bootstrap model"
 ```
@@ -205,10 +201,10 @@ metadata contains home, integer UID, non-empty group, integer GID, password path
 all installer Nix commands use --no-update-lock-file
 0 or >1 eligible disks abort before Disko
 1 eligible disk creates the alias
-Git and nix flake update are never invoked
+nix flake update is never invoked
 ```
 
-Run the new `installer-runtime` check and confirm failure.
+Run the new `installer-runtime` check through `path:.` and confirm failure.
 
 - [ ] **Step 2: Package the script**
 
@@ -299,8 +295,8 @@ Errors before completion exit non-zero without powering off.
 - [ ] **Step 7: Verify and commit**
 
 ```bash
-nix build -L .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).installer-runtime
-nix flake check -L
+nix build -L path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).installer-runtime
+nix flake check -L path:.
 git add nix/installer/install.nu nix/installer/script.nix nix/tests/installer/runtime.nix nix/checks.nix
 git commit -m "feat: add nixos installer transaction"
 ```
@@ -313,7 +309,6 @@ git commit -m "feat: add nixos installer transaction"
 - Create: `nix/installer/iso.nix`
 - Create: `nix/flake/installer.nix`
 - Create: `nix/apps/build-installer/{default.nix,build.nu,tests/run.sh}`
-- Create: `nix/tests/fixtures/source-filter/{.gitignore,kept.txt,ignored/secret.txt}`
 - Create: `nix/tests/installer/e2e.nix`
 - Create: `nix/apps/test-installer-e2e/default.nix`
 - Modify: `nix/flake/{apps,default}.nix`
@@ -323,45 +318,23 @@ git commit -m "feat: add nixos installer transaction"
 **Produces:**
 - same-system `packages.installer-<host>`;
 - `packages.installer-e2e-driver`;
-- pure `build-installer` and `test-installer-e2e` flake apps.
+- `build-installer` and `test-installer-e2e` apps.
 
-- [ ] **Step 1: Keep flake app evaluation pure**
+- [ ] **Step 1: Pass the path snapshot directly to the apps**
 
-`flake/apps.nix` must not read `PWD` or any environment variable. It only constructs the app packages from normal pure inputs.
-
-Add/retain an ordinary:
-
-```bash
-nix flake check -L
-```
-
-regression after wiring both apps; it must pass without `--impure`.
-
-- [ ] **Step 2: Snapshot the filesystem inside the build app process**
-
-`build-installer/default.nix` bakes `pkgs.path` into the builder package.
-
-At runtime `build.nu` resolves `$PWD`, sets it as `DOTFILES_SOURCE_ROOT`, and runs one narrow impure evaluation equivalent to:
+In `flake/apps.nix`, pass:
 
 ```nix
-let
-  pkgs = import <baked-in-pkgs.path> { };
-  root = builtins.toPath (builtins.getEnv "DOTFILES_SOURCE_ROOT");
-in
-toString (pkgs.nix-gitignore.gitignoreSource [ ] root)
+source = self.outPath;
 ```
 
-using:
+to `build-installer`.
 
-```text
-nix eval --impure --raw --expr ...
-```
+Do not read `PWD`, run an impure evaluation, apply an ignore policy, or create another source path.
 
-The returned store path is the immutable `dotfilesSource`.
+Add a check that the builder package embeds exactly `self.outPath` as its source argument.
 
-Create a fixture whose `.gitignore` ignores `ignored/`; assert the produced source contains `kept.txt` and excludes `ignored/secret.txt`.
-
-- [ ] **Step 3: Generate same-system installer packages with an exact default target**
+- [ ] **Step 2: Generate same-system installer packages with an exact default target**
 
 In `flake/installer.nix`, select hosts with:
 
@@ -381,17 +354,17 @@ targetNames.mkSystemTargetName {
 }
 ```
 
-For `aarch64-linux-a`, assert the target is:
+For `aarch64-linux-a`, assert:
 
 ```text
 aarch64-linux-a--theme-light--session-gui
 ```
 
-Add a test that reverses the theme/session lists while keeping the same declared defaults and asserts the target name is unchanged.
+Add a regression that reverses the theme/session lists while keeping declared defaults unchanged and verifies the target name remains unchanged.
 
-Construct `packages.installer-<host>` from `host`, target, primary account, and `source = self.outPath`. Do not evaluate the final NixOS target.
+Construct `packages.installer-<host>` with `source = self.outPath`. Do not evaluate the final NixOS target.
 
-- [ ] **Step 4: Build the ISO and own tty1**
+- [ ] **Step 3: Build the ISO and own tty1**
 
 `iso.nix` imports the minimal installation CD module, derives EFI architecture, calls `mkInstallerScript`, and configures:
 
@@ -415,24 +388,26 @@ systemd.services.dotfiles-installer = {
 };
 ```
 
-- [ ] **Step 5: Build only the frozen snapshot**
+- [ ] **Step 4: Implement the thin build app**
 
-After obtaining `dotfilesSource`, `build.nu --host HOST` runs:
+`build.nu --host HOST` runs:
 
 ```text
-nix build path:<dotfilesSource>#installer-HOST
-  --out-link <PWD>/result/installer-HOST
+nix build path:<source>#installer-HOST
+  --out-link result/installer-HOST
 ```
 
-Do not add a second host validator; missing/non-same-system packages fail naturally.
+where `source` is the `self.outPath` baked into the app during
+`nix run path:.#build-installer`.
 
-Builder tests assert the final build reference uses only the immutable source path and no Git command runs.
+An invalid or non-same-system host fails because the package is absent.
 
-- [ ] **Step 6: Add the lifecycle E2E**
+- [ ] **Step 5: Add the lifecycle E2E**
 
 `nix/tests/installer/e2e.nix` uses `pkgs.testers.runNixOSTest`; expose its `driverInteractive` as `packages.installer-e2e-driver`.
 
-The ordinary pure `test-installer-e2e` app executes that driver's `bin/nixos-test-driver --no-interactive`. It does not snapshot `PWD`; source-filter behavior is covered by the builder test, while the E2E covers the actual ISO/runtime lifecycle.
+`nix run path:.#test-installer-e2e` executes that driver's
+`bin/nixos-test-driver --no-interactive` from the same `path:.` source snapshot.
 
 The VM uses UEFI, the actual installer ISO, one blank internal disk, and network access for locked dependencies.
 
@@ -450,14 +425,13 @@ password login + sudo work
 root data resets; persistent data and dotfiles survive reboot
 ```
 
-- [ ] **Step 7: Document and verify**
+- [ ] **Step 6: Document and verify**
 
 Document:
 
 ```text
 edit dotfiles
-→ nix run .#build-installer -- --host HOST
-→ builder snapshots current non-ignored files
+→ nix run path:.#build-installer -- --host HOST
 → write/attach ISO
 → boot and enter password
 → poweroff
@@ -468,17 +442,17 @@ edit dotfiles
 Then run:
 
 ```bash
-nix flake check -L
-nix run .#test-installer-e2e
-nix run .#build-installer -- --host aarch64-linux-a
+nix flake check -L path:.
+nix run path:.#test-installer-e2e
+nix run path:.#build-installer -- --host aarch64-linux-a
 test -e result/installer-aarch64-linux-a
 ```
 
 If virtualization is unavailable, report it rather than weakening the E2E. Do not boot the ISO on the real machine.
 
-- [ ] **Step 8: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add nix/installer/iso.nix nix/flake/installer.nix nix/apps/build-installer nix/tests/fixtures/source-filter nix/tests/installer/e2e.nix nix/apps/test-installer-e2e nix/flake/apps.nix nix/flake/default.nix nix/checks.nix README.org flake.nix
-git commit -m "feat: add snapshot-based nixos installer"
+git add nix/installer/iso.nix nix/flake/installer.nix nix/apps/build-installer nix/tests/installer/e2e.nix nix/apps/test-installer-e2e nix/flake/apps.nix nix/flake/default.nix nix/checks.nix README.org flake.nix
+git commit -m "feat: add path-based nixos installer"
 ```

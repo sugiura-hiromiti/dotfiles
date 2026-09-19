@@ -4,7 +4,7 @@
 
 **Goal:** Build same-system NixOS installation media from the current dotfiles filesystem snapshot, generate facter on the target, install one fixed impermanent layout, and verify the lifecycle.
 
-**Architecture:** Every operator/test command uses an explicit `path:` flake. Nix freezes the current directory as `self.outPath`; the builder, ISO, runtime installer, and E2E all use that same immutable snapshot. The ISO copies it writable, adds facter, evaluates the final configuration, validates one target disk, installs, and persists the same tree.
+**Architecture:** Every operator/test command that evaluates this repository uses an explicit `path:` flake reference. Nix freezes the current directory as `self.outPath`; the builder, ISO, runtime installer, and E2E all use that same immutable snapshot. The ISO copies it writable, adds facter, evaluates the final configuration, validates one target disk, installs, and persists the same tree.
 
 **Tech Stack:** NixOS/nixpkgs, flake-parts, Disko, nixos-facter, preservation, Nushell, systemd-boot, NixOS VM tests.
 
@@ -53,6 +53,7 @@
 - Modify: `nix/modules/nixos/default.nix`
 - Modify: `nix/profiles/hosts/aarch64-linux-a/nixos.nix`
 - Modify: `nix/flake/{default,configurations,checks}.nix`
+- Modify: `nix/lib/targets.nix`
 - Modify: `nix/checks.nix`
 - Modify: `nix/tests/nixos/{storage-provisioning,impermanence,impermanence-vm}.nix`
 - Delete: `nix/tests/nixos/{ephemeral-root,storage-provisioning-vm}.nix`
@@ -127,23 +128,59 @@ In `nix/profiles/hosts/aarch64-linux-a/nixos.nix`, remove local
 `hardware.facter.reportPath`, all `fileSystems`, and `swapDevices`.
 Keep only host-specific policy such as performance tuning.
 
-- [ ] **Step 5: Gate final configurations by the registry key**
+- [ ] **Step 5: Gate final configurations from one ready-entry source of truth**
 
-Define:
+In `flake/default.nix`, define readiness once:
 
 ```nix
 nixosHostReady =
   host:
   builtins.pathExists (../profiles/hosts + "/${host}/facter.json");
+
+readyNixosTargetEntries =
+  lib.filter
+    (entry: nixosHostReady entry.config.host)
+    (targets.mkTargetConfigEntries "nixos");
 ```
 
-Filter NixOS target entries with:
+Do not independently re-run the readiness predicate in `flake/configurations.nix`
+and `flake/checks.nix`. Pass the same `readyNixosTargetEntries` to both.
+
+Current `mkTargetConfigs` internally enumerates all target entries, so extend
+`nix/lib/targets.nix` with an entry-based constructor while preserving the
+existing wrapper:
 
 ```nix
-entry: nixosHostReady entry.config.host
+mkTargetConfigsFromEntries =
+  target: entries: mkConf:
+  lib.listToAttrs (
+    map (entry: {
+      inherit (entry) name;
+      value = mkConf entry.config;
+    }) (assertUniqueTargetNames target entries)
+  );
+
+mkTargetConfigs =
+  target: mkConf:
+  mkTargetConfigsFromEntries target (mkTargetConfigEntries target) mkConf;
 ```
 
-in `flake/configurations.nix` and `flake/checks.nix`.
+Export final NixOS configurations from `readyNixosTargetEntries` through
+`mkTargetConfigsFromEntries`.
+
+In `flake/checks.nix`, derive the per-system ready entries from that same list:
+
+```nix
+nixosTargetEntries =
+  lib.filter (entry: entry.config.system == system) readyNixosTargetEntries;
+
+targetConfigNames.nixos = map (entry: entry.name) nixosTargetEntries;
+```
+
+Do not use the unfiltered `targetConfigNamesForSystem "nixos" system` for NixOS
+build checks. This same `nixosTargetEntries` feeds embedded-Home-Manager checks
+and the primary-user ownership checks, so no check can dereference a
+`self.nixosConfigurations` entry that readiness filtering removed.
 
 Add an evaluation check for each ready NixOS target asserting the primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Use the evaluated NixOS values; do not add group metadata.
 
@@ -201,6 +238,7 @@ one metadata eval uses path:/run/dotfiles-installer/source
 metadata contains home, integer UID, non-empty group, integer GID, password path
 all installer Nix commands use --no-update-lock-file
 0 or >1 eligible disks abort before Disko
+fake lsblk JSON uses boolean rm/hotplug values
 1 eligible disk creates the alias
 nix flake update is never invoked
 ```
@@ -260,7 +298,15 @@ Run:
 lsblk --json --output PATH,TYPE,RM,HOTPLUG
 ```
 
-Require exactly one `TYPE=disk`, `RM=0`, `HOTPLUG=0` entry, then create:
+Parse the JSON and require exactly one entry satisfying:
+
+```text
+type == "disk"
+rm == false
+hotplug == false
+```
+
+`RM` and `HOTPLUG` are JSON booleans, not numeric 0/1 values. Then create:
 
 ```text
 /dev/dotfiles-install-target -> selected disk
@@ -367,9 +413,14 @@ Construct `packages.installer-<host>` with `source = self.outPath`. Do not evalu
 
 - [ ] **Step 3: Build the ISO and own tty1**
 
-`iso.nix` imports the minimal installation CD module, derives EFI architecture, calls `mkInstallerScript`, and configures:
+`iso.nix` imports the minimal installation CD module, derives EFI architecture, calls `mkInstallerScript`, and explicitly enables the Nix CLI features used by the runtime installer:
 
 ```nix
+nix.settings.experimental-features = [
+  "nix-command"
+  "flakes"
+];
+
 systemd.targets.getty.wants = lib.mkForce [ "autovt@tty2.service" ];
 systemd.services."getty@tty1".enable = false;
 systemd.services."autovt@tty1".enable = false;
@@ -389,17 +440,25 @@ systemd.services.dotfiles-installer = {
 };
 ```
 
+Add an evaluation check for the ISO configuration that asserts both
+`nix-command` and `flakes` are present in
+`nix.settings.experimental-features`.
+
 - [ ] **Step 4: Implement the thin build app**
 
 `build.nu --host HOST` runs:
 
 ```text
 nix build path:<source>#installer-HOST
-  --out-link result/installer-HOST
+  --out-link result-installer-HOST
 ```
 
 where `source` is the `self.outPath` baked into the app during
 `nix run path:.#build-installer`.
+
+Use the flat `result-installer-HOST` name rather than treating the conventional
+`result` out-link as a directory. A pre-existing ordinary `result -> /nix/store/...`
+symlink must not affect installer builds.
 
 An invalid or non-same-system host fails because the package is absent.
 
@@ -446,7 +505,7 @@ Then run:
 nix flake check -L path:.
 nix run path:.#test-installer-e2e
 nix run path:.#build-installer -- --host aarch64-linux-a
-test -e result/installer-aarch64-linux-a
+test -e result-installer-aarch64-linux-a
 ```
 
 If virtualization is unavailable, report it rather than weakening the E2E. Do not boot the ISO on the real machine.

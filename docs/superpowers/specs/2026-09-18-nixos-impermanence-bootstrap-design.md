@@ -24,10 +24,16 @@ this design.
 ## Source and configuration
 
 `path:.` copies the source tree to an immutable Nix store path before flake
-evaluation. `self.outPath` is therefore the exact installer source snapshot.
+evaluation. `self.outPath` is therefore the exact immutable base installer
+snapshot.
 
-No second source-snapshot mechanism is needed. The builder, ISO, runtime
-installer, and E2E all consume that same snapshot.
+The builder and ISO consume that base snapshot directly. Runtime installation
+creates exactly one host-materialized tree by copying the base to
+`/run/dotfiles-installer/source` and adding fresh `facter.json`. After facter
+generation, that tree is no longer modified. All final NixOS evaluation, Disko
+realization, and flake-based installation operations use `path:` semantics over
+that same host-materialized tree. Repeated evaluation is allowed; additional
+Git/refetch/filter-based source reconstruction is not.
 
 The source directory itself is the boundary. Files that must never enter an
 installer snapshot must live outside it.
@@ -65,13 +71,16 @@ nix/profiles/hosts/<host>/facter.json
 ```
 
 Every exported NixOS configuration uses that file through
-`hardware.facter.reportPath`. Exported NixOS configurations and every check
-that dereferences them are derived from the same facter-ready target-entry set;
-there is no separate unfiltered NixOS check-name list.
+`hardware.facter.reportPath`. Exported NixOS configurations, every check that
+dereferences them, and generated CI targets that dereference them are derived
+from the same facter-ready target-entry set; there is no separate unfiltered
+NixOS check or CI target-name source.
 
 During installation the embedded source is copied to writable runtime storage,
-fresh `facter.json` is generated there, and the final target is evaluated from
-that writable tree using `path:` flake semantics.
+fresh `facter.json` is generated there, and final-config metadata is evaluated
+from that host-materialized tree using `path:` flake semantics. Later Disko
+realization and `nixos-install --flake` may evaluate the same final target again;
+this is intentional because the host-materialized source is no longer mutated.
 
 The installer ISO explicitly enables the `nix-command` and `flakes`
 experimental features because the runtime transaction invokes bare `nix eval`
@@ -180,6 +189,12 @@ realization, and the exactly-one-disk check succeed.
 The installer service owns tty1 while interactive. tty1 getty/autovt instances
 are masked and tty2 remains available for diagnostics.
 
+The installer wants and starts after `network-online.target` because locked Nix
+inputs may need runtime fetching. This target provides boot ordering only; it is
+not treated as proof of Internet reachability. A fetch failure is reported
+without hiding tty2 so the operator can repair networking and restart the
+installer service.
+
 ## Assumptions
 
 The supported environment has:
@@ -202,13 +217,14 @@ Implementation is complete when:
 1. `nix flake check -L path:.` passes from the current filesystem snapshot;
 2. `nix run path:.#build-installer -- --host HOST` works for same-system
    declared NixOS hosts;
-3. the builder and ISO use `self.outPath` from that same immutable `path:`
-   snapshot without a second snapshot/filter stage;
+3. the builder and ISO use one immutable `self.outPath` base snapshot, while
+   runtime derives exactly one facter-enriched host-materialized tree from it
+   and performs all final NixOS operations from that unmodified tree;
 4. default installer target selection uses declared runtime defaults and does
    not change when runtime-list ordering changes;
 5. facter-less hosts can build installer media without exporting final
-   `nixosConfigurations`, and checks never reference NixOS configurations
-   removed by that readiness filter;
+   `nixosConfigurations`, and neither checks nor generated CI reference NixOS
+   configurations removed by that readiness filter;
 6. the production host profile contains no legacy filesystem/swap/facter
    ownership;
 7. final NixOS configurations use facter, fixed Disko storage, impermanent
@@ -216,7 +232,9 @@ Implementation is complete when:
    fallback EFI boot;
 8. installation fails before destructive work when final evaluation fails,
    lock mutation would be required, or the eligible-disk count is not one;
-9. tty1 remains exclusively installer-owned during interaction;
+9. tty1 remains exclusively installer-owned during interaction, and the
+   installer starts after `network-online.target` while preserving tty2 as the
+   recovery path for connectivity failures;
 10. one deterministic VM proves root reset/persistence across reboot;
 11. one lifecycle E2E boots the actual ISO, installs to a blank disk, boots the
     installed disk without the ISO, verifies password/sudo, and verifies

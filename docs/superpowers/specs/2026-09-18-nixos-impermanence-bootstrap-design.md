@@ -42,6 +42,11 @@ identity from Git state. Files present inside the source boundary, including
 
 Installer-side Nix operations use `--no-update-lock-file`.
 
+Repository-evaluating bootstrap and generated-CI commands use explicit
+`path:...` flake references so they follow the same filesystem-snapshot source
+semantics. Commands that do not evaluate this repository are outside that
+contract.
+
 ## Host and target model
 
 `host` means the host-registry key. `hostName` means the hostname configured

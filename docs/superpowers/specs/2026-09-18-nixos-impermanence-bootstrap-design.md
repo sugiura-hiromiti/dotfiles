@@ -42,6 +42,11 @@ A `.git` directory may therefore be physically present in the snapshot. It is
 semantically inert: installer code must not inspect it or derive behavior from
 Git history, refs, remotes, index state, or cleanliness.
 
+The explicit-path source contract also applies to generated CI: every Nix
+command that evaluates this repository names `path:.` explicitly. Commands
+that do not evaluate the repository, such as `nix --version`, are outside that
+rule.
+
 Installer packages are generated for declared NixOS hosts whose `system`
 matches the current `perSystem` system.
 
@@ -75,6 +80,12 @@ Every exported NixOS configuration uses that file through
 dereferences them, and generated CI targets that dereference them are derived
 from the same facter-ready target-entry set; there is no separate unfiltered
 NixOS check or CI target-name source.
+
+A representative NixOS CI target is optional. When there is no facter-ready
+representative, CI generation remains valid and omits only NixOS-specific
+evaluation/build references. This is required so the bootstrap state
+"declared NixOS host, no facter report yet" can still evaluate its installer
+package/app.
 
 During installation the embedded source is copied to writable runtime storage,
 fresh `facter.json` is generated there, and final-config metadata is evaluated
@@ -131,14 +142,22 @@ users.users.<primary>.hashedPasswordFile =
 ```
 
 The installer reads the effective home, UID, primary group, GID, and password
-path from the evaluated final NixOS configuration.
+path from the evaluated final NixOS configuration. Before Disko it requires UID
+and GID to be integers, group to be non-empty, home to be an absolute normalized
+non-root path with no `..` traversal component, and the password path to equal
+exactly `/persist/etc/dotfiles/password-<primary>.hash`.
 
-The installed bootloader is:
+The installed bootloader contract is:
 
 ```nix
 boot.loader.systemd-boot.enable = true;
 boot.loader.efi.canTouchEfiVariables = false;
 ```
+
+The baseline boot module may continue to provide these as composable defaults,
+but every installer-compatible final NixOS configuration asserts the effective
+values after module merging. A host/profile override that violates either value
+therefore makes final configuration evaluation fail.
 
 Boot relies on the standard fallback EFI loader at:
 
@@ -151,15 +170,18 @@ Boot relies on the standard fallback EFI loader at:
 ```text
 boot ISO
 ↓
-copy embedded source to /run/dotfiles-installer/source
+discard stale installer-owned /run state and stale install-target symlink
+↓
+copy embedded base source to /run/dotfiles-installer/source
 ↓
 prompt twice and hash administrator password
 ↓
 generate facter.json in the writable source
 ↓
-evaluate final target with --no-update-lock-file
+evaluate final metadata with --no-update-lock-file
 ↓
-resolve home / UID / primary group / GID / hashedPasswordFile
+validate absolute safe home / UID / primary group / GID
+and exact /persist/etc/dotfiles/password-<primary>.hash
 ↓
 realize Disko script with --no-update-lock-file
 ↓
@@ -183,17 +205,34 @@ chown with evaluated UID/GID
 sync, unmount, power off
 ```
 
-All destructive work starts only after final target evaluation, Disko-script
-realization, and the exactly-one-disk check succeed.
+All destructive work starts only after final metadata evaluation,
+Disko-script realization, policy/path validation, and the exactly-one-disk check
+succeed.
+
+This barrier intentionally does not prove that the complete
+`system.build.toplevel` can already be realized. `nixos-install --flake`
+realizes the final system in the target store after Disko, so dependency,
+substitution, system-build, disk-capacity, or bootloader failures may still
+occur after the target disk has been modified. Pre-realizing the full system in
+the live ISO store is explicitly outside this design.
 
 The installer service owns tty1 while interactive. tty1 getty/autovt instances
 are masked and tty2 remains available for diagnostics.
 
 The installer wants and starts after `network-online.target` because locked Nix
 inputs may need runtime fetching. This target provides boot ordering only; it is
-not treated as proof of Internet reachability. A fetch failure is reported
-without hiding tty2 so the operator can repair networking and restart the
-installer service.
+not treated as proof of Internet reachability.
+
+Each invocation owns fresh transaction state under
+`/run/dotfiles-installer`. Before any destructive work it recreates the
+host-materialized source from the immutable base and removes a stale
+`/dev/dotfiles-install-target` only when that path is a symlink; an unexpected
+non-symlink object at that path is an error.
+
+A network/fetch failure before Disko leaves tty2 available. After repairing
+connectivity, restarting `dotfiles-installer.service` starts from fresh
+transaction state. Failures after Disko are outside this non-destructive retry
+guarantee.
 
 ## Assumptions
 
@@ -218,26 +257,32 @@ Implementation is complete when:
 2. `nix run path:.#build-installer -- --host HOST` works for same-system
    declared NixOS hosts;
 3. the builder and ISO use one immutable `self.outPath` base snapshot, while
-   runtime derives exactly one facter-enriched host-materialized tree from it
-   and performs all final NixOS operations from that unmodified tree;
+   every installer invocation derives a fresh facter-enriched host-materialized
+   tree from it and performs all final NixOS operations from that unmodified
+   per-invocation tree;
 4. default installer target selection uses declared runtime defaults and does
    not change when runtime-list ordering changes;
 5. facter-less hosts can build installer media without exporting final
-   `nixosConfigurations`, and neither checks nor generated CI reference NixOS
-   configurations removed by that readiness filter;
+   `nixosConfigurations`; representative NixOS CI references are optional and
+   neither checks nor generated CI reference configurations removed by the
+   readiness filter;
 6. the production host profile contains no legacy filesystem/swap/facter
    ownership;
 7. final NixOS configurations use facter, fixed Disko storage, impermanent
-   `@root`, effective user/group ownership, persistent credentials, and
-   fallback EFI boot;
-8. installation fails before destructive work when final evaluation fails,
-   lock mutation would be required, or the eligible-disk count is not one;
-9. tty1 remains exclusively installer-owned during interaction, and the
-   installer starts after `network-online.target` while preserving tty2 as the
-   recovery path for connectivity failures;
+   `@root`, effective user/group ownership, the exact persistent credential
+   path, asserted systemd-boot/no-EFI-variable policy, and fallback EFI boot;
+8. installation fails before destructive work when metadata/policy/path
+   validation fails, Disko realization fails, lock mutation would be required,
+   or the eligible-disk count is not one; full-system realization is explicitly
+   allowed to fail after Disko;
+9. tty1 remains exclusively installer-owned during interaction; the installer
+   starts after `network-online.target`, and a pre-Disko connectivity failure
+   can be retried from fresh transaction state using tty2 plus a service restart;
 10. one deterministic VM proves root reset/persistence across reboot;
 11. one lifecycle E2E boots the actual ISO, installs to a blank disk, boots the
     installed disk without the ISO, verifies password/sudo, and verifies
     persistence/root reset;
-12. the implementation stops after building and testing the ISO and does not
+12. every generated CI command that evaluates this repository uses an
+    explicit `path:.` flake operand;
+13. the implementation stops after building and testing the ISO and does not
     boot it on the user's real machine.

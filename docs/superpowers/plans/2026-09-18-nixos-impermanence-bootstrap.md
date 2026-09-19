@@ -13,7 +13,8 @@
 ## Global Constraints
 
 - Build command: `nix run path:.#build-installer -- --host HOST`.
-- Check command: `nix flake check -L path:.`.
+- Universal evaluation command: `nix flake check --no-build path:.`.
+- Full VM-backed check command: `nix flake check -L path:.` on a builder advertising the `kvm` system feature. KVM-backed checks are a separate lifecycle gate, not a universal requirement on non-KVM machines.
 - `self.outPath` is the immutable base installer snapshot. Each runtime invocation may create exactly one host-materialized copy by adding fresh facter data; do not create any other source reconstruction, refetch, or filter layer.
 - After fresh `facter.json` is written, `/run/dotfiles-installer/source` is logically immutable: all later Nix evaluation/build/install commands use that same tree without modifying it.
 - `.git` may be physically included by `path:`; installer code must treat it as inert data and never inspect Git state.
@@ -25,7 +26,7 @@
 - Generated CI commands that evaluate this repository also use explicit `path:.` flake operands; there is no CI exception to the source contract.
 - The destructive barrier proves final metadata evaluation, Disko-script realization, and target-disk validation only. It intentionally does not pre-realize `system.build.toplevel`; `nixos-install --flake` may still fail after Disko because of dependency/substitution/system-build or bootloader errors.
 - Fixed storage: `dotfiles-system`, `@root`, `@nix`, `@persist`, `/dev/dotfiles-install-target`.
-- Exactly one non-removable, non-hotplug whole disk is accepted.
+- Exactly one eligible target disk is accepted, where eligible means a whole disk with `rm == false` and `hotplug == false`. This predicate does not prove physical/internal attachment; the operator/environment must ensure the sole eligible disk is the intended target.
 - tty1 belongs to the installer; tty2 is diagnostic.
 - EFI-variable writes stay disabled.
 - Keep one impermanence VM and one installer E2E.
@@ -152,6 +153,21 @@ In `configurations/nixos.nix`, every constructed NixOS target includes:
       assertion = !args.config.boot.loader.efi.canTouchEfiVariables;
       message = "installer-compatible NixOS targets must not write EFI variables";
     }
+    {
+      assertion =
+        args.config.users.users.${config.primaryAccountName}.isNormalUser;
+      message = "installer primary account must remain a normal user";
+    }
+    {
+      assertion =
+        builtins.elem "wheel"
+          args.config.users.users.${config.primaryAccountName}.extraGroups;
+      message = "installer primary account must remain in wheel";
+    }
+    {
+      assertion = args.config.security.sudo.enable;
+      message = "installer-compatible NixOS targets require sudo";
+    }
   ];
 })
 ```
@@ -165,18 +181,44 @@ Keep only host-specific policy such as performance tuning.
 
 - [ ] **Step 5: Gate final configurations from one ready-entry source of truth**
 
-Make `nix/lib/hosts.nix` own the facter path because it already owns `hostDir`. Export one helper:
+Make the repository-relative host-directory location the source of truth.
+
+In `flake/default.nix`, construct the host registry from one relative directory and the repository source root:
 
 ```nix
-facterPathForHost =
-  host:
-  hostDir + "/${host}/facter.json";
+hostDirRelative = "nix/profiles/hosts";
+
+hostRegistry = import ../lib/hosts.nix {
+  inherit lib runtimeContexts hostDirRelative;
+  sourceRoot = ../..;
+};
 ```
 
-In `flake/default.nix`, inherit that helper from `hostRegistry`, pass it to `configurations/nixos.nix`, and define readiness only in terms of the same helper:
+In `nix/lib/hosts.nix`, derive registry discovery plus both facter helpers from that same value:
 
 ```nix
-inherit (hostRegistry) hosts hostNames facterPathForHost;
+hostDir = sourceRoot + "/${hostDirRelative}";
+
+facterRelativePathForHost =
+  host:
+  "${hostDirRelative}/${host}/facter.json";
+
+facterPathForHost =
+  host:
+  sourceRoot + "/${facterRelativePathForHost host}";
+```
+
+Export both helpers. In `flake/default.nix`, pass `facterPathForHost` to
+`configurations/nixos.nix`, pass `facterRelativePathForHost` to installer
+package construction, and define readiness only in terms of the absolute helper:
+
+```nix
+inherit (hostRegistry)
+  hosts
+  hostNames
+  facterRelativePathForHost
+  facterPathForHost
+  ;
 
 nixosHostReady =
   host:
@@ -188,7 +230,12 @@ readyNixosTargetEntries =
     (targets.mkTargetConfigEntries "nixos");
 ```
 
-Do not independently reconstruct `../profiles/hosts/<host>/facter.json` anywhere else. The readiness predicate and `hardware.facter.reportPath` must call the same `facterPathForHost` helper. Do not independently re-run the readiness predicate in `flake/configurations.nix` and `flake/checks.nix`; pass the same `readyNixosTargetEntries` to both.
+Do not independently reconstruct `nix/profiles/hosts/<host>/facter.json`
+anywhere else. Registry discovery, readiness, `hardware.facter.reportPath`,
+and the runtime installer destination must all derive from
+`hostDirRelative`/the exported helpers. Do not independently re-run the
+readiness predicate in `flake/configurations.nix` and `flake/checks.nix`;
+pass the same `readyNixosTargetEntries` to both.
 
 Current `mkTargetConfigs` internally enumerates all target entries, so extend
 `nix/lib/targets.nix` with an entry-based constructor while preserving the
@@ -296,10 +343,11 @@ facter-less NixOS host still receives an installer package/app.
 
 Add evaluation regressions proving that, for every ready NixOS target:
 
-- readiness is determined by `builtins.pathExists (facterPathForHost entry.config.host)`; and
-- the resulting `hardware.facter.reportPath` equals `facterPathForHost entry.config.host` exactly.
+- readiness is determined by `builtins.pathExists (facterPathForHost entry.config.host)`;
+- the resulting `hardware.facter.reportPath` equals `facterPathForHost entry.config.host` exactly; and
+- `facterRelativePathForHost entry.config.host` is the relative path baked into the corresponding installer package/script.
 
-Also assert the primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Use the evaluated NixOS values; do not add group metadata.
+Also assert the primary user's effective `group` is non-empty, `config.users.groups.${group}.gid` is an integer, `isNormalUser == true`, `"wheel"` is present in the effective `extraGroups`, and `config.security.sudo.enable == true`. Use the evaluated NixOS values; do not add duplicate account metadata.
 
 - [ ] **Step 6: Keep one behavioral impermanence VM**
 
@@ -315,10 +363,17 @@ Delete `storage-provisioning-vm.nix` and the standalone `ephemeral-root.nix` tes
 - [ ] **Step 7: Verify and commit**
 
 ```bash
-nix flake check -L path:.
+nix flake check --no-build path:.
+# Build/run non-VM checks on any supported builder.
+# Run the VM-backed impermanence check only on a builder with system feature "kvm".
+nix flake check -L path:.  # KVM-capable builder
 git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/lib/hosts.nix nix/lib/targets.nix nix/ci nix/tests/nixos nix/checks.nix
 git commit -m "refactor: fix nixos bootstrap model"
 ```
+
+Do not set `requiredFeatures.kvm = false` merely to make this gate runnable on
+a non-KVM builder. A non-KVM machine reports the lifecycle gate unavailable;
+it does not redefine the test.
 
 ---
 
@@ -338,6 +393,7 @@ mkInstallerScript {
   target;
   primaryAccount;
   source;
+  facterRelativePath;
   efiArch;
 }
 ```
@@ -352,15 +408,15 @@ With fake external commands, cover:
 each invocation recreates /run/dotfiles-installer/source from the immutable base
 a stale /dev/dotfiles-install-target symlink is removed before disk discovery
 a non-symlink object at /dev/dotfiles-install-target aborts safely
-facter generated for host
+facter is written exactly to /run/dotfiles-installer/source + facterRelativePath
 metadata eval uses path:/run/dotfiles-installer/source
-metadata contains absolute safe home, integer UID, non-empty group, integer GID, exact password path
+metadata contains absolute safe home, integer UID, non-empty group, integer GID, exact password path, isNormalUser, effective extraGroups, and sudoEnabled
 hashedPasswordFile must equal /persist/etc/dotfiles/password-<primary>.hash
 home rejects relative, root, and '..' traversal paths
 all installer Nix commands use --no-update-lock-file
 0 or >1 eligible disks abort before Disko
 fake lsblk JSON uses boolean rm/hotplug values
-1 eligible disk creates the alias
+1 eligible target disk creates the alias; RM/HOTPLUG is never described or tested as proof of physical/internal attachment
 run #1 fails before Disko -> run #2 recreates clean transaction state and succeeds
 nix flake update is never invoked
 ```
@@ -369,7 +425,7 @@ Run the new `installer-runtime` check through `path:.` and confirm failure.
 
 - [ ] **Step 2: Package the script**
 
-`script.nix` substitutes `host`, `target`, `primaryAccount`, `source`, and `efiArch` into `install.nu`.
+`script.nix` substitutes `host`, `target`, `primaryAccount`, `source`, `facterRelativePath`, and `efiArch` into `install.nu`. `facterRelativePath` is supplied by `facterRelativePathForHost host`; `install.nu` never reconstructs the repository-relative host/facter location.
 
 The ISO service in Task 3 provides:
 
@@ -397,7 +453,7 @@ Each service invocation starts a fresh transaction before any destructive work:
 3. copy immutable `source` to `/run/dotfiles-installer/source` and make it
    writable;
 4. prompt twice for a matching non-empty password and hash it with yescrypt;
-5. write fresh `facter.json` for `host`;
+5. create the parent directory for `facterRelativePath` inside `/run/dotfiles-installer/source` and write fresh facter output exactly to `/run/dotfiles-installer/source + facterRelativePath`;
 6. evaluate final-config metadata with `--json --apply --no-update-lock-file`
    from `path:/run/dotfiles-installer/source`.
 
@@ -410,6 +466,9 @@ The apply result is metadata only:
   group = user.group;
   gid = config.users.groups.${user.group}.gid;
   hashedPasswordFile = user.hashedPasswordFile;
+  isNormalUser = user.isNormalUser;
+  extraGroups = user.extraGroups;
+  sudoEnabled = config.security.sudo.enable;
 }
 ```
 
@@ -421,8 +480,10 @@ Before Disko, validate:
 - `group` is non-empty;
 - `home` is an absolute normalized path, is not `/`, and contains no `..`
   traversal component;
-- `hashedPasswordFile` is exactly
-  `/persist/etc/dotfiles/password-<primaryAccount>.hash`.
+- `hashedPasswordFile` is exactly `/persist/etc/dotfiles/password-<primaryAccount>.hash`;
+- `isNormalUser == true`;
+- `"wheel"` is present in effective `extraGroups`; and
+- `sudoEnabled == true`.
 
 Do not merely accept arbitrary non-empty destination strings. These checks make
 the later writes to `/mnt/persist + home + /dotfiles` and
@@ -450,7 +511,7 @@ Run:
 lsblk --json --output PATH,TYPE,RM,HOTPLUG
 ```
 
-Parse the JSON and require exactly one entry satisfying:
+Parse the JSON and require exactly one **eligible target disk** satisfying:
 
 ```text
 type == "disk"
@@ -458,7 +519,7 @@ rm == false
 hotplug == false
 ```
 
-`RM` and `HOTPLUG` are JSON booleans, not numeric 0/1 values. Then create:
+`RM` and `HOTPLUG` are JSON booleans, not numeric 0/1 values. This predicate is only the installer's eligibility filter; it does not establish that the device is physically internal. The supported environment must ensure the sole eligible disk is the intended installation target. Then create:
 
 ```text
 /dev/dotfiles-install-target -> selected disk
@@ -567,7 +628,7 @@ aarch64-linux-a--theme-light--session-gui
 
 Add a regression that reverses the theme/session lists while keeping declared defaults unchanged and verifies the target name remains unchanged.
 
-Construct `packages.installer-<host>` with `source = self.outPath`. Do not evaluate the final NixOS target.
+Construct `packages.installer-<host>` with `source = self.outPath` and `facterRelativePath = facterRelativePathForHost host`. Do not evaluate the final NixOS target. Add a regression that moving/changing `hostDirRelative` changes both `facterPathForHost` and the installer-baked relative destination consistently.
 
 Add a bootstrap regression with a declared same-system NixOS host but no
 facter-ready final configuration. It must still produce/evaluate
@@ -645,15 +706,31 @@ An invalid or non-same-system host fails because the package is absent.
 `nix run path:.#test-installer-e2e` executes that driver's
 `bin/nixos-test-driver --no-interactive` from the same `path:.` source snapshot.
 
-The VM uses UEFI, the actual installer ISO, one blank internal disk, and network access for locked dependencies.
+The VM uses UEFI, the actual installer ISO, and one blank eligible target disk.
+The lifecycle E2E is **offline/hermetic**: it must not require public Internet,
+DNS, or a default route. `runNixOSTest` network isolation is part of the test
+contract, not something to work around.
+
+Arrange all locked flake input source paths and install-time store content needed
+by the test through declared Nix dependencies. The implementation may either:
+
+- embed/prepopulate the required test-only store paths/closures so the installer
+  can evaluate and install offline; or
+- expose them through a cache/service reachable only on the isolated NixOS-test
+  network.
+
+Whichever mechanism is chosen, the test must not contact public substituters or
+source hosts. Keep connectivity-failure/restart behavior in the fake-command
+runtime test from Task 2 rather than depending on real Internet failure here.
 
 Verify:
 
 ```text
+no public default route/DNS dependency is required for installation
 tty1 installer active; tty1 gettys masked; tty2 usable
 installer starts after network-online.target
 password flow completes
-facter appears
+facter appears at the baked facterRelativePath
 fixed Disko layout is installed
 fallback EFI loader exists
 installer powers off
@@ -676,16 +753,26 @@ edit dotfiles
 → boot installed system
 ```
 
-Then run:
+Then run the universal gate on every supported builder:
 
 ```bash
-nix flake check -L path:.
-nix run path:.#test-installer-e2e
+nix flake check --no-build path:.
+# Build/run the non-VM checks explicitly.
 nix run path:.#build-installer -- --host aarch64-linux-a
 test -e result-installer-aarch64-linux-a
 ```
 
-If virtualization is unavailable, report it rather than weakening the E2E. Do not boot the ISO on the real machine.
+On a builder advertising the `kvm` system feature, run the lifecycle gate:
+
+```bash
+nix flake check -L path:.
+nix run path:.#test-installer-e2e
+```
+
+If KVM is unavailable, report the VM/lifecycle gate as unavailable rather than
+setting `requiredFeatures.kvm = false`, removing the checks, or treating the
+universal gate as if it had exercised the lifecycle. Do not boot the ISO on the
+real machine.
 
 - [ ] **Step 7: Commit**
 

@@ -13,7 +13,8 @@ plan names implementation work and tests; it does not restate every invariant.
 
 **Verification gates:**
 
-- universal: `nix flake check --no-build path:.` plus applicable non-VM checks;
+- evaluation: `nix flake check --no-build path:.`;
+- universal: evaluation plus `nix build -L path:.#checks.<system>.non-vm`;
 - lifecycle: normal KVM-backed NixOS VM tests, including the impermanence VM and
   installer E2E.
 
@@ -50,7 +51,11 @@ plan names implementation work and tests; it does not restate every invariant.
   `btrfs-progs`.
 
 Update the structural tests to prove the fixed Disko layout and initrd execution
-environment. Do not keep a second VM solely for storage provisioning.
+environment. Factor the root-device selection/cardinality logic into a focused
+testable component and cover 0, 1, and 2 `PARTLABEL=dotfiles-system` matches;
+only the single-match case may proceed to root-subvolume mutation.
+
+Do not keep a second VM solely for storage provisioning.
 
 ### Step 2: Centralize final-system policy
 
@@ -149,15 +154,35 @@ Add evaluation tests proving:
 Prefer testing these domain properties over searching generated text for a
 specific implementation spelling.
 
-### Step 7: Verify
+### Step 7: Define the real non-VM gate and CI split
+
+- [ ] Split check construction into non-VM and VM-backed sets.
+- [ ] Expose `checks.<system>.non-vm` as an aggregate derivation whose
+  dependencies force every applicable non-VM check for that system to build.
+  Do not include the aggregate itself in its dependency set.
+- [ ] Keep VM-backed checks as ordinary checks with their normal KVM
+  requirements.
+- [ ] Change generated Linux CI on `ubuntu-24.04-arm` so it runs:
+  1. `nix flake check --no-build path:.`; then
+  2. `nix build -L path:.#checks.aarch64-linux.non-vm`.
+- [ ] Remove unrestricted hosted-ARM `nix flake check` from generated
+  `full-build.yml` while VM-backed checks remain part of `checks`.
+- [ ] Run lifecycle checks only on a builder advertising `kvm`. If no such CI
+  runner is configured, keep the lifecycle gate explicit/manual rather than
+  weakening or silently skipping its requirements.
+- [ ] Keep generated repository-evaluating CI commands on explicit `path:.`
+  flake references.
+
+### Step 8: Verify
 
 ```bash
 nix flake check --no-build path:.
+nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
 ```
 
-Run the impermanence VM on a KVM-capable builder.
+Run the impermanence VM separately on a KVM-capable builder.
 
-Commit this task as one coherent final-system/readiness refactor.
+Commit this task as one coherent final-system/readiness/verification refactor.
 
 ---
 
@@ -170,8 +195,10 @@ Commit this task as one coherent final-system/readiness refactor.
 - Create: `nix/tests/installer/runtime.nix`
 - Modify: `nix/checks.nix`
 
-The runtime source is `/run/dotfiles-installer/source`. The Disko alias is
-`/dev/dotfiles-install-target`.
+The writable working tree is `/run/dotfiles-installer/source`. After facter
+generation it is added to the local Nix store exactly once; the resulting
+post-facter store path becomes the transaction source identity. The Disko alias
+is `/dev/dotfiles-install-target`.
 
 ### Step 1: Package one installer script
 
@@ -187,20 +214,29 @@ Each invocation:
 
 - [ ] safely clears only installer-owned stale runtime state and a stale
   installer-created target symlink;
-- [ ] copies the immutable source to the runtime source;
+- [ ] copies the immutable source to the writable working tree;
+- [ ] restores owner-write permission on the working tree while preserving
+  executable bits;
 - [ ] prompts twice for a matching non-empty password and hashes it with
   yescrypt;
-- [ ] writes fresh facter data at the canonical relative facter path; and
-- [ ] stops mutating the runtime source after facter generation.
+- [ ] writes fresh facter data at the canonical relative facter path;
+- [ ] adds the complete post-facter tree to the local Nix store exactly once;
+- [ ] records that store path and keeps it rooted for the transaction lifetime;
+  and
+- [ ] never uses the writable working tree as the final source identity after
+  the store snapshot exists.
 
 An unexpected non-symlink object at the target-alias path aborts the transaction.
 
 ### Step 3: Evaluate and validate final metadata
 
-- [ ] Evaluate only the final metadata needed by the installer from
-  `path:/run/dotfiles-installer/source`.
+- [ ] Evaluate only the final metadata needed by the installer from the exact
+  post-facter store path.
 - [ ] Validate the administrator and bootloader contract defined in the spec.
-- [ ] Realize only the Disko script before the destructive barrier.
+- [ ] Realize only the Disko script from that same store path before the
+  destructive barrier.
+- [ ] Carry the same store path into `nixos-install --flake`; do not resnapshot
+  `/run/dotfiles-installer/source` between validation and installation.
 
 All installer-side Nix operations use `--no-update-lock-file`.
 
@@ -219,10 +255,11 @@ After Disko:
 - [ ] require the expected mountpoints;
 - [ ] write the password hash to the evaluated persistent password path with
   restrictive permissions;
-- [ ] run `nixos-install` against the same runtime source;
+- [ ] run `nixos-install` against the same post-facter store path;
 - [ ] require the architecture-specific fallback EFI loader;
-- [ ] copy the runtime dotfiles tree to the evaluated user's persistent home and
-  chown it to the evaluated UID:GID;
+- [ ] copy the post-facter source tree to the evaluated user's persistent home;
+- [ ] restore owner-write permission on that persisted tree while preserving
+  executable bits, then chown it to the evaluated UID:GID;
 - [ ] sync, unmount, verify unmounted, and power off.
 
 Errors exit non-zero. The pre-Disko retry guarantee does not extend to failures
@@ -235,8 +272,13 @@ boundaries:
 
 - [ ] every invocation recreates runtime source from the immutable base;
 - [ ] facter is written at the supplied canonical relative destination;
-- [ ] final evaluation/Disko/install consume the same runtime source;
+- [ ] exactly one post-facter store snapshot is created and its returned path is
+  used by final evaluation, Disko realization, and installation;
+- [ ] modifying the writable working tree after the store snapshot is created
+  does not change what later validation/installation observes;
 - [ ] invalid administrator metadata fails before Disko;
+- [ ] Disko-script realization failure leaves the target alias absent, never
+  invokes Disko/nixos-install/target mutation, and a retry starts cleanly;
 - [ ] zero or multiple eligible target disks fail before Disko;
 - [ ] one eligible target disk creates the alias;
 - [ ] an unexpected alias-path object fails safely;
@@ -252,6 +294,7 @@ command-line spelling when the behavioral property is already covered.
 ```bash
 nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).installer-runtime
 nix flake check --no-build path:.
+nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
 ```
 
 Commit the installer transaction separately from ISO/E2E work.
@@ -335,10 +378,11 @@ boot actual ISO
 → installer powers off
 → boot installed disk without ISO
 → password login + sudo work
+→ primary user modifies a normal file in persisted dotfiles successfully
 → create disposable + persistent data
 → reboot
 → disposable data gone
-→ persistent data and dotfiles survive
+→ persistent data and writable dotfiles survive
 ```
 
 Connectivity-failure/retry behavior remains a runtime-test concern, not a public
@@ -358,10 +402,11 @@ edit dotfiles
 → boot installed system
 ```
 
-Run the universal gate:
+Run the evaluation + universal gates:
 
 ```bash
 nix flake check --no-build path:.
+nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
 nix run path:.#build-installer -- --host aarch64-linux-a
 test -e result-installer-aarch64-linux-a
 ```

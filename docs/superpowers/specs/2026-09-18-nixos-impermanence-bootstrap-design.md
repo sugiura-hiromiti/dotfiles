@@ -68,15 +68,20 @@ Here, `host` means the host-registry key (for example
 `aarch64-linux-a`). `hostName` means only the hostname configured inside
 the operating system.
 
-Final `nixosConfigurations` are exported only for entries whose
-`entry.config.host` has:
+`nix/lib/hosts.nix` owns one `facterPathForHost` helper derived from its
+`hostDir`. Final `nixosConfigurations` are exported only for entries where:
 
-```text
-nix/profiles/hosts/<host>/facter.json
+```nix
+builtins.pathExists (facterPathForHost entry.config.host)
 ```
 
-Every exported NixOS configuration uses that file through
-`hardware.facter.reportPath`. Exported NixOS configurations, every check that
+Every exported NixOS configuration uses the exact same helper result through:
+
+```nix
+hardware.facter.reportPath = facterPathForHost config.host;
+```
+
+Readiness and final hardware configuration therefore cannot drift through independently written host/facter path expressions. Exported NixOS configurations, every check that
 dereferences them, and generated CI targets that dereference them are derived
 from the same facter-ready target-entry set; there is no separate unfiltered
 NixOS check or CI target-name source.
@@ -127,6 +132,8 @@ During installation Disko receives the selected disk through:
 Impermanence resets only `@root`. In initrd it requires exactly one partition
 with `PARTLABEL=dotfiles-system`, deletes the previous `@root`, recreates
 it, and keeps `/nix` and `/persist` available for boot.
+
+The root-reset initrd unit declares its executable dependencies explicitly with a service-local `path` containing `pkgs.util-linux` and `pkgs.btrfs-progs`; it does not rely on the installer ISO's package set or on incidental initrd contents. This makes both `blkid` discovery and `btrfs` subvolume operations available in the installed system's initrd.
 
 The host-specific profile owns only host-specific policy. Universal hardware,
 storage, and password policy are owned by constructed NixOS configuration, so
@@ -268,9 +275,7 @@ Implementation is complete when:
    readiness filter;
 6. the production host profile contains no legacy filesystem/swap/facter
    ownership;
-7. final NixOS configurations use facter, fixed Disko storage, impermanent
-   `@root`, effective user/group ownership, the exact persistent credential
-   path, asserted systemd-boot/no-EFI-variable policy, and fallback EFI boot;
+7. final NixOS configurations use the same `facterPathForHost` helper for readiness and `hardware.facter.reportPath`, fixed Disko storage, impermanent `@root`, an initrd root-reset service with explicit `util-linux`/`btrfs-progs` dependencies, effective user/group ownership, the exact persistent credential path, asserted systemd-boot/no-EFI-variable policy, and fallback EFI boot;
 8. installation fails before destructive work when metadata/policy/path
    validation fails, Disko realization fails, lock mutation would be required,
    or the eligible-disk count is not one; full-system realization is explicitly

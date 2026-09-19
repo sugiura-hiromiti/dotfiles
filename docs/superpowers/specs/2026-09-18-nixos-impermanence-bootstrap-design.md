@@ -9,21 +9,32 @@ Provide one same-system command for creating installation media for a declared
 NixOS host:
 
 ```text
-nix run path:.#build-installer -- --host HOST
+nix run .#build-installer -- --host HOST
 ```
 
-The installer captures the current dotfiles snapshot, generates hardware facts
-on the target machine, installs one fixed Disko/impermanence layout, and powers
-off for manual installer-media removal.
+The installer captures the current versioned dotfiles contents, generates
+hardware facts on the target machine, installs one fixed
+Disko/impermanence layout, and powers off for manual installer-media removal.
 
-Cross-system installer builds and the existing update workflow are out of scope.
+Cross-system installer builds, VCS history/ref semantics, and the existing
+update workflow are out of scope.
 
 ## Source identity
 
-`path:.` defines the input snapshot used to build installer media. Nix stores
-that snapshot immutably and the ISO carries it as the base source.
+Version control is used only to select which paths belong to dotfiles.
 
-At runtime the installer creates one writable working tree:
+For this repository, `build-installer` uses JJ to enumerate the current
+versioned path set. It copies the current filesystem contents of those paths
+into a fresh staging directory outside the checkout, preserving relative paths,
+symlinks, and executable bits. Commit IDs, parents, bookmarks, remotes, and
+history do not participate in source identity.
+
+The stage is added to the Nix store and becomes the immutable **base source**.
+Ignored/unversioned files and generated artifacts in the checkout are outside
+that source boundary.
+
+The installer ISO carries that base source. At runtime it creates one writable
+working tree:
 
 ```text
 /run/dotfiles-installer/source
@@ -34,13 +45,22 @@ adds the complete tree to the local Nix store exactly once. The returned
 **post-facter store path** is the transaction source identity.
 
 Metadata evaluation, Disko realization, and `nixos-install --flake` all use
-that exact store path. The writable working tree is not evaluated again after
-the store snapshot exists. The store path remains rooted for the transaction
-lifetime.
+that exact post-facter store path. The writable working tree is not evaluated
+again after the snapshot exists, and the store path remains rooted for the
+transaction lifetime.
 
-Installer-side Nix operations do not update the lock file. Repository-evaluating
-bootstrap and generated-CI commands use explicit `path:...` flake references
-so they use filesystem-snapshot semantics.
+`build-installer` does not create an output link inside the checkout. It builds
+with no out-link and reports the resulting installer output path.
+
+## Lock graph
+
+Source identity and dependency identity are separate invariants.
+
+Every flake operation used by bootstrap construction or installer runtime uses
+`--no-update-lock-file`. An incomplete or stale lock graph therefore fails
+instead of being updated in memory or on disk.
+
+Using `--no-write-lock-file` alone does not satisfy this contract.
 
 ## Hosts, targets, and facter readiness
 
@@ -87,11 +107,11 @@ Impermanence resets only `@root`. Initrd requires exactly one
 `@persist` intact. The root-reset service carries the executables it invokes in
 its own initrd service environment.
 
-Universal storage, facter, impermanence, authentication, and boot policy belongs
-to the constructed NixOS configuration; host profiles contain host-specific
-policy only.
+Universal storage, facter, impermanence, authentication, Preservation, and boot
+policy belongs to the constructed NixOS configuration; host profiles contain
+host-specific policy only.
 
-## Administrator and boot contract
+## Administrator, password, and boot contract
 
 The final configuration uses immutable password state:
 
@@ -111,6 +131,11 @@ Before destructive work the installer validates the effective primary account:
 - membership in `wheel`; and
 - effective sudo enabled.
 
+The installer service uses `UMask=0077`. The persistent password directory and
+hash are owned by `root:root`; the directory is mode `0700` and the hash is
+mode `0600`. The hash is written through a temporary file in the same
+directory and atomically renamed to its final path.
+
 The installed system uses:
 
 ```nix
@@ -121,29 +146,54 @@ boot.loader.efi.canTouchEfiVariables = false;
 Those values are asserted after module merging. Boot uses the standard fallback
 loader at `/EFI/BOOT/BOOT<ARCH>.EFI`.
 
+## Preservation contract
+
+The primary user's `dotfiles` directory is preserved under `/persist`.
+
+Installer metadata includes the evaluated physical backing path for that
+preserved directory. The installer treats this path as opaque policy from the
+final NixOS configuration rather than reconstructing Preservation's path rules.
+
+For the current layout this resolves to:
+
+```text
+/persist<evaluatedHome>/dotfiles
+```
+
+and while the installed system is mounted at `/mnt` the write destination is:
+
+```text
+/mnt/persist<evaluatedHome>/dotfiles
+```
+
+After boot, Preservation exposes the same data at:
+
+```text
+<evaluatedHome>/dotfiles
+```
+
+The persisted copy preserves executable bits, restores owner-write permission,
+and is owned by the evaluated UID:GID.
+
 ## Installation transaction
 
 Each service invocation starts with fresh installer-owned runtime state:
 
 ```text
-base store snapshot
-→ writable working tree
-→ password hash + facter
+sanitized immutable base source
+→ writable facter workspace
 → immutable post-facter store snapshot
 → validate final metadata
 → realize Disko script
 → validate exactly one eligible target disk
 → create /dev/dotfiles-install-target
 → Disko provisions /mnt
-→ write persistent password hash
+→ atomically write root-only persistent password hash
 → nixos-install from the same post-facter store path
 → verify fallback EFI loader
-→ persist a writable copy of dotfiles for the primary user
+→ copy dotfiles to the evaluated Preservation backing path
 → sync, unmount, power off
 ```
-
-The persisted dotfiles copy preserves executable bits, restores owner-write
-permission, and is owned by the evaluated UID:GID.
 
 A fresh invocation may remove its own stale target symlink. Any unexpected
 non-symlink object at that path is an error.
@@ -151,7 +201,7 @@ non-symlink object at that path is an error.
 ## Destructive barrier
 
 No target-disk modification occurs before all four checks succeed against the
-same post-facter source:
+same post-facter source and frozen lock graph:
 
 1. final metadata evaluation;
 2. administrator and boot-policy validation;
@@ -189,7 +239,7 @@ intended eligible target disk, no second attached installed disk using
 
 Verification has three layers:
 
-- **evaluation:** `nix flake check --no-build path:.`;
+- **evaluation:** `nix flake check --no-build .`;
 - **universal:** evaluation plus `checks.<system>.non-vm`, which builds every
   applicable non-VM check without requiring KVM;
 - **lifecycle:** the impermanence VM and installer E2E on a builder advertising
@@ -198,12 +248,22 @@ Verification has three layers:
 Hosted non-KVM CI runs evaluation and universal checks only. The lifecycle gate
 keeps its normal KVM requirement.
 
-The lifecycle E2E is hermetic: it boots the actual ISO with one blank eligible
-disk, installs without public Internet/DNS/default route, boots the installed
-disk without the ISO, verifies password/sudo and writable persisted dotfiles,
-then verifies root reset and persistent state across reboot.
+Focused non-VM tests cover:
 
-Focused non-VM tests cover facter readiness/path consistency, root-device
-cardinality (0/1/2 matches), post-facter source identity, destructive-barrier
-failures including Disko realization failure, retry behavior, fixed storage,
-and generated-CI source semantics.
+- source staging includes modified versioned contents and excludes
+  ignored/unversioned/generated paths;
+- adding a prior build artifact in the checkout cannot change the staged base
+  source identity;
+- incomplete/stale lock graphs fail because every flake operation uses
+  `--no-update-lock-file`;
+- facter readiness/path consistency and single post-facter source identity;
+- root-device cardinality (0/1/2 matches);
+- destructive-barrier failures including Disko realization failure;
+- secure password ownership/mode and retry behavior; and
+- fixed storage and generated-CI behavior.
+
+The lifecycle E2E boots the actual ISO with one blank eligible disk, installs
+without public Internet/DNS/default route, verifies the password hash backing
+file before unmount, boots the installed disk without the ISO, verifies
+password/sudo and password-file ownership/mode again, verifies writable dotfiles
+at the user's home, then verifies that data survives root reset and reboot.

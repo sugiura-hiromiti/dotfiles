@@ -27,8 +27,8 @@ this design.
 evaluation. `self.outPath` is therefore the exact immutable base installer
 snapshot.
 
-The builder and ISO consume that base snapshot directly. Runtime installation
-creates exactly one host-materialized tree by copying the base to
+The builder and ISO consume that base snapshot directly. Each runtime installer
+service invocation creates exactly one host-materialized tree by copying the base to
 `/run/dotfiles-installer/source` and adding fresh `facter.json`. After facter
 generation, that tree is no longer modified. All final NixOS evaluation, Disko
 realization, and flake-based installation operations use `path:` semantics over

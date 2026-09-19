@@ -75,16 +75,18 @@ both absolute and relative facter paths from it.
 - [ ] In `flake/default.nix`, derive NixOS target sets once:
 
 ```nix
+declaredNixosTargetEntries = targets.mkTargetConfigEntries "nixos";
+readyNixosTargetEntries = lib.filter (
+  entry: builtins.pathExists (facterPathForHost entry.config.host)
+) declaredNixosTargetEntries;
+
 nixosTargetSets = {
-  declared = targets.mkTargetConfigEntries "nixos";
-  ready = lib.filter (
-    entry: builtins.pathExists (facterPathForHost entry.config.host)
-  ) nixosTargetSets.declared;
+  declared = declaredNixosTargetEntries;
+  ready = readyNixosTargetEntries;
 };
 ```
 
-Use an equivalent non-recursive implementation if needed; the important
-property is one declared set and one facter-ready set.
+The important property is one declared set and one facter-ready set.
 
 - [ ] Add a generic `mkTargetConfigsFromEntries` helper to `lib/targets.nix`.
   Keep `mkTargetConfigs` as the wrapper for callers that want all entries.
@@ -107,6 +109,8 @@ semantics.
 - [ ] CI consumes that helper/result.
 - [ ] When no facter-ready representative NixOS target exists, CI remains
   structurally valid and omits only the NixOS-specific evaluation/build work.
+- [ ] Generated CI commands that evaluate this repository use explicit
+  `path:.` flake references, preserving the source contract.
 
 Do not add bootstrap-specific tests for generic theme/session list ordering after
 the target model itself proves the property.
@@ -135,6 +139,9 @@ Add evaluation tests proving:
 - [ ] declared-without-facter hosts remain valid bootstrap inputs;
 - [ ] ready targets use exactly the canonical facter path;
 - [ ] configurations, NixOS checks, and CI all consume the same ready target set;
+- [ ] generated CI contains no repository-evaluating Git-flake shorthand where
+  the source contract requires explicit `path:.`; this text-level regression is
+  intentional because the spelling selects different Nix source semantics;
 - [ ] moving the canonical host-directory root changes absolute and installer
   relative facter destinations consistently; and
 - [ ] effective administrator/bootloader values satisfy the spec.

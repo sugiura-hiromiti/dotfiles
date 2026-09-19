@@ -78,8 +78,8 @@ nix run path:.#test-installer-e2e
 - [ ] Feed that same ready set to NixOS checks and CI.
 - [ ] Keep installer-package discovery based on declared same-system NixOS
   hosts, so a facter-less host remains bootstrappable.
-- [ ] Keep default-target selection in the target model and reuse it from
-  installer/CI consumers.
+- [ ] Keep default-target selection in the target model for installer-package
+  selection.
 
 Focused evaluation tests prove declared-vs-ready behavior, facter-path
 consistency, effective administrator/boot values, and default-target selection.
@@ -91,7 +91,10 @@ consistency, effective administrator/boot values, and default-target selection.
   applicable non-VM check.
 - [ ] Keep VM tests as ordinary KVM-requiring checks.
 - [ ] Make generated hosted Linux CI run the evaluation gate and the non-VM
-  aggregate instead of building VM checks.
+  aggregate instead of building VM checks or selecting a representative NixOS
+  target.
+- [ ] Remove NixOS representative-target plumbing from hosted Linux CI once the
+  aggregate owns that coverage.
 - [ ] Keep lifecycle tests for a KVM-capable builder.
 - [ ] Keep repository-evaluating generated CI commands on explicit `path:.`
   flake references.

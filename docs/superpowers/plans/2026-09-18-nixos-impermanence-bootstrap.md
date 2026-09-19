@@ -4,7 +4,7 @@
 
 **Goal:** Build same-system NixOS installation media from the current dotfiles filesystem snapshot, generate facter on the target, install one fixed impermanent layout, and verify the lifecycle.
 
-**Architecture:** Every operator/test command that evaluates this repository uses an explicit `path:` flake reference. Nix freezes the current directory as the immutable base snapshot `self.outPath`; the builder and ISO consume that base directly. At runtime the installer creates exactly one writable host-materialized tree from that base, adds fresh `facter.json`, then stops mutating it. All final NixOS evaluation/build/install operations use `path:/run/dotfiles-installer/source`, so repeated evaluations are permitted but are derived from the same host-materialized contents.
+**Architecture:** Every operator/test command that evaluates this repository uses an explicit `path:` flake reference. Nix freezes the current directory as the immutable base snapshot `self.outPath`; the builder and ISO consume that base directly. At runtime each installer service invocation creates exactly one writable host-materialized tree from that base, adds fresh `facter.json`, then stops mutating it. All final NixOS evaluation/build/install operations use `path:/run/dotfiles-installer/source`, so repeated evaluations are permitted but are derived from the same host-materialized contents.
 
 **Tech Stack:** NixOS/nixpkgs, flake-parts, Disko, nixos-facter, preservation, Nushell, systemd-boot, NixOS VM tests.
 
@@ -14,7 +14,7 @@
 
 - Build command: `nix run path:.#build-installer -- --host HOST`.
 - Check command: `nix flake check -L path:.`.
-- `self.outPath` is the immutable base installer snapshot. Runtime may create exactly one host-materialized copy by adding fresh facter data; do not create any other source reconstruction, refetch, or filter layer.
+- `self.outPath` is the immutable base installer snapshot. Each runtime invocation may create exactly one host-materialized copy by adding fresh facter data; do not create any other source reconstruction, refetch, or filter layer.
 - After fresh `facter.json` is written, `/run/dotfiles-installer/source` is logically immutable: all later Nix evaluation/build/install commands use that same tree without modifying it.
 - `.git` may be physically included by `path:`; installer code must treat it as inert data and never inspect Git state.
 - `host` always means registry key; `hostName` means OS/network hostname.

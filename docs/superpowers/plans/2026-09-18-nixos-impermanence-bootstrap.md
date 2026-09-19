@@ -147,7 +147,6 @@ Prove:
 - Create: `nix/flake/installer.nix`
 - Create: `nix/apps/build-installer/{default.nix,build.nu,tests/run.sh}`
 - Create: `nix/tests/installer/e2e.nix`
-- Create: `nix/apps/test-installer-e2e/default.nix`
 - Modify: flake apps/default/checks, `README.org`, `flake.nix`
 
 ### 3.1 Capture the base source
@@ -208,8 +207,6 @@ boot ISO
 → disposable state gone; persistent state survives
 ```
 
-Expose `test-installer-e2e` as an optional interactive/debug entrypoint; the
-automated lifecycle gate is the flake check.
 
 ### 3.4 Operator documentation
 

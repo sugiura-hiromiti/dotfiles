@@ -32,6 +32,10 @@ installer, and E2E all consume that same snapshot.
 The source directory itself is the boundary. Files that must never enter an
 installer snapshot must live outside it.
 
+A `.git` directory may therefore be physically present in the snapshot. It is
+semantically inert: installer code must not inspect it or derive behavior from
+Git history, refs, remotes, index state, or cleanliness.
+
 Installer packages are generated for declared NixOS hosts whose `system`
 matches the current `perSystem` system.
 

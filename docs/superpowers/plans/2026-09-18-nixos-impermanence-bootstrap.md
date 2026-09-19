@@ -35,7 +35,7 @@
 | Area | Files |
 |---|---|
 | Final installed state | `storage/layout.nix`, `storage/provisioning.nix`, `impermanence/{impermanence,ephemeral-root}.nix`, `configurations/nixos.nix`, production host `nixos.nix` |
-| Facter gating | `flake/{default,configurations,checks}.nix`, `checks.nix` |
+| Facter gating | `flake/{default,configurations,checks}.nix`, `lib/targets.nix`, `checks.nix` |
 | Installer transaction | `installer/{install.nu,script.nix}`, `tests/installer/runtime.nix` |
 | ISO/builder | `installer/iso.nix`, `flake/installer.nix`, `apps/build-installer/*` |
 | Verification | `tests/nixos/impermanence-vm.nix`, `tests/installer/e2e.nix` |
@@ -199,7 +199,7 @@ Delete `storage-provisioning-vm.nix` and the standalone `ephemeral-root.nix` tes
 
 ```bash
 nix flake check -L path:.
-git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/tests/nixos nix/checks.nix
+git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/lib/targets.nix nix/tests/nixos nix/checks.nix
 git commit -m "refactor: fix nixos bootstrap model"
 ```
 

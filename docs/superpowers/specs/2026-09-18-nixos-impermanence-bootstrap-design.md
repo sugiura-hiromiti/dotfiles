@@ -65,11 +65,17 @@ nix/profiles/hosts/<host>/facter.json
 ```
 
 Every exported NixOS configuration uses that file through
-`hardware.facter.reportPath`.
+`hardware.facter.reportPath`. Exported NixOS configurations and every check
+that dereferences them are derived from the same facter-ready target-entry set;
+there is no separate unfiltered NixOS check-name list.
 
 During installation the embedded source is copied to writable runtime storage,
 fresh `facter.json` is generated there, and the final target is evaluated from
 that writable tree using `path:` flake semantics.
+
+The installer ISO explicitly enables the `nix-command` and `flakes`
+experimental features because the runtime transaction invokes bare `nix eval`
+and `nix build` flake commands.
 
 Installer-side Nix operations use:
 
@@ -148,7 +154,8 @@ resolve home / UID / primary group / GID / hashedPasswordFile
 ↓
 realize Disko script with --no-update-lock-file
 ↓
-require exactly one non-removable, non-hotplug whole disk
+require exactly one whole disk where lsblk JSON has
+type == "disk", rm == false, hotplug == false
 ↓
 /dev/dotfiles-install-target -> selected disk
 ↓
@@ -200,7 +207,8 @@ Implementation is complete when:
 4. default installer target selection uses declared runtime defaults and does
    not change when runtime-list ordering changes;
 5. facter-less hosts can build installer media without exporting final
-   `nixosConfigurations`;
+   `nixosConfigurations`, and checks never reference NixOS configurations
+   removed by that readiness filter;
 6. the production host profile contains no legacy filesystem/swap/facter
    ownership;
 7. final NixOS configurations use facter, fixed Disko storage, impermanent

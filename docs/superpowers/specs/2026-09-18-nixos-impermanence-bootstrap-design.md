@@ -5,54 +5,69 @@ Revised: 2026-09-19
 
 ## Purpose
 
-Provide one generic command for creating installation media for any declared
-NixOS host:
+Provide one command for creating installation media for a declared NixOS host
+on the current system:
 
 ```text
-nix run --impure .#build-installer -- --host HOST
+nix run .#build-installer -- --host HOST
 ```
 
 The installer consumes the current dotfiles filesystem contents, not Git
 history. It installs a facter-backed NixOS system with one fixed
 Disko/impermanence layout, then powers off for manual installer-media removal.
 
-The existing `.#update` workflow is outside this design.
+Cross-system installer builds and the existing `.#update` workflow are outside
+this design.
 
 ## Source and configuration
 
-The builder reads the current working directory through an impure flake
-evaluation and immediately converts it to an immutable filtered store path:
+The flake remains pure under ordinary evaluation, including
+`nix flake check`.
+
+`build-installer` is a pure app whose runtime script snapshots its current
+working directory. The script performs one narrowly scoped impure Nix
+evaluation that applies:
 
 ```nix
 pkgs.nix-gitignore.gitignoreSource [ ] sourceRoot
 ```
 
+using the flake's pinned nixpkgs. The resulting store path is immutable before
+the ISO build starts.
+
 The repository's `.gitignore` is the source-selection policy. All current
 non-ignored files are included; ignored local state and `.git` are excluded.
 
-The filter runs before the source enters the Nix store. ISO construction uses
-only that immutable store path.
+Installer packages are generated for declared NixOS hosts whose `system`
+matches the current `perSystem` system.
 
-Installer packages are generated for every declared NixOS host and use the
-host's existing normalized:
+For a host, the installer target is exactly:
 
-- system;
-- primary account;
-- default theme;
-- default session;
-- target-axis policy.
+```nix
+targetNames.mkSystemTargetName {
+  inherit (host) targetHost;
+  inherit (host.runtime) targetAxes;
+  themeName = host.runtime.defaultTheme;
+  sessionName = host.runtime.defaultSession;
+}
+```
 
-The final target name is derived with the existing target naming rules.
+so target selection is independent of the ordering of `runtime.themes` and
+`runtime.sessions`.
 
-Final `nixosConfigurations` are exported only for hosts that have:
+Here, `host` means the host-registry key (for example
+`aarch64-linux-a`). `hostName` means only the hostname configured inside
+the operating system.
+
+Final `nixosConfigurations` are exported only for entries whose
+`entry.config.host` has:
 
 ```text
 nix/profiles/hosts/<host>/facter.json
 ```
 
 Every exported NixOS configuration uses that file through
-`hardware.facter.reportPath`. There is no alternate hardware-description
-path.
+`hardware.facter.reportPath`.
 
 During installation the embedded source is copied to writable runtime storage,
 fresh `facter.json` is generated there, and the final target is evaluated from
@@ -89,6 +104,11 @@ Impermanence resets only `@root`. In initrd it requires exactly one partition
 with `PARTLABEL=dotfiles-system`, deletes the previous `@root`, recreates
 it, and keeps `/nix` and `/persist` available for boot.
 
+The host-specific profile owns only host-specific policy. Universal hardware,
+storage, and password policy are owned by constructed NixOS configuration, so
+the production host profile does not declare its own filesystems, swap, or
+`hardware.facter.reportPath`.
+
 The primary account uses immutable password configuration:
 
 ```nix
@@ -97,7 +117,9 @@ users.users.<primary>.hashedPasswordFile =
   "/persist/etc/dotfiles/password-<primary>.hash";
 ```
 
-The installer writes only the password hash to that evaluated path.
+The installer reads the effective home, UID, primary group, GID, and password
+path from the evaluated final NixOS configuration. It does not duplicate those
+values in host metadata.
 
 The installed bootloader is:
 
@@ -111,8 +133,6 @@ Boot therefore relies on the standard fallback EFI loader at:
 ```text
 /EFI/BOOT/BOOT<ARCH>.EFI
 ```
-
-The installer verifies that file after `nixos-install`.
 
 ## Installation flow
 
@@ -154,8 +174,7 @@ All destructive work starts only after final target evaluation, Disko-script
 realization, and the exactly-one-disk check succeed.
 
 The installer service owns tty1 while interactive. tty1 getty/autovt instances
-are masked, tty2 remains available for diagnostics, and the installer service
-uses a long-running service type appropriate for an interactive process.
+are masked and tty2 remains available for diagnostics.
 
 ## Assumptions
 
@@ -174,18 +193,24 @@ target-disk data.
 
 Implementation is complete when:
 
-1. `build-installer --host HOST` works for declared NixOS hosts and embeds the
-   filtered current filesystem snapshot;
-2. facter-less hosts can build installer media without exporting final
+1. ordinary `nix flake check -L` stays pure;
+2. `build-installer --host HOST` snapshots the current filesystem only at app
+   runtime and works for same-system declared NixOS hosts;
+3. default installer target selection uses declared runtime defaults and does
+   not change when runtime-list ordering changes;
+4. facter-less hosts can build installer media without exporting final
    `nixosConfigurations`;
-3. final NixOS configurations use facter, the fixed Disko topology,
-   impermanent `@root`, persistent credentials, and fallback EFI boot;
-4. installation fails before destructive work when final evaluation fails,
+5. the production host profile contains no legacy filesystem/swap/facter
+   ownership;
+6. final NixOS configurations use facter, fixed Disko storage, impermanent
+   `@root`, effective user/group ownership, persistent credentials, and
+   fallback EFI boot;
+7. installation fails before destructive work when final evaluation fails,
    lock mutation would be required, or the eligible-disk count is not one;
-5. tty1 remains exclusively installer-owned during interaction;
-6. one deterministic VM proves root reset/persistence across reboot;
-7. one lifecycle E2E boots the actual ISO, installs to a blank disk, boots the
-   installed disk without the ISO, verifies password/sudo, and verifies
-   persistence/root reset;
-8. the implementation stops after building and testing the ISO and does not
-   boot it on the user's real machine.
+8. tty1 remains exclusively installer-owned during interaction;
+9. one deterministic VM proves root reset/persistence across reboot;
+10. one lifecycle E2E boots the actual ISO, installs to a blank disk, boots the
+    installed disk without the ISO, verifies password/sudo, and verifies
+    persistence/root reset;
+11. the implementation stops after building and testing the ISO and does not
+    boot it on the user's real machine.

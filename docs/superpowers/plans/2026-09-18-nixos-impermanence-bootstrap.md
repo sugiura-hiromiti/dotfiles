@@ -4,7 +4,7 @@
 
 **Goal:** Build same-system NixOS installation media from the current dotfiles filesystem snapshot, generate facter on the target, install one fixed impermanent layout, and verify the lifecycle.
 
-**Architecture:** Every operator/test command that evaluates this repository uses an explicit `path:` flake reference. Nix freezes the current directory as `self.outPath`; the builder, ISO, runtime installer, and E2E all use that same immutable snapshot. The ISO copies it writable, adds facter, evaluates the final configuration, validates one target disk, installs, and persists the same tree.
+**Architecture:** Every operator/test command that evaluates this repository uses an explicit `path:` flake reference. Nix freezes the current directory as the immutable base snapshot `self.outPath`; the builder and ISO consume that base directly. At runtime the installer creates exactly one writable host-materialized tree from that base, adds fresh `facter.json`, then stops mutating it. All final NixOS evaluation/build/install operations use `path:/run/dotfiles-installer/source`, so repeated evaluations are permitted but are derived from the same host-materialized contents.
 
 **Tech Stack:** NixOS/nixpkgs, flake-parts, Disko, nixos-facter, preservation, Nushell, systemd-boot, NixOS VM tests.
 
@@ -14,7 +14,8 @@
 
 - Build command: `nix run path:.#build-installer -- --host HOST`.
 - Check command: `nix flake check -L path:.`.
-- `self.outPath` is the installer source snapshot; do not create another source snapshot/filter layer.
+- `self.outPath` is the immutable base installer snapshot. Runtime may create exactly one host-materialized copy by adding fresh facter data; do not create any other source reconstruction, refetch, or filter layer.
+- After fresh `facter.json` is written, `/run/dotfiles-installer/source` is logically immutable: all later Nix evaluation/build/install commands use that same tree without modifying it.
 - `.git` may be physically included by `path:`; installer code must treat it as inert data and never inspect Git state.
 - `host` always means registry key; `hostName` means OS/network hostname.
 - Installer target uses `runtime.defaultTheme` and `runtime.defaultSession`, never runtime-list order.
@@ -35,7 +36,7 @@
 | Area | Files |
 |---|---|
 | Final installed state | `storage/layout.nix`, `storage/provisioning.nix`, `impermanence/{impermanence,ephemeral-root}.nix`, `configurations/nixos.nix`, production host `nixos.nix` |
-| Facter gating | `flake/{default,configurations,checks}.nix`, `lib/targets.nix`, `checks.nix` |
+| Facter gating | `flake/{default,configurations,checks,ci}.nix`, `lib/targets.nix`, `ci/default.nix`, `checks.nix` |
 | Installer transaction | `installer/{install.nu,script.nix}`, `tests/installer/runtime.nix` |
 | ISO/builder | `installer/iso.nix`, `flake/installer.nix`, `apps/build-installer/*` |
 | Verification | `tests/nixos/impermanence-vm.nix`, `tests/installer/e2e.nix` |
@@ -52,8 +53,9 @@
 - Modify: `nix/configurations/nixos.nix`
 - Modify: `nix/modules/nixos/default.nix`
 - Modify: `nix/profiles/hosts/aarch64-linux-a/nixos.nix`
-- Modify: `nix/flake/{default,configurations,checks}.nix`
+- Modify: `nix/flake/{default,configurations,checks,ci}.nix`
 - Modify: `nix/lib/targets.nix`
+- Modify: `nix/ci/default.nix`
 - Modify: `nix/checks.nix`
 - Modify: `nix/tests/nixos/{storage-provisioning,impermanence,impermanence-vm}.nix`
 - Delete: `nix/tests/nixos/{ephemeral-root,storage-provisioning-vm}.nix`
@@ -182,6 +184,25 @@ build checks. This same `nixosTargetEntries` feeds embedded-Home-Manager checks
 and the primary-user ownership checks, so no check can dereference a
 `self.nixosConfigurations` entry that readiness filtering removed.
 
+Propagate the same readiness contract into CI. Pass `readyNixosTargetEntries`
+through `flake/ci.nix` into `nix/ci/default.nix`. Keep Home Manager and Darwin
+target discovery unchanged, but derive the representative Linux NixOS target
+only from `readyNixosTargetEntries`, for example with an entry-based helper:
+
+```nix
+defaultTargetFromEntries =
+  target: hostName: entries:
+  # same default-theme/default-session matching logic
+  ...;
+
+linuxNixosTarget =
+  defaultTargetFromEntries "nixos" linuxHost readyNixosTargetEntries;
+```
+
+Any generated CI job that dereferences `nixosConfigurations.${linuxNixosTarget}`
+or `checks.<system>.build-nixos-${linuxNixosTarget}` must therefore originate
+from the facter-ready set rather than raw `mkTargetConfigEntries "nixos"`.
+
 Add an evaluation check for each ready NixOS target asserting the primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Use the evaluated NixOS values; do not add group metadata.
 
 - [ ] **Step 6: Keep one behavioral impermanence VM**
@@ -199,7 +220,7 @@ Delete `storage-provisioning-vm.nix` and the standalone `ephemeral-root.nix` tes
 
 ```bash
 nix flake check -L path:.
-git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/lib/targets.nix nix/tests/nixos nix/checks.nix
+git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/lib/targets.nix nix/ci nix/tests/nixos nix/checks.nix
 git commit -m "refactor: fix nixos bootstrap model"
 ```
 
@@ -234,7 +255,7 @@ With fake external commands, cover:
 ```text
 source copied writable
 facter generated for host
-one metadata eval uses path:/run/dotfiles-installer/source
+metadata eval uses path:/run/dotfiles-installer/source
 metadata contains home, integer UID, non-empty group, integer GID, password path
 all installer Nix commands use --no-update-lock-file
 0 or >1 eligible disks abort before Disko
@@ -264,14 +285,14 @@ The ISO service in Task 3 provides:
 ]
 ```
 
-- [ ] **Step 3: Implement reversible preparation and one metadata evaluation**
+- [ ] **Step 3: Implement reversible preparation and metadata evaluation**
 
 The script:
 
 1. copies `source` to `/run/dotfiles-installer/source` and makes it writable;
 2. prompts twice for a matching non-empty password and hashes it with yescrypt;
 3. writes fresh `facter.json` for `host`;
-4. evaluates the final config once with `--json --apply --no-update-lock-file`.
+4. evaluates final-config metadata with `--json --apply --no-update-lock-file` from `path:/run/dotfiles-installer/source`.
 
 The apply result is:
 
@@ -288,7 +309,9 @@ The apply result is:
 
 where `user = config.users.users.<primaryAccount>`.
 
-Reject missing/non-integer UID/GID and empty home/group/hash paths. Then build only `config.system.build.diskoScript` with `--no-update-lock-file --no-link --print-out-paths`.
+Reject missing/non-integer UID/GID and empty home/group/hash paths. From this point onward, do not modify `/run/dotfiles-installer/source`. Later Disko realization and `nixos-install --flake` may evaluate the final configuration again; every such operation must use the same `path:/run/dotfiles-installer/source` host-materialized tree and `--no-update-lock-file`.
+
+Then build only `config.system.build.diskoScript` with `--no-update-lock-file --no-link --print-out-paths`.
 
 - [ ] **Step 4: Implement the destructive barrier**
 
@@ -427,6 +450,8 @@ systemd.services."autovt@tty1".enable = false;
 
 systemd.services.dotfiles-installer = {
   wantedBy = [ "multi-user.target" ];
+  wants = [ "network-online.target" ];
+  after = [ "network-online.target" ];
   path = [ /* Task 2 runtime packages */ ];
   serviceConfig = {
     Type = "exec";
@@ -440,9 +465,16 @@ systemd.services.dotfiles-installer = {
 };
 ```
 
-Add an evaluation check for the ISO configuration that asserts both
-`nix-command` and `flakes` are present in
-`nix.settings.experimental-features`.
+Add evaluation checks for the ISO configuration that assert:
+
+- both `nix-command` and `flakes` are present in `nix.settings.experimental-features`;
+- `dotfiles-installer` both wants and starts after `network-online.target`.
+
+`network-online.target` is startup ordering, not proof of Internet reachability.
+If a locked dependency fetch still fails, the installer must fail non-destructively
+when that fetch occurs before Disko, leave tty2 available for networking repair,
+and print a concrete recovery instruction such as restarting
+`dotfiles-installer.service` after connectivity is fixed.
 
 - [ ] **Step 4: Implement the thin build app**
 
@@ -475,6 +507,7 @@ Verify:
 
 ```text
 tty1 installer active; tty1 gettys masked; tty2 usable
+installer starts after network-online.target
 password flow completes
 facter appears
 fixed Disko layout is installed

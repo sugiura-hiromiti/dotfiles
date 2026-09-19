@@ -9,11 +9,13 @@ Provide one command for creating installation media for a declared NixOS host
 on the current system:
 
 ```text
-nix run .#build-installer -- --host HOST
+nix run path:.#build-installer -- --host HOST
 ```
 
-The installer consumes the current dotfiles filesystem contents, not Git
-history. It installs a facter-backed NixOS system with one fixed
+The `path:` input is the source contract: the installer is built from the
+current filesystem tree as it exists at invocation time.
+
+The installer produces a facter-backed NixOS system with one fixed
 Disko/impermanence layout, then powers off for manual installer-media removal.
 
 Cross-system installer builds and the existing `.#update` workflow are outside
@@ -21,22 +23,14 @@ this design.
 
 ## Source and configuration
 
-The flake remains pure under ordinary evaluation, including
-`nix flake check`.
+`path:.` copies the source tree to an immutable Nix store path before flake
+evaluation. `self.outPath` is therefore the exact installer source snapshot.
 
-`build-installer` is a pure app whose runtime script snapshots its current
-working directory. The script performs one narrowly scoped impure Nix
-evaluation that applies:
+No second source-snapshot mechanism is needed. The builder, ISO, runtime
+installer, and E2E all consume that same snapshot.
 
-```nix
-pkgs.nix-gitignore.gitignoreSource [ ] sourceRoot
-```
-
-using the flake's pinned nixpkgs. The resulting store path is immutable before
-the ISO build starts.
-
-The repository's `.gitignore` is the source-selection policy. All current
-non-ignored files are included; ignored local state and `.git` are excluded.
+The source directory itself is the boundary. Files that must never enter an
+installer snapshot must live outside it.
 
 Installer packages are generated for declared NixOS hosts whose `system`
 matches the current `perSystem` system.
@@ -118,8 +112,7 @@ users.users.<primary>.hashedPasswordFile =
 ```
 
 The installer reads the effective home, UID, primary group, GID, and password
-path from the evaluated final NixOS configuration. It does not duplicate those
-values in host metadata.
+path from the evaluated final NixOS configuration.
 
 The installed bootloader is:
 
@@ -128,7 +121,7 @@ boot.loader.systemd-boot.enable = true;
 boot.loader.efi.canTouchEfiVariables = false;
 ```
 
-Boot therefore relies on the standard fallback EFI loader at:
+Boot relies on the standard fallback EFI loader at:
 
 ```text
 /EFI/BOOT/BOOT<ARCH>.EFI
@@ -139,7 +132,7 @@ Boot therefore relies on the standard fallback EFI loader at:
 ```text
 boot ISO
 ↓
-copy embedded filtered source to /run/dotfiles-installer/source
+copy embedded source to /run/dotfiles-installer/source
 ↓
 prompt twice and hash administrator password
 ↓
@@ -180,6 +173,8 @@ are masked and tty2 remains available for diagnostics.
 
 The supported environment has:
 
+- a source directory containing only files acceptable to copy into the Nix store
+  and installer snapshot;
 - UEFI firmware able to boot the standard fallback EFI loader;
 - installer media that does not qualify as the internal target disk;
 - exactly one eligible internal whole disk;
@@ -193,24 +188,26 @@ target-disk data.
 
 Implementation is complete when:
 
-1. ordinary `nix flake check -L` stays pure;
-2. `build-installer --host HOST` snapshots the current filesystem only at app
-   runtime and works for same-system declared NixOS hosts;
-3. default installer target selection uses declared runtime defaults and does
+1. `nix flake check -L path:.` passes from the current filesystem snapshot;
+2. `nix run path:.#build-installer -- --host HOST` works for same-system
+   declared NixOS hosts;
+3. the builder and ISO use `self.outPath` from that same immutable `path:`
+   snapshot without a second snapshot/filter stage;
+4. default installer target selection uses declared runtime defaults and does
    not change when runtime-list ordering changes;
-4. facter-less hosts can build installer media without exporting final
+5. facter-less hosts can build installer media without exporting final
    `nixosConfigurations`;
-5. the production host profile contains no legacy filesystem/swap/facter
+6. the production host profile contains no legacy filesystem/swap/facter
    ownership;
-6. final NixOS configurations use facter, fixed Disko storage, impermanent
+7. final NixOS configurations use facter, fixed Disko storage, impermanent
    `@root`, effective user/group ownership, persistent credentials, and
    fallback EFI boot;
-7. installation fails before destructive work when final evaluation fails,
+8. installation fails before destructive work when final evaluation fails,
    lock mutation would be required, or the eligible-disk count is not one;
-8. tty1 remains exclusively installer-owned during interaction;
-9. one deterministic VM proves root reset/persistence across reboot;
-10. one lifecycle E2E boots the actual ISO, installs to a blank disk, boots the
+9. tty1 remains exclusively installer-owned during interaction;
+10. one deterministic VM proves root reset/persistence across reboot;
+11. one lifecycle E2E boots the actual ISO, installs to a blank disk, boots the
     installed disk without the ISO, verifies password/sudo, and verifies
     persistence/root reset;
-11. the implementation stops after building and testing the ISO and does not
+12. the implementation stops after building and testing the ISO and does not
     boot it on the user's real machine.

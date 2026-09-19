@@ -68,8 +68,21 @@ Here, `host` means the host-registry key (for example
 `aarch64-linux-a`). `hostName` means only the hostname configured inside
 the operating system.
 
-`nix/lib/hosts.nix` owns one `facterPathForHost` helper derived from its
-`hostDir`. Final `nixosConfigurations` are exported only for entries where:
+The host registry owns one repository-relative host-directory value,
+`hostDirRelative`, and derives registry discovery plus both facter helpers
+from it:
+
+```nix
+hostDir = sourceRoot + "/${hostDirRelative}";
+
+facterRelativePathForHost =
+  host: "${hostDirRelative}/${host}/facter.json";
+
+facterPathForHost =
+  host: sourceRoot + "/${facterRelativePathForHost host}";
+```
+
+Final `nixosConfigurations` are exported only for entries where:
 
 ```nix
 builtins.pathExists (facterPathForHost entry.config.host)
@@ -81,7 +94,13 @@ Every exported NixOS configuration uses the exact same helper result through:
 hardware.facter.reportPath = facterPathForHost config.host;
 ```
 
-Readiness and final hardware configuration therefore cannot drift through independently written host/facter path expressions. Exported NixOS configurations, every check that
+Installer construction bakes
+`facterRelativePathForHost host` into the runtime script. The runtime installer
+writes fresh facter data to that exact relative destination beneath its
+host-materialized source and never reconstructs the repository path itself.
+
+Registry discovery, readiness, final hardware configuration, and runtime facter
+placement therefore all follow the same `hostDirRelative` source of truth. Exported NixOS configurations, every check that
 dereferences them, and generated CI targets that dereference them are derived
 from the same facter-ready target-entry set; there is no separate unfiltered
 NixOS check or CI target-name source.
@@ -148,11 +167,7 @@ users.users.<primary>.hashedPasswordFile =
   "/persist/etc/dotfiles/password-<primary>.hash";
 ```
 
-The installer reads the effective home, UID, primary group, GID, and password
-path from the evaluated final NixOS configuration. Before Disko it requires UID
-and GID to be integers, group to be non-empty, home to be an absolute normalized
-non-root path with no `..` traversal component, and the password path to equal
-exactly `/persist/etc/dotfiles/password-<primary>.hash`.
+The installer reads the effective home, UID, primary group, GID, password path, `isNormalUser`, `extraGroups`, and effective sudo enablement from the evaluated final NixOS configuration. Before Disko it requires UID and GID to be integers, group to be non-empty, home to be an absolute normalized non-root path with no `..` traversal component, the password path to equal exactly `/persist/etc/dotfiles/password-<primary>.hash`, `isNormalUser == true`, membership in `wheel`, and `security.sudo.enable == true`. These are the administrator semantics required by the later password-login-and-sudo lifecycle assertion.
 
 The installed bootloader contract is:
 
@@ -183,16 +198,17 @@ copy embedded base source to /run/dotfiles-installer/source
 ↓
 prompt twice and hash administrator password
 ↓
-generate facter.json in the writable source
+write facter.json at the baked facterRelativePath in the writable source
 ↓
 evaluate final metadata with --no-update-lock-file
 ↓
-validate absolute safe home / UID / primary group / GID
-and exact /persist/etc/dotfiles/password-<primary>.hash
+validate absolute safe home / UID / primary group / GID,
+exact /persist/etc/dotfiles/password-<primary>.hash,
+normal-user status, wheel membership, and sudo enablement
 ↓
 realize Disko script with --no-update-lock-file
 ↓
-require exactly one whole disk where lsblk JSON has
+require exactly one eligible target disk where lsblk JSON has
 type == "disk", rm == false, hotplug == false
 ↓
 /dev/dotfiles-install-target -> selected disk
@@ -248,19 +264,36 @@ The supported environment has:
 - a source directory containing only files acceptable to copy into the Nix store
   and installer snapshot;
 - UEFI firmware able to boot the standard fallback EFI loader;
-- installer media that does not qualify as the internal target disk;
-- exactly one eligible internal whole disk;
-- network access when locked Nix dependencies must be fetched;
+- installer media that does not satisfy the target-disk eligibility predicate;
+- exactly one eligible whole target disk, and the operator/environment guarantees that this sole eligible disk is the intended installation target; `RM=false` plus `HOTPLUG=false` is not treated as proof of physical/internal attachment;
+- network access on the real installer when locked Nix dependencies are not already available locally; the lifecycle E2E itself is offline/hermetic and declares all required inputs/store content;
 - no second attached installed disk using `PARTLABEL=dotfiles-system`.
 
 The installer does not choose among multiple target disks or preserve existing
 target-disk data.
 
+## Verification environments
+
+Verification has two distinct gates.
+
+The **universal gate** evaluates the flake and runs non-VM checks without
+requiring virtualization. It is valid on builders without KVM.
+
+The **lifecycle gate** contains the impermanence VM and installer lifecycle E2E.
+On Linux these tests retain their normal NixOS-test `requiredFeatures.kvm = true`
+contract. A builder without the `kvm` system feature reports this gate as
+unavailable; the design does not disable KVM requirements to make the tests run.
+
+The lifecycle E2E is hermetic. NixOS-test network isolation remains enabled, and
+all flake inputs/store content required for installation are declared test
+dependencies or are served only from the isolated test network. Real Internet
+connectivity is not part of E2E success.
+
 ## Acceptance
 
 Implementation is complete when:
 
-1. `nix flake check -L path:.` passes from the current filesystem snapshot;
+1. `nix flake check --no-build path:.` and all non-VM checks succeed on supported builders; full `nix flake check -L path:.` is the KVM-required lifecycle gate and is required only on a builder advertising the `kvm` system feature;
 2. `nix run path:.#build-installer -- --host HOST` works for same-system
    declared NixOS hosts;
 3. the builder and ISO use one immutable `self.outPath` base snapshot, while
@@ -275,18 +308,13 @@ Implementation is complete when:
    readiness filter;
 6. the production host profile contains no legacy filesystem/swap/facter
    ownership;
-7. final NixOS configurations use the same `facterPathForHost` helper for readiness and `hardware.facter.reportPath`, fixed Disko storage, impermanent `@root`, an initrd root-reset service with explicit `util-linux`/`btrfs-progs` dependencies, effective user/group ownership, the exact persistent credential path, asserted systemd-boot/no-EFI-variable policy, and fallback EFI boot;
-8. installation fails before destructive work when metadata/policy/path
-   validation fails, Disko realization fails, lock mutation would be required,
-   or the eligible-disk count is not one; full-system realization is explicitly
-   allowed to fail after Disko;
+7. host discovery, readiness, `hardware.facter.reportPath`, and runtime facter placement derive from one `hostDirRelative`/facter-helper contract; final NixOS configurations use fixed Disko storage, impermanent `@root`, an initrd root-reset service with explicit `util-linux`/`btrfs-progs` dependencies, effective normal-user/wheel/sudo administrator semantics, the exact persistent credential path, asserted systemd-boot/no-EFI-variable policy, and fallback EFI boot;
+8. installation fails before destructive work when metadata/administrator/policy/path validation fails, Disko realization fails, lock mutation would be required, or the eligible-target-disk count is not one; the eligibility predicate is not claimed to prove physical/internal attachment, and full-system realization is explicitly allowed to fail after Disko;
 9. tty1 remains exclusively installer-owned during interaction; the installer
    starts after `network-online.target`, and a pre-Disko connectivity failure
    can be retried from fresh transaction state using tty2 plus a service restart;
-10. one deterministic VM proves root reset/persistence across reboot;
-11. one lifecycle E2E boots the actual ISO, installs to a blank disk, boots the
-    installed disk without the ISO, verifies password/sudo, and verifies
-    persistence/root reset;
+10. one deterministic VM proves root reset/persistence across reboot on a KVM-capable builder;
+11. one offline/hermetic lifecycle E2E, also requiring a KVM-capable builder, boots the actual ISO, installs to a blank eligible target disk without public Internet/DNS/default-route dependence, boots the installed disk without the ISO, verifies password/sudo, and verifies persistence/root reset;
 12. every generated CI command that evaluates this repository uses an
     explicit `path:.` flake operand;
 13. the implementation stops after building and testing the ISO and does not

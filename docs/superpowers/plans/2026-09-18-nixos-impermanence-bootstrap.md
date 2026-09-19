@@ -15,6 +15,7 @@
 - Build command: `nix run path:.#build-installer -- --host HOST`.
 - Check command: `nix flake check -L path:.`.
 - `self.outPath` is the installer source snapshot; do not create another source snapshot/filter layer.
+- `.git` may be physically included by `path:`; installer code must treat it as inert data and never inspect Git state.
 - `host` always means registry key; `hostName` means OS/network hostname.
 - Installer target uses `runtime.defaultTheme` and `runtime.defaultSession`, never runtime-list order.
 - Builder supports declared NixOS hosts whose `system` matches the current `perSystem` system.

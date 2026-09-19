@@ -38,7 +38,7 @@
 | Area | Files |
 |---|---|
 | Final installed state | `storage/layout.nix`, `storage/provisioning.nix`, `impermanence/{impermanence,ephemeral-root}.nix`, `configurations/nixos.nix`, production host `nixos.nix` |
-| Facter gating | `flake/{default,configurations,checks,ci}.nix`, `lib/targets.nix`, `ci/default.nix`, `checks.nix` |
+| Facter gating | `lib/hosts.nix`, `flake/{default,configurations,checks,ci}.nix`, `configurations/nixos.nix`, `lib/targets.nix`, `ci/default.nix`, `checks.nix` |
 | Installer transaction | `installer/{install.nu,script.nix}`, `tests/installer/runtime.nix` |
 | ISO/builder | `installer/iso.nix`, `flake/installer.nix`, `apps/build-installer/*` |
 | Verification | `tests/nixos/impermanence-vm.nix`, `tests/installer/e2e.nix` |
@@ -56,6 +56,7 @@
 - Modify: `nix/modules/nixos/default.nix`
 - Modify: `nix/profiles/hosts/aarch64-linux-a/nixos.nix`
 - Modify: `nix/flake/{default,configurations,checks,ci}.nix`
+- Modify: `nix/lib/hosts.nix`
 - Modify: `nix/lib/targets.nix`
 - Modify: `nix/ci/default.nix`
 - Modify: `nix/checks.nix`
@@ -82,7 +83,9 @@ assert disk.content.partitions.system.content.subvolumes ? "@nix";
 assert disk.content.partitions.system.content.subvolumes ? "@persist";
 ```
 
-`impermanence.nix` must assert `/nix` and `/persist` are needed for boot and the root-reset unit uses `dotfiles-system` / `@root`.
+`impermanence.nix` must assert `/nix` and `/persist` are needed for boot, the root-reset unit uses `dotfiles-system` / `@root`, and the initrd unit that performs discovery/reset has explicit executable dependencies on `pkgs.util-linux` and `pkgs.btrfs-progs` through its service-local `path`.
+
+The test must fail if `blkid` is only available in the stage-2 system or installer ISO; it must validate the installed system's initrd service environment.
 
 Run both focused checks through `path:.` and confirm failure.
 
@@ -104,20 +107,33 @@ Rewrite `provisioning.nix` to declare the GPT/ESP/Btrfs layout from those consta
 
 - [ ] **Step 3: Make root reset internal**
 
-Remove the public `ephemeralRoot` options from `ephemeral-root.nix`. The initrd service uses the fixed layout and:
+Remove the public `ephemeralRoot` options from `ephemeral-root.nix`. The initrd root-reset service uses the fixed layout and:
 
 ```text
 blkid -t PARTLABEL=dotfiles-system -o device
 ```
 
-It requires exactly one unique device before deleting/recreating `@root`. `impermanence.nix` imports this internal module and marks `/nix` and `/persist` needed for boot.
+The installed initrd must provide every executable that service invokes. Declare the dependencies on the initrd service itself rather than relying on the installer ISO or incidental initrd contents:
+
+```nix
+boot.initrd.systemd.services.<root-reset-unit>.path = [
+  pkgs.util-linux
+  pkgs.btrfs-progs
+];
+```
+
+This guarantees `blkid` and `btrfs` are available in that unit's initrd execution environment. Prefer this service-local `path` over a global `boot.initrd.systemd.extraBin` unless another initrd consumer genuinely needs the same tools.
+
+The service requires exactly one unique device before deleting/recreating `@root`. `impermanence.nix` imports this internal module and marks `/nix` and `/persist` needed for boot.
 
 - [ ] **Step 4: Centralize universal final-system policy**
+
+Pass both `disko` and the shared `facterPathForHost` helper into `configurations/nixos.nix` from `flake/default.nix`.
 
 In `configurations/nixos.nix`, every constructed NixOS target includes:
 
 ```nix
-{ hardware.facter.reportPath = facterPath; }
+{ hardware.facter.reportPath = facterPathForHost config.host; }
 (import ../modules/nixos/features/storage/provisioning.nix { inherit disko; })
 {
   dotfiles.features.preservation.enable = true;
@@ -149,12 +165,22 @@ Keep only host-specific policy such as performance tuning.
 
 - [ ] **Step 5: Gate final configurations from one ready-entry source of truth**
 
-In `flake/default.nix`, define readiness once:
+Make `nix/lib/hosts.nix` own the facter path because it already owns `hostDir`. Export one helper:
 
 ```nix
+facterPathForHost =
+  host:
+  hostDir + "/${host}/facter.json";
+```
+
+In `flake/default.nix`, inherit that helper from `hostRegistry`, pass it to `configurations/nixos.nix`, and define readiness only in terms of the same helper:
+
+```nix
+inherit (hostRegistry) hosts hostNames facterPathForHost;
+
 nixosHostReady =
   host:
-  builtins.pathExists (../profiles/hosts + "/${host}/facter.json");
+  builtins.pathExists (facterPathForHost host);
 
 readyNixosTargetEntries =
   lib.filter
@@ -162,8 +188,7 @@ readyNixosTargetEntries =
     (targets.mkTargetConfigEntries "nixos");
 ```
 
-Do not independently re-run the readiness predicate in `flake/configurations.nix`
-and `flake/checks.nix`. Pass the same `readyNixosTargetEntries` to both.
+Do not independently reconstruct `../profiles/hosts/<host>/facter.json` anywhere else. The readiness predicate and `hardware.facter.reportPath` must call the same `facterPathForHost` helper. Do not independently re-run the readiness predicate in `flake/configurations.nix` and `flake/checks.nix`; pass the same `readyNixosTargetEntries` to both.
 
 Current `mkTargetConfigs` internally enumerates all target entries, so extend
 `nix/lib/targets.nix` with an entry-based constructor while preserving the
@@ -269,7 +294,12 @@ Add two CI/readiness regressions:
 Task 3 adds the complementary bootstrap regression proving a declared,
 facter-less NixOS host still receives an installer package/app.
 
-Add an evaluation check for each ready NixOS target asserting the primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Use the evaluated NixOS values; do not add group metadata.
+Add evaluation regressions proving that, for every ready NixOS target:
+
+- readiness is determined by `builtins.pathExists (facterPathForHost entry.config.host)`; and
+- the resulting `hardware.facter.reportPath` equals `facterPathForHost entry.config.host` exactly.
+
+Also assert the primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Use the evaluated NixOS values; do not add group metadata.
 
 - [ ] **Step 6: Keep one behavioral impermanence VM**
 
@@ -286,7 +316,7 @@ Delete `storage-provisioning-vm.nix` and the standalone `ephemeral-root.nix` tes
 
 ```bash
 nix flake check -L path:.
-git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/lib/targets.nix nix/ci nix/tests/nixos nix/checks.nix
+git add -A nix/modules/nixos nix/configurations/nixos.nix nix/profiles/hosts/aarch64-linux-a/nixos.nix nix/flake nix/lib/hosts.nix nix/lib/targets.nix nix/ci nix/tests/nixos nix/checks.nix
 git commit -m "refactor: fix nixos bootstrap model"
 ```
 

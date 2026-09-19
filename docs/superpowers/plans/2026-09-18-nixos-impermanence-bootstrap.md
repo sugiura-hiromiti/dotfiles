@@ -22,6 +22,8 @@
 - Builder supports declared NixOS hosts whose `system` matches the current `perSystem` system.
 - Final NixOS configs require `facter.json`; installer packages do not.
 - Installer Nix commands use `--no-update-lock-file`.
+- Generated CI commands that evaluate this repository also use explicit `path:.` flake operands; there is no CI exception to the source contract.
+- The destructive barrier proves final metadata evaluation, Disko-script realization, and target-disk validation only. It intentionally does not pre-realize `system.build.toplevel`; `nixos-install --flake` may still fail after Disko because of dependency/substitution/system-build or bootloader errors.
 - Fixed storage: `dotfiles-system`, `@root`, `@nix`, `@persist`, `/dev/dotfiles-install-target`.
 - Exactly one non-removable, non-hotplug whole disk is accepted.
 - tty1 belongs to the installer; tty2 is diagnostic.
@@ -124,7 +126,22 @@ In `configurations/nixos.nix`, every constructed NixOS target includes:
   users.users.${config.primaryAccountName}.hashedPasswordFile =
     "/persist/etc/dotfiles/password-${config.primaryAccountName}.hash";
 }
+(args: {
+  assertions = [
+    {
+      assertion = args.config.boot.loader.systemd-boot.enable;
+      message = "installer-compatible NixOS targets require systemd-boot";
+    }
+    {
+      assertion = !args.config.boot.loader.efi.canTouchEfiVariables;
+      message = "installer-compatible NixOS targets must not write EFI variables";
+    }
+  ];
+})
 ```
+
+Keep the baseline boot module's `mkDefault` values composable; the constructor
+assertions enforce the effective installer contract after all modules merge.
 
 In `nix/profiles/hosts/aarch64-linux-a/nixos.nix`, remove local
 `hardware.facter.reportPath`, all `fileSystems`, and `swapDevices`.
@@ -186,22 +203,71 @@ and the primary-user ownership checks, so no check can dereference a
 
 Propagate the same readiness contract into CI. Pass `readyNixosTargetEntries`
 through `flake/ci.nix` into `nix/ci/default.nix`. Keep Home Manager and Darwin
-target discovery unchanged, but derive the representative Linux NixOS target
-only from `readyNixosTargetEntries`, for example with an entry-based helper:
+target discovery unchanged.
+
+The representative Linux NixOS target is optional. A declared host without
+`facter.json` is a supported bootstrap state, so zero matching ready entries
+must return `null` rather than assert:
 
 ```nix
-defaultTargetFromEntries =
-  target: hostName: entries:
-  # same default-theme/default-session matching logic
-  ...;
+optionalDefaultTargetFromEntries =
+  target: hostKey: entries:
+  let
+    host = hosts.${hostKey};
+    matches = lib.filter (
+      entry:
+      entry.config.host == hostKey
+      && entry.config.themeName == host.runtime.defaultTheme
+      && entry.config.sessionName == host.runtime.defaultSession
+    ) entries;
+  in
+  if matches == [ ] then
+    null
+  else
+    assert lib.assertMsg (builtins.length matches == 1)
+      "Expected at most one ready default ${target} target for ${hostKey}";
+    (lib.head matches).name;
 
 linuxNixosTarget =
-  defaultTargetFromEntries "nixos" linuxHost readyNixosTargetEntries;
+  optionalDefaultTargetFromEntries "nixos" linuxHost readyNixosTargetEntries;
 ```
 
-Any generated CI job that dereferences `nixosConfigurations.${linuxNixosTarget}`
-or `checks.<system>.build-nixos-${linuxNixosTarget}` must therefore originate
-from the facter-ready set rather than raw `mkTargetConfigEntries "nixos"`.
+Keep shared CI jobs structurally present so existing `needs` relationships stay
+valid. Conditionally include only the NixOS-specific evaluation step and
+NixOS-specific smoke-build argument when `linuxNixosTarget != null`. The Linux
+Home Manager smoke check and Darwin jobs remain unconditional.
+
+Any generated CI step that dereferences `nixosConfigurations.${linuxNixosTarget}`
+or `checks.<system>.build-nixos-${linuxNixosTarget}` must therefore both:
+
+1. originate from the facter-ready set; and
+2. be omitted when no facter-ready representative exists.
+
+Convert every generated CI command that evaluates this repository to an explicit
+`path:.` flake operand. At minimum:
+
+```bash
+nix eval --raw "path:.#nixosConfigurations...."
+nix build "path:.#checks...." --no-write-lock-file
+nix flake check path:. --no-write-lock-file --print-build-logs
+nix build "path:.#checks.${linuxPlatform}.deadnix" --no-write-lock-file
+nix build "path:.#checks.${linuxPlatform}.statix" --no-write-lock-file
+nix fmt path:. -- --ci
+nix run path:.#render-workflows
+```
+
+Commands such as `nix --version` and `nix store info` do not evaluate this
+repository and need no flake operand.
+
+Add two CI/readiness regressions:
+
+- with `readyNixosTargetEntries = [ ]`, CI configuration still evaluates/renders
+  and contains no NixOS-config/check dereference;
+- generated workflows contain no repository-evaluating shorthand `.#...`
+  references.
+
+Task 3 adds the complementary bootstrap regression proving a declared,
+facter-less NixOS host still receives an installer package/app.
 
 Add an evaluation check for each ready NixOS target asserting the primary user's effective `group` is non-empty and `config.users.groups.${group}.gid` is an integer. Use the evaluated NixOS values; do not add group metadata.
 
@@ -253,14 +319,19 @@ Runtime source: `/run/dotfiles-installer/source`. Disk alias: `/dev/dotfiles-ins
 With fake external commands, cover:
 
 ```text
-source copied writable
+each invocation recreates /run/dotfiles-installer/source from the immutable base
+a stale /dev/dotfiles-install-target symlink is removed before disk discovery
+a non-symlink object at /dev/dotfiles-install-target aborts safely
 facter generated for host
 metadata eval uses path:/run/dotfiles-installer/source
-metadata contains home, integer UID, non-empty group, integer GID, password path
+metadata contains absolute safe home, integer UID, non-empty group, integer GID, exact password path
+hashedPasswordFile must equal /persist/etc/dotfiles/password-<primary>.hash
+home rejects relative, root, and '..' traversal paths
 all installer Nix commands use --no-update-lock-file
 0 or >1 eligible disks abort before Disko
 fake lsblk JSON uses boolean rm/hotplug values
 1 eligible disk creates the alias
+run #1 fails before Disko -> run #2 recreates clean transaction state and succeeds
 nix flake update is never invoked
 ```
 
@@ -287,18 +358,23 @@ The ISO service in Task 3 provides:
 
 - [ ] **Step 3: Implement reversible preparation and metadata evaluation**
 
-The script:
+Each service invocation starts a fresh transaction before any destructive work:
 
-1. copies `source` to `/run/dotfiles-installer/source` and makes it writable;
-2. prompts twice for a matching non-empty password and hashes it with yescrypt;
-3. writes fresh `facter.json` for `host`;
-4. evaluates final-config metadata with `--json --apply --no-update-lock-file` from `path:/run/dotfiles-installer/source`.
+1. if `/dev/dotfiles-install-target` exists and is a symlink, remove it; if that
+   path exists as anything else, abort;
+2. remove and recreate only the installer-owned runtime source state under
+   `/run/dotfiles-installer`;
+3. copy immutable `source` to `/run/dotfiles-installer/source` and make it
+   writable;
+4. prompt twice for a matching non-empty password and hash it with yescrypt;
+5. write fresh `facter.json` for `host`;
+6. evaluate final-config metadata with `--json --apply --no-update-lock-file`
+   from `path:/run/dotfiles-installer/source`.
 
-The apply result is:
+The apply result is metadata only:
 
 ```nix
 {
-  toplevelDrv = config.system.build.toplevel.drvPath;
   home = user.home;
   uid = user.uid;
   group = user.group;
@@ -309,9 +385,32 @@ The apply result is:
 
 where `user = config.users.users.<primaryAccount>`.
 
-Reject missing/non-integer UID/GID and empty home/group/hash paths. From this point onward, do not modify `/run/dotfiles-installer/source`. Later Disko realization and `nixos-install --flake` may evaluate the final configuration again; every such operation must use the same `path:/run/dotfiles-installer/source` host-materialized tree and `--no-update-lock-file`.
+Before Disko, validate:
 
-Then build only `config.system.build.diskoScript` with `--no-update-lock-file --no-link --print-out-paths`.
+- UID and GID are integers;
+- `group` is non-empty;
+- `home` is an absolute normalized path, is not `/`, and contains no `..`
+  traversal component;
+- `hashedPasswordFile` is exactly
+  `/persist/etc/dotfiles/password-<primaryAccount>.hash`.
+
+Do not merely accept arbitrary non-empty destination strings. These checks make
+the later writes to `/mnt/persist + home + /dotfiles` and
+`/mnt + hashedPasswordFile` consequences of the declared policy rather than
+unvalidated module output.
+
+From the moment fresh `facter.json` is written, do not modify
+`/run/dotfiles-installer/source`. Later Disko realization and
+`nixos-install --flake` may evaluate the final configuration again; every such
+operation must use the same `path:/run/dotfiles-installer/source`
+host-materialized tree and `--no-update-lock-file`.
+
+Then build only `config.system.build.diskoScript` with
+`--no-update-lock-file --no-link --print-out-paths`.
+
+A failure before Disko must leave the service safe to invoke again: the next
+invocation discards stale transaction-owned runtime state and starts again from
+the immutable base snapshot.
 
 - [ ] **Step 4: Implement the destructive barrier**
 
@@ -353,6 +452,12 @@ nixos-install \
   --no-channel-copy \
   --no-root-password
 ```
+
+This deliberately realizes the final `system.build.toplevel` in the target
+store after Disko rather than pre-realizing it in the live ISO store. Therefore
+dependency/substitution/system-build and bootloader failures can still occur
+after the target disk has been modified. That is an accepted resource/safety
+tradeoff, not part of the pre-Disko barrier guarantee.
 
 - [ ] **Step 6: Persist and finish**
 
@@ -434,6 +539,11 @@ Add a regression that reverses the theme/session lists while keeping declared de
 
 Construct `packages.installer-<host>` with `source = self.outPath`. Do not evaluate the final NixOS target.
 
+Add a bootstrap regression with a declared same-system NixOS host but no
+facter-ready final configuration. It must still produce/evaluate
+`packages.installer-<host>` and the `build-installer` app, while the optional
+representative NixOS CI steps remain absent.
+
 - [ ] **Step 3: Build the ISO and own tty1**
 
 `iso.nix` imports the minimal installation CD module, derives EFI architecture, calls `mkInstallerScript`, and explicitly enables the Nix CLI features used by the runtime installer:
@@ -456,6 +566,8 @@ systemd.services.dotfiles-installer = {
   serviceConfig = {
     Type = "exec";
     ExecStart = lib.getExe installerScript;
+    RuntimeDirectory = "dotfiles-installer";
+    RuntimeDirectoryMode = "0700";
     StandardInput = "tty-force";
     StandardOutput = "tty";
     StandardError = "tty";
@@ -471,10 +583,12 @@ Add evaluation checks for the ISO configuration that assert:
 - `dotfiles-installer` both wants and starts after `network-online.target`.
 
 `network-online.target` is startup ordering, not proof of Internet reachability.
-If a locked dependency fetch still fails, the installer must fail non-destructively
-when that fetch occurs before Disko, leave tty2 available for networking repair,
-and print a concrete recovery instruction such as restarting
-`dotfiles-installer.service` after connectivity is fixed.
+If a locked dependency fetch fails before Disko, the installer must fail
+non-destructively, leave tty2 available for networking repair, and print a
+concrete recovery instruction such as restarting
+`dotfiles-installer.service` after connectivity is fixed. The fresh-transaction
+rules in Task 2 make that pre-Disko retry deterministic. Failures after Disko are
+outside the non-destructive retry guarantee.
 
 - [ ] **Step 4: Implement the thin build app**
 

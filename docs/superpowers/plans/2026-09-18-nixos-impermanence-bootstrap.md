@@ -16,7 +16,6 @@ nix build -L   .#checks.$(nix eval --raw --impure --expr builtins.currentSystem)
 
 # KVM-capable builder only
 nix flake check -L .
-nix run .#test-installer-e2e
 ```
 
 ---
@@ -209,7 +208,8 @@ boot ISO
 → disposable state gone; persistent state survives
 ```
 
-Expose `test-installer-e2e`.
+Expose `test-installer-e2e` as an optional interactive/debug entrypoint; the
+automated lifecycle gate is the flake check.
 
 ### 3.4 Operator documentation
 

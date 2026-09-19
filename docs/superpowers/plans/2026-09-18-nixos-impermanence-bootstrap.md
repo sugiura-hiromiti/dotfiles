@@ -414,7 +414,7 @@ metadata contains absolute safe home, integer UID, non-empty group, integer GID,
 hashedPasswordFile must equal /persist/etc/dotfiles/password-<primary>.hash
 home rejects relative, root, and '..' traversal paths
 all installer Nix commands use --no-update-lock-file
-0 or >1 eligible disks abort before Disko
+0 or >1 eligible target disks abort before Disko
 fake lsblk JSON uses boolean rm/hotplug values
 1 eligible target disk creates the alias; RM/HOTPLUG is never described or tested as proof of physical/internal attachment
 run #1 fails before Disko -> run #2 recreates clean transaction state and succeeds
@@ -562,7 +562,8 @@ Errors before completion exit non-zero without powering off.
 
 ```bash
 nix build -L path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).installer-runtime
-nix flake check -L path:.
+nix flake check --no-build path:.
+# Run full nix flake check only on a KVM-capable builder.
 git add nix/installer/install.nu nix/installer/script.nix nix/tests/installer/runtime.nix nix/checks.nix
 git commit -m "feat: add nixos installer transaction"
 ```

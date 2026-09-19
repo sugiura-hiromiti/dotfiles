@@ -177,7 +177,8 @@ specific implementation spelling.
 
 ```bash
 nix flake check --no-build path:.
-nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
+nix build -L \
+  path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
 ```
 
 Run the impermanence VM separately on a KVM-capable builder.
@@ -292,9 +293,11 @@ command-line spelling when the behavioral property is already covered.
 ### Step 7: Verify
 
 ```bash
-nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).installer-runtime
+nix build -L \
+  path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).installer-runtime
 nix flake check --no-build path:.
-nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
+nix build -L \
+  path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
 ```
 
 Commit the installer transaction separately from ISO/E2E work.
@@ -406,7 +409,8 @@ Run the evaluation + universal gates:
 
 ```bash
 nix flake check --no-build path:.
-nix build -L   path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
+nix build -L \
+  path:.#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
 nix run path:.#build-installer -- --host aarch64-linux-a
 test -e result-installer-aarch64-linux-a
 ```

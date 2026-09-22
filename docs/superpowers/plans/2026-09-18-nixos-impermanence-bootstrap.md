@@ -34,39 +34,39 @@ nix flake check -L .
 
 ### 1.1 Storage and root reset
 
-- [ ] Define fixed partition label, subvolumes, and installer disk alias once.
-- [ ] Make Disko consume that layout directly.
-- [ ] Internalize root reset under impermanence.
-- [ ] Give the initrd reset service its executable dependencies.
-- [ ] Test root-device selection for 0/1/2 matching
-  `PARTLABEL=dotfiles-system` devices.
-- [ ] Keep one behavioral impermanence VM for root reset + persistence.
+- [x] Define fixed partition label, subvolumes, and installer disk alias once.
+- [x] Make Disko consume that layout directly.
+- [x] Internalize root reset under impermanence.
+- [x] Give the initrd reset service its executable dependencies.
+- [x] Test root-device selection for 0/1/2 matching
+      `PARTLABEL=dotfiles-system` devices.
+- [x] Keep one behavioral impermanence VM for root reset + persistence.
 
 ### 1.2 Final-system and Preservation policy
 
-- [ ] Centralize facter, storage, preservation, impermanence, authentication, and
-  boot policy in the constructed NixOS configuration.
-- [ ] Set canonical facter and persistent-password paths.
-- [ ] Preserve the primary user's `dotfiles` directory.
-- [ ] Export installer metadata for the effective administrator, boot settings,
-  and physical Preservation backing path.
-- [ ] Assert those effective contracts after module merging.
-- [ ] Leave host profiles with host-specific policy only.
+- [x] Centralize facter, storage, preservation, impermanence, authentication, and
+      boot policy in the constructed NixOS configuration.
+- [x] Set canonical facter and persistent-password paths.
+- [x] Preserve the primary user's `dotfiles` directory.
+- [x] Export installer metadata for the effective administrator, boot settings,
+      and physical Preservation backing path.
+- [x] Assert those effective contracts after module merging.
+- [x] Leave host profiles with host-specific policy only.
 
 ### 1.3 Facter readiness
 
-- [ ] Make the host registry own canonical facter-path helpers.
-- [ ] Derive declared and facter-ready NixOS target sets once.
-- [ ] Export final NixOS configurations/checks/CI from the ready set.
-- [ ] Keep installer-package discovery on declared same-system hosts.
-- [ ] Keep default-target selection in the target model.
+- [x] Make the host registry own canonical facter-path helpers.
+- [x] Derive declared and facter-ready NixOS target sets once.
+- [x] Export final NixOS configurations/checks/CI from the ready set.
+- [x] Keep installer-package discovery on declared same-system hosts.
+- [x] Keep default-target selection in the target model.
 
 ### 1.4 Verification split
 
-- [ ] Classify checks once as non-VM or VM-backed.
-- [ ] Expose `checks.<system>.non-vm` as the aggregate non-VM gate.
-- [ ] Keep VM tests KVM-requiring.
-- [ ] Hosted Linux CI runs evaluation + the non-VM aggregate only.
+- [x] Classify checks once as non-VM or VM-backed.
+- [x] Expose `checks.<system>.non-vm` as the aggregate non-VM gate.
+- [x] Keep VM tests KVM-requiring.
+- [x] Hosted Linux CI runs evaluation + the non-VM aggregate only.
 - [ ] Lifecycle tests run on a KVM-capable builder.
 
 ---
@@ -82,44 +82,44 @@ nix flake check -L .
 
 ### 2.1 Runtime inputs
 
-- [ ] Package the installer with host, default target, primary account, immutable
-  base source, canonical facter path, and EFI architecture.
-- [ ] Include required runtime tools.
-- [ ] Use `--no-update-lock-file` for every installer flake operation.
+- [x] Package the installer with host, default target, primary account, immutable
+      base source, canonical facter path, and EFI architecture.
+- [x] Include required runtime tools.
+- [x] Use `--no-update-lock-file` for every installer flake operation.
 
 ### 2.2 Post-facter source
 
 Each invocation:
 
-- [ ] recreates installer-owned runtime state from the immutable base;
-- [ ] makes the working tree owner-writable while preserving executable bits;
-- [ ] collects and hashes the administrator password;
-- [ ] generates facter at the canonical path; and
-- [ ] adds the completed tree to the Nix store once and roots the returned path.
+- [x] recreates installer-owned runtime state from the immutable base;
+- [x] makes the working tree owner-writable while preserving executable bits;
+- [x] collects and hashes the administrator password;
+- [x] generates facter at the canonical path; and
+- [x] adds the completed tree to the Nix store once and roots the returned path.
 
 Metadata evaluation, Disko realization, and installation all use that exact
 post-facter store path.
 
 ### 2.3 Destructive barrier
 
-- [ ] Evaluate and validate administrator, Preservation, and boot metadata.
-- [ ] Realize the Disko script from the same post-facter source.
-- [ ] Require exactly one eligible disk from
-  `lsblk --json --output PATH,TYPE,RM,HOTPLUG`.
-- [ ] Create `/dev/dotfiles-install-target` only after those checks succeed.
-- [ ] Treat unexpected non-symlink objects at the alias path as errors.
+- [x] Evaluate and validate administrator, Preservation, and boot metadata.
+- [x] Realize the Disko script from the same post-facter source.
+- [x] Require exactly one eligible disk from
+      `lsblk --json --output PATH,TYPE,RM,HOTPLUG`.
+- [x] Create `/dev/dotfiles-install-target` only after those checks succeed.
+- [x] Treat unexpected non-symlink objects at the alias path as errors.
 
 ### 2.4 Install and persist
 
-- [ ] Run Disko and validate expected mountpoints.
-- [ ] Create `/mnt/persist/etc/dotfiles` as `root:root 0700`.
-- [ ] Atomically install the yescrypt hash as `root:root 0600`.
-- [ ] Run `nixos-install --flake` from the post-facter source.
-- [ ] Verify the fallback EFI loader.
-- [ ] Copy dotfiles to `/mnt` + the evaluated Preservation backing path.
-- [ ] Restore owner-write permission, preserve executable bits, and chown to the
-  evaluated UID:GID.
-- [ ] Sync, unmount, and power off.
+- [x] Run Disko and validate expected mountpoints.
+- [x] Create `/mnt/persist/etc/dotfiles` as `root:root 0700`.
+- [x] Atomically install the yescrypt hash as `root:root 0600`.
+- [x] Run `nixos-install --flake` from the post-facter source.
+- [x] Verify the fallback EFI loader.
+- [x] Copy dotfiles to `/mnt` + the evaluated Preservation backing path.
+- [x] Restore owner-write permission, preserve executable bits, and chown to the
+      evaluated UID:GID.
+- [x] Sync, unmount, and power off.
 
 The installer service uses `UMask=0077`.
 
@@ -127,15 +127,15 @@ The installer service uses `UMask=0077`.
 
 Prove:
 
-- [ ] fresh retry state;
-- [ ] facter placement;
-- [ ] one post-facter source reused by validation/Disko/install;
-- [ ] later working-tree mutation cannot affect that source;
-- [ ] stale/incomplete locks fail and every flake command uses
-  `--no-update-lock-file`;
-- [ ] invalid metadata and Disko-realization failure remain pre-destructive;
-- [ ] disk cardinality is fail-closed; and
-- [ ] alias-path handling is safe.
+- [x] fresh retry state;
+- [x] facter placement;
+- [x] one post-facter source reused by validation/Disko/install;
+- [x] later working-tree mutation cannot affect that source;
+- [x] stale/incomplete locks fail and every flake command uses
+      `--no-update-lock-file`;
+- [x] invalid metadata and Disko-realization failure remain pre-destructive;
+- [x] disk cardinality is fail-closed; and
+- [x] alias-path handling is safe.
 
 ---
 
@@ -153,11 +153,11 @@ Prove:
 
 `build-installer` owns source selection:
 
-- [ ] enumerate the current versioned paths with JJ;
-- [ ] copy their current filesystem contents to a fresh stage outside the
-  checkout, preserving paths, symlinks, and executable bits; and
-- [ ] build directly from
-  `path:<stage>#installer-HOST --no-link --print-out-paths
+- [x] enumerate the current versioned paths with JJ;
+- [x] copy their current filesystem contents to a fresh stage outside the
+      checkout, preserving paths, symlinks, and executable bits; and
+- [x] build directly from
+      `path:<stage>#installer-HOST --no-link --print-out-paths
   --no-update-lock-file`.
 
 The staged flake's `self.outPath` is the immutable base source carried by the
@@ -165,24 +165,27 @@ ISO.
 
 Source tests prove:
 
-- [ ] modified versioned contents are included;
-- [ ] ignored/unversioned contents are excluded and cannot change source
-  identity; and
-- [ ] symlinks and executable bits survive staging.
+- [x] modified versioned contents are included;
+- [x] ignored/unversioned contents are excluded and cannot change source
+      identity; and
+- [x] symlinks and executable bits survive staging.
 
 ### 3.2 Installer packages and ISO
 
-- [ ] Generate `installer-<host>` packages for declared same-system NixOS
-  hosts from the staged flake source.
-- [ ] A facter-less declared host still produces its installer package.
-- [ ] Configure the minimal installation ISO with required Nix CLI features.
-- [ ] Reserve tty1 for the installer and tty2 for diagnostics.
-- [ ] Start after/wanting `network-online.target`.
-- [ ] Set installer-service `UMask=0077`.
-- [ ] Print a concrete tty2 recovery/restart instruction on pre-Disko
-  connectivity failure.
+- [x] Generate `installer-<host>` packages for declared same-system NixOS
+      hosts from the staged flake source.
+- [x] A facter-less declared host still produces its installer package.
+- [x] Configure the minimal installation ISO with required Nix CLI features.
+- [x] Reserve tty1 for the installer and tty2 for diagnostics.
+- [x] Start after/wanting `network-online.target`.
+- [x] Set installer-service `UMask=0077`.
+- [x] Print a concrete tty2 recovery/restart instruction on pre-Disko
+      connectivity failure.
 
 ### 3.3 Lifecycle E2E
+
+Implementation is present. Execution remains pending on a working KVM builder;
+the local QEMU launch reported that the KVM kernel module was unavailable.
 
 Use `pkgs.testers.runNixOSTest` with UEFI, the actual installer ISO, one blank
 eligible disk, and all required source/store dependencies supplied inside the
@@ -206,7 +209,6 @@ boot ISO
 → reboot
 → disposable state gone; persistent state survives
 ```
-
 
 ### 3.4 Operator documentation
 

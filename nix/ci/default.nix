@@ -1,97 +1,79 @@
 {
-  hosts,
   lib,
-  mkTargetConfigEntries,
+  hosts,
+  defaultTarget,
+  readyNixosTargetEntries,
 }:
 let
-  defaultTarget =
-    target: hostName:
-    let
-      host = hosts.${hostName};
-      matches = lib.filter (
-        entry:
-        entry.config.host == hostName
-        && entry.config.themeName == host.runtime.defaultTheme
-        && entry.config.sessionName == host.runtime.defaultSession
-        && (target != "home" || entry.config.accountName == host.primaryAccountName)
-      ) (mkTargetConfigEntries target);
-    in
-    assert lib.assertMsg (
-      builtins.length matches == 1
-    ) "Expected exactly one default ${target} target for ${hostName}";
-    (lib.head matches).name;
-
-  linuxHost = "aarch64-linux-a";
-  darwinHost = "aarch64-darwin-a";
-
-  linuxNixosTarget = defaultTarget "nixos" linuxHost;
-  linuxHomeTarget = defaultTarget "home" linuxHost;
-
-  darwinSystemTarget = defaultTarget "darwin" darwinHost;
-  darwinHomeTarget = defaultTarget "home" darwinHost;
-
+  linuxPlatform = "aarch64-linux";
   checkout = {
     uses = "actions/checkout@v6";
-    "with" = {
-      persist-credentials = false;
-    };
+    "with".persist-credentials = false;
   };
   installNix = {
     uses = "cachix/install-nix-action@v31";
   };
-  installNixFromMatrix = installNix // {
-    "with" = {
-      install_url = "https://releases.nixos.org/nix/nix-\${{ matrix.nix_version }}/install";
-    };
-  };
-
-  linuxRunner = "ubuntu-24.04-arm";
-  linuxPlatform = "aarch64-linux";
-  darwinRunner = "macos-14";
-  darwinPlatform = "aarch64-darwin";
   concurrency = {
     group = "\${{ github.workflow }}-\${{ github.ref }}";
     cancel-in-progress = true;
   };
+  linuxSteps = [
+    checkout
+    installNix
+    {
+      name = "Evaluate";
+      run = "nix flake check --no-build --no-update-lock-file .";
+    }
+    {
+      name = "Build non-VM checks";
+      run = "nix build --no-update-lock-file --print-build-logs .#checks.${linuxPlatform}.non-vm";
+    }
+  ];
+  darwinTarget = defaultTarget "darwin" "aarch64-darwin-a";
+  darwinHome = defaultTarget "home" "aarch64-darwin-a";
+  readyNames = map (entry: entry.name) (
+    lib.filter (entry: entry.config.system == linuxPlatform) readyNixosTargetEntries
+  );
 in
 {
   useJJ = true;
-  defaultValues = {
-    jobs = {
-      timeout-minutes = 45;
-    };
-  };
+  defaultValues.jobs.timeout-minutes = 120;
   workflows = {
-    ".github/workflows/eval-nix-version.yml" = {
+    ".github/workflows/ci.yml" = {
+      name = "CI";
+      inherit concurrency;
+      permissions.contents = "read";
       on = {
+        push.branches = [ "main" ];
         pull_request = { };
+        workflow_dispatch = { };
       };
-      name = "temporalily diagnostics";
       jobs = {
-        eval-nix-version = {
-          runs-on = linuxRunner;
-          strategy = {
-            fail-fast = false;
-            matrix.nix_version = [
-              "2.34.8"
-              "2.35.2"
-            ];
-          };
+        linux = {
+          runs-on = "ubuntu-24.04-arm";
+          steps = linuxSteps;
+        };
+        darwin = {
+          runs-on = "macos-14";
           steps = [
             checkout
-            installNixFromMatrix
+            installNix
             {
-              name = "Show Nix versions";
-              run = ''
-                nix --version
-                nix store info --json
-              '';
+              name = "Build representative Darwin targets";
+              run = "nix build --no-update-lock-file .#checks.${hosts.aarch64-darwin-a.system}.build-darwin-${darwinTarget} .#checks.${hosts.aarch64-darwin-a.system}.build-home-${darwinHome}";
             }
+          ];
+        };
+        generated-workflows = {
+          runs-on = "ubuntu-24.04-arm";
+          steps = [
+            checkout
+            installNix
             {
-              name = "Evaluate NixOS target directly";
+              name = "Check generated workflows";
               run = ''
-                nix eval --raw \
-                  ".#nixosConfigurations.${linuxNixosTarget}.config.system.build.toplevel.drvPath"
+                nix run --no-update-lock-file .#render-workflows
+                git diff --exit-code -- .github/workflows
               '';
             }
           ];
@@ -101,155 +83,59 @@ in
     ".github/workflows/full-build.yml" = {
       name = "Full build";
       inherit concurrency;
-      permissions = {
-        contents = "read";
-      };
-
+      permissions.contents = "read";
       on = {
-        schedule = [
-          {
-            # 03:00 JST
-            cron = "0 18 * * *";
-          }
-        ];
+        schedule = [ { cron = "0 18 * * *"; } ];
         workflow_dispatch = { };
       };
       jobs = {
         linux = {
-          runs-on = linuxRunner;
-
-          timeout-minutes = 120;
-          steps = [
-            checkout
-            installNix
-            {
-              name = "Build all Linux targets";
-              run = ''
-                nix flake check \
-                  --no-write-lock-file \
-                  --print-build-logs
-              '';
-            }
-          ];
+          runs-on = "ubuntu-24.04-arm";
+          steps = linuxSteps;
         };
-
         darwin = {
-          runs-on = darwinRunner;
-          timeout-minutes = 120;
-
+          runs-on = "macos-14";
           steps = [
             checkout
             installNix
             {
-              name = "Build all Darwin targets";
-              run = ''
-                nix flake check \
-                  --no-write-lock-file \
-                  --print-build-logs
-              '';
+              name = "Build Darwin checks";
+              run = "nix flake check --no-update-lock-file --print-build-logs";
             }
           ];
         };
       };
     };
-    ".github/workflows/ci.yml" = {
-      inherit concurrency;
-      name = "CI";
-      permissions = {
-        contents = "read";
-      };
-      on = {
-        push.branches = [ "main" ];
-        pull_request = { };
-        workflow_dispatch = { };
-      };
-
-      jobs = {
-        eval = {
-          runs-on = linuxRunner;
-
-          steps = [
-            checkout
-            installNix
-            {
-              name = "Evaluate";
-              run = ''
-                nix eval --raw \
-                  ".#nixosConfigurations.${linuxNixosTarget}.config.system.build.toplevel.drvPath"
-              '';
-            }
+    ".github/workflows/eval-nix-version.yml" = {
+      name = "Nix evaluation compatibility";
+      on.pull_request = { };
+      jobs.eval-nix-version = {
+        runs-on = "ubuntu-24.04-arm";
+        strategy = {
+          fail-fast = false;
+          matrix.nix_version = [
+            "2.34.8"
+            "2.35.2"
           ];
         };
-        smoke-darwin = {
-          runs-on = darwinRunner;
-          needs = [
-            "eval"
-            "lint"
-          ];
-
-          steps = [
-            checkout
+        steps = [
+          checkout
+          (
             installNix
-            {
-              name = "Build representative darwin targets";
-              run = ''
-                nix build \
-                  ".#checks.${darwinPlatform}.build-darwin-${darwinSystemTarget}" \
-                  ".#checks.${darwinPlatform}.build-home-${darwinHomeTarget}" \
-                  --no-write-lock-file
-              '';
+            // {
+              "with".install_url = "https://releases.nixos.org/nix/nix-\${{ matrix.nix_version }}/install";
             }
-          ];
-        };
-        smoke-linux = {
-          runs-on = linuxRunner;
-          needs = [
-            "eval"
-            "lint"
-          ];
-
-          steps = [
-            checkout
-            installNix
-            {
-              name = "Build representative Linux targets";
-              run = ''
-                nix build \
-                  ".#checks.${linuxPlatform}.build-nixos-${linuxNixosTarget}" \
-                  ".#checks.${linuxPlatform}.build-home-${linuxHomeTarget}" \
-                  --no-write-lock-file
-              '';
-            }
-          ];
-        };
-        lint = {
-          runs-on = linuxRunner;
-          steps = [
-            checkout
-            installNix
-            {
-              name = "Deadnix";
-              run = "nix build .#checks.${linuxPlatform}.deadnix --no-write-lock-file";
-            }
-
-            {
-              name = "Statix";
-              run = "nix build .#checks.${linuxPlatform}.statix --no-write-lock-file";
-            }
-
-            {
-              name = "Treefmt";
-              run = "nix fmt -- --ci";
-            }
-            {
-              name = "Check generated workflows";
-              run = ''
-                nix run .#render-workflows
-                git diff --exit-code -- .github/workflows
-              '';
-            }
-          ];
-        };
+          )
+          {
+            name = "Evaluate ready NixOS targets";
+            run =
+              "nix flake check --no-build --no-update-lock-file .\n"
+              + lib.concatMapStringsSep "\n" (
+                name:
+                "nix eval --no-update-lock-file --raw .#nixosConfigurations.${name}.config.system.build.toplevel.drvPath"
+              ) readyNames;
+          }
+        ];
       };
     };
   };

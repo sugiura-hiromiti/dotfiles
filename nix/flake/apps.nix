@@ -15,6 +15,9 @@
     }:
     {
       apps = {
+        build-installer = import ../apps/build-installer {
+          inherit lib pkgs;
+        };
         update = import ../apps/update {
           inherit
             lib

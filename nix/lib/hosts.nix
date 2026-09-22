@@ -17,6 +17,8 @@ let
   # and whether each concept contributes to configuration identity.
   # Once these semantics are explicit, derive assertions from the model
   # instead of encoding assumptions from the current repository shape.
+  facterRelativePath = host: "nix/profiles/hosts/${host}/facter.json";
+  facterPath = host: hostDir + "/${host}/facter.json";
   defaultRuntime = {
     themes = [ runtimeContexts.defaults.theme ];
     sessions = [ runtimeContexts.defaults.session ];
@@ -169,6 +171,9 @@ let
       targetAxes.session || builtins.length runtimeSessions == 1
     ) "Host '${host}' has multiple runtime.sessions, so runtime.targetAxes.session must be true";
     {
+      facterPath = facterPath host;
+      facterRelativePath = facterRelativePath host;
+      facterReady = builtins.pathExists (facterPath host);
       inherit
         host
         os
@@ -200,6 +205,8 @@ assert lib.assertMsg (
 ) "Host targetHost values must be unique";
 {
   inherit
+    facterRelativePath
+    facterPath
     defaultRuntime
     hosts
     hostNames

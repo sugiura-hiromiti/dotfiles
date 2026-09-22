@@ -1,12 +1,18 @@
 {
   lib,
   hosts,
-  mkTargetConfigEntries,
+  defaultTarget,
+  readyNixosTargetEntries,
   actions-nix,
 }:
 let
   ciConfig = import ../ci {
-    inherit hosts lib mkTargetConfigEntries;
+    inherit
+      hosts
+      lib
+      defaultTarget
+      readyNixosTargetEntries
+      ;
   };
 in
 {

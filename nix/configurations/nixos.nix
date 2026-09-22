@@ -2,6 +2,7 @@
   lib,
   nixpkgs,
   preservation,
+  disko,
   catppuccin,
   nix-agent,
   home-manager,
@@ -54,7 +55,10 @@ let
   modulesFor =
     config:
     [
-      preservation.nixosModules.default
+      (import ./nixos-bootstrap.nix {
+        inherit disko preservation;
+        hostConfig = config;
+      })
       home-manager.nixosModules.home-manager
       (nixosProfileModule config)
       (homeManagerModule config)

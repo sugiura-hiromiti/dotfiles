@@ -4,15 +4,21 @@
   self,
   disko,
   preservation,
-  mkTargetConfigEntries,
+  nixpkgs,
+  mkReadyTargetConfigEntries,
   targetConfigNamesForSystem,
 }:
 {
   perSystem =
-    { pkgs, system, ... }:
+    {
+      config,
+      pkgs,
+      system,
+      ...
+    }:
     let
       nixosTargetEntries = lib.filter (entry: entry.config.system == system) (
-        mkTargetConfigEntries "nixos"
+        mkReadyTargetConfigEntries "nixos"
       );
     in
     {
@@ -26,7 +32,9 @@
           pkgs
           self
           disko
+          nixpkgs
           ;
+        formattingCheck = config.treefmt.build.check self;
         targetConfigNames = {
           home = targetConfigNamesForSystem "home" system;
           nixos = targetConfigNamesForSystem "nixos" system;

@@ -7,7 +7,6 @@
   ...
 }:
 let
-  filesystemUuid = "11111111-2222-4333-8444-555555555555";
   targetSystem = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
     specialArgs = {
@@ -27,6 +26,12 @@ let
       })
 
       {
+        services.openssh.enable = true;
+        services.tailscale = {
+          enable = true;
+          disableUpstreamLogging = true;
+        };
+        networking.networkmanager.enable = true;
         home-manager = {
           users = {
             a = {
@@ -54,6 +59,7 @@ let
             systemd-boot = {
               enable = true;
             };
+            efi.canTouchEfiVariables = false;
             grub = {
               enable = false;
             };
@@ -67,14 +73,7 @@ let
             impermanence = {
               enable = true;
             };
-            storage = {
-              inherit filesystemUuid;
-              partitionLabel = "test-system";
-              provisioning = {
-                disk = "/dev/vda";
-                enable = true;
-              };
-            };
+
           };
         };
       }
@@ -123,9 +122,10 @@ pkgs.testers.runNixOSTest {
         installer.start()
         installer.wait_for_unit("multi-user.target")
         installer.succeed("test -b /dev/vda")
+        installer.succeed("ln -s /dev/vda /dev/dotfiles-install-target")
         installer.succeed("${diskoScript}")
 
-        installer.succeed("test -b /dev/disk/by-partlabel/test-system")
+        installer.succeed("test -b /dev/disk/by-partlabel/dotfiles-system")
 
         installer.succeed("mountpoint -q /mnt")
         installer.succeed("mountpoint -q /mnt/nix")
@@ -165,7 +165,21 @@ pkgs.testers.runNixOSTest {
         target.succeed('test "$(findmnt -n -o FSROOT /nix)" = /@nix')
         target.succeed('test "$(findmnt -n -o FSROOT /persist)" = /@persist')
 
+    with subtest("persistent services before reboot"):
+        target.wait_for_unit("sshd.service")
+        target.wait_for_unit("tailscaled.service")
+        target.wait_for_unit("NetworkManager.service")
+        machine_id = target.succeed("cat /etc/machine-id").strip()
+        ssh_key = target.succeed("ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key").strip()
+        target.succeed("nmcli connection add type dummy ifname ptest0 con-name ptest0")
+        nm_uuid = target.succeed("nmcli -g connection.uuid connection show ptest0").strip()
+        target.succeed("tailscale status --json --peers=false >/dev/null")
+        target.succeed("echo tailscale-preserved > /var/lib/tailscale/preservation-test")
+
     with subtest("create disposable and persistent state"):
+        target.succeed("mountpoint -q /home/a/dotfiles")
+        target.succeed("su - a -c 'echo repository > ~/dotfiles/probe'")
+        target.succeed("echo nix-persistent > /nix/impermanence-nix-marker")
         target.succeed("echo disposable > /impermanence-root-marker")
         target.succeed(
             "echo persistent > /persist/impermanence-persist-marker"
@@ -189,7 +203,22 @@ pkgs.testers.runNixOSTest {
         target.wait_for_unit("multi-user.target")
         target.wait_for_unit("home-manager-a.service")
 
+    with subtest("persistent services after reboot"):
+        target.wait_for_unit("sshd.service")
+        target.wait_for_unit("tailscaled.service")
+        target.wait_for_unit("NetworkManager.service")
+        assert target.succeed("cat /etc/machine-id").strip() == machine_id
+        assert target.succeed("ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key").strip() == ssh_key
+        assert target.succeed("nmcli -g connection.uuid connection show ptest0").strip() == nm_uuid
+        target.succeed("tailscale status --json --peers=false >/dev/null")
+        target.succeed("grep -qx tailscale-preserved /var/lib/tailscale/preservation-test")
+        target.succeed("grep -qx tailscale-preserved /persist/var/lib/tailscale/preservation-test")
+
     with subtest("verify impermanence contract"):
+        target.succeed("grep -qx repository /home/a/dotfiles/probe")
+        target.succeed("grep -qx repository /persist/home/a/dotfiles/probe")
+        target.succeed("grep -qx nix-persistent /nix/impermanence-nix-marker")
+        target.succeed("su - a -c 'echo writable >> ~/dotfiles/probe'")
         target.succeed("test ! -e /impermanence-root-marker")
 
         target.succeed(

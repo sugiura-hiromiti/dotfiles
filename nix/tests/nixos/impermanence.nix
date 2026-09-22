@@ -1,60 +1,24 @@
 {
   lib,
   pkgs,
+  disko,
 }:
 let
-  filesystemUuid = "11111111-2222-4333-8444-555555555555";
-  importWith = subVolNamePrefix: [
-    ../../modules/nixos/features/impermanence/impermanence.nix
-    {
-      dotfiles = {
-        features = {
-          storage = {
-            inherit filesystemUuid;
-            subvolumes = lib.mkIf (subVolNamePrefix != "") {
-              root = "@${subVolNamePrefix}root";
-              persist = "@${subVolNamePrefix}persist";
-              nix = "@${subVolNamePrefix}nix";
-            };
-          };
-          impermanence = {
-            enable = true;
-          };
-        };
-      };
-    }
-  ];
   system = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
-    modules = importWith "";
+    modules = [
+      (import ../../modules/nixos/features/storage/provisioning.nix { inherit disko; })
+      ../../modules/nixos/features/impermanence/impermanence.nix
+      { dotfiles.features.impermanence.enable = true; }
+    ];
   };
-  fs = system.config.fileSystems;
-  customSystem = lib.nixosSystem {
-    system = pkgs.stdenv.hostPlatform.system;
-    modules = importWith "test-";
-  };
+  service = system.config.boot.initrd.systemd.services.impermanence-reset;
 in
-assert fs."/persist".neededForBoot;
-assert fs."/nix".neededForBoot;
-
-assert !(system.options.dotfiles.features.storage ? provisioning);
-assert !(system.options ? disko);
-
-assert
-  system.config.dotfiles.features.ephemeralRoot.subvolume
-  == system.config.dotfiles.features.storage.subvolumes.root;
-assert
-  customSystem.config.dotfiles.features.ephemeralRoot.subvolume
-  == customSystem.config.dotfiles.features.storage.subvolumes.root;
-
-assert system.config.dotfiles.features.ephemeralRoot.enable;
-assert
-  system.config.dotfiles.features.ephemeralRoot.device
-  == system.config.dotfiles.features.storage.device;
-
-assert customSystem.config.dotfiles.features.ephemeralRoot.enable;
-assert
-  customSystem.config.dotfiles.features.ephemeralRoot.device
-  == customSystem.config.dotfiles.features.storage.device;
-
+assert system.config.fileSystems."/persist".neededForBoot;
+assert system.config.fileSystems."/nix".neededForBoot;
+assert builtins.elem "sysroot.mount" service.before;
+assert builtins.elem "sysroot.mount" service.requiredBy;
+assert builtins.elem pkgs.btrfs-progs service.path;
+assert builtins.elem pkgs.util-linux service.path;
+assert builtins.elem pkgs.coreutils service.path;
 pkgs.runCommandLocal "impermanence-eval-test" { } ''touch "$out"''

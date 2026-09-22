@@ -43,6 +43,7 @@ let
     inherit (inputs)
       nixpkgs
       preservation
+      disko
       catppuccin
       nix-agent
       home-manager
@@ -76,14 +77,24 @@ in
       inherit (targets) mkTargetConfigEntries;
     })
     (import ./dev-shells.nix { inherit lib; })
+    (import ./installer.nix {
+      inherit lib self;
+      inherit (inputs) nixpkgs;
+      inherit (targets) declaredNixosHostsForSystem defaultTarget;
+    })
     (import ./checks.nix {
       inherit lib self;
-      inherit (inputs) disko preservation home-manager;
-      inherit (targets) mkTargetConfigEntries targetConfigNamesForSystem;
+      inherit (inputs)
+        disko
+        preservation
+        home-manager
+        nixpkgs
+        ;
+      inherit (targets) mkReadyTargetConfigEntries targetConfigNamesForSystem;
     })
     (import ./ci.nix {
       inherit lib hosts;
-      inherit (targets) mkTargetConfigEntries;
+      inherit (targets) defaultTarget readyNixosTargetEntries;
       inherit (inputs) actions-nix;
     })
   ];

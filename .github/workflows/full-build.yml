@@ -14,11 +14,8 @@ jobs:
       with:
         persist-credentials: false
     - uses: cachix/install-nix-action@v31
-    - name: Build all Darwin targets
-      run: |-
-        nix flake check \
-          --no-write-lock-file \
-          --print-build-logs
+    - name: Build Darwin checks
+      run: nix flake check --no-update-lock-file --print-build-logs
     timeout-minutes: 120
   linux:
     runs-on: ubuntu-24.04-arm
@@ -27,11 +24,10 @@ jobs:
       with:
         persist-credentials: false
     - uses: cachix/install-nix-action@v31
-    - name: Build all Linux targets
-      run: |-
-        nix flake check \
-          --no-write-lock-file \
-          --print-build-logs
+    - name: Evaluate
+      run: nix flake check --no-build --no-update-lock-file .
+    - name: Build non-VM checks
+      run: nix build --no-update-lock-file --print-build-logs .#checks.aarch64-linux.non-vm
     timeout-minutes: 120
 name: Full build
 'on':

@@ -1,71 +1,34 @@
 { disko }:
-{ lib, config, ... }:
 let
-  storage = config.dotfiles.features.storage;
-  cfg = storage.provisioning;
+  layout = import ./layout.nix;
 in
 {
-  imports = [
-    ./.
-    disko.nixosModules.disko
-  ];
-
-  options.dotfiles.features.storage = {
-    partitionLabel = lib.mkOption {
-      type = lib.types.str;
-      default = "nixos";
-    };
-
-    provisioning = {
-      enable = lib.mkEnableOption "provisioning";
-
-      disk = lib.mkOption {
-        type = lib.types.str;
-      };
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
-    disko = {
-      enableConfig = true;
-
-      devices.disk.main = {
-        type = "disk";
-        device = cfg.disk;
-
-        content = {
-          type = "gpt";
-
-          partitions = {
-            ESP = {
-              size = "512M";
-              type = "EF00";
-
-              content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-              };
-            };
-
-            system = {
-              label = storage.partitionLabel;
-              size = "100%";
-
-              content = {
-                type = "btrfs";
-
-                extraArgs = [
-                  "-U"
-                  storage.filesystemUuid
-                ];
-
-                subvolumes = {
-                  ${storage.subvolumes.root}.mountpoint = "/";
-                  ${storage.subvolumes.nix}.mountpoint = "/nix";
-                  ${storage.subvolumes.persist}.mountpoint = "/persist";
-                };
-              };
+  imports = [ disko.nixosModules.disko ];
+  disko.enableConfig = true;
+  disko.devices.disk.main = {
+    type = "disk";
+    device = layout.installerDisk;
+    content = {
+      type = "gpt";
+      partitions = {
+        ESP = {
+          size = "512M";
+          type = "EF00";
+          content = {
+            type = "filesystem";
+            format = "vfat";
+            mountpoint = "/boot";
+          };
+        };
+        system = {
+          label = layout.partitionLabel;
+          size = "100%";
+          content = {
+            type = "btrfs";
+            subvolumes = {
+              ${layout.subvolumes.root}.mountpoint = "/";
+              ${layout.subvolumes.nix}.mountpoint = "/nix";
+              ${layout.subvolumes.persist}.mountpoint = "/persist";
             };
           };
         };

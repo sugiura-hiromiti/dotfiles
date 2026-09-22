@@ -7,6 +7,8 @@
   targetConfigNames,
   disko,
   nixosTargetEntries,
+  nixpkgs,
+  formattingCheck,
 }:
 let
   mkLintCheck =
@@ -57,35 +59,86 @@ let
       value = mkEmbeddedHomeManagerCheck entry;
     }) nixosTargetEntries
   );
+  nonVm = {
+    treefmt = formattingCheck;
+    deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --fail .";
+    statix = mkLintCheck "statix" pkgs.statix "statix check .";
+  }
+  // embeddedHomeManagerChecks
+  // mkBuildChecks "home" homeConfigNames (
+    target: self.homeConfigurations.${target}.activationPackage
+  )
+  // mkBuildChecks "nixos" nixosConfigNames (
+    target: self.nixosConfigurations.${target}.config.system.build.toplevel
+  )
+  // mkBuildChecks "darwin" darwinConfigNames (target: self.darwinConfigurations.${target}.system)
+  // (import ./apps/update/tests { inherit lib pkgs; })
+  // (import ./apps/build-installer/tests { inherit lib pkgs; })
+  // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    ci-contract = import ./tests/nixos/ci.nix { inherit lib pkgs; };
+    installer-runtime = import ./tests/installer/runtime.nix { inherit lib pkgs; };
+    installer-iso = import ./tests/installer/iso.nix {
+      inherit lib pkgs nixpkgs;
+      source = self.outPath;
+    };
+    installer-fixture = import ./tests/installer/fixture-contract.nix {
+      inherit
+        lib
+        pkgs
+        nixpkgs
+        disko
+        preservation
+        ;
+    };
+    bootstrap = import ./tests/nixos/bootstrap.nix {
+      inherit
+        lib
+        pkgs
+        disko
+        preservation
+        ;
+    };
+    facter-readiness = import ./tests/nixos/readiness.nix { inherit lib pkgs; };
+    impermanence = import ./tests/nixos/impermanence.nix { inherit lib pkgs disko; };
+    storage-provisioning = import ./tests/nixos/storage-provisioning.nix { inherit lib pkgs disko; };
+    root-device =
+      pkgs.runCommandLocal "root-device-test"
+        {
+          nativeBuildInputs = [
+            pkgs.python3
+            pkgs.bash
+          ];
+        }
+        ''
+          python3 ${./tests/nixos/root-device.py} ${./modules/nixos/features/impermanence/root-device.sh}
+          touch "$out"
+        '';
+  };
+  vm = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    installer-e2e = import ./tests/installer/e2e.nix {
+      inherit
+        lib
+        pkgs
+        nixpkgs
+        disko
+        preservation
+        ;
+    };
+    impermanence-vm = import ./tests/nixos/impermanence-vm.nix {
+      inherit
+        home-manager
+        pkgs
+        lib
+        disko
+        preservation
+        ;
+    };
+  };
 in
-{
-  deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --fail .";
-  statix = mkLintCheck "statix" pkgs.statix "statix check .";
-}
-// embeddedHomeManagerChecks
-// mkBuildChecks "home" homeConfigNames (
-  target: self.homeConfigurations.${target}.activationPackage
-)
-// mkBuildChecks "nixos" nixosConfigNames (
-  target: self.nixosConfigurations.${target}.config.system.build.toplevel
-)
-// mkBuildChecks "darwin" darwinConfigNames (target: self.darwinConfigurations.${target}.system)
-// (import ./apps/update/tests { inherit lib pkgs; })
-// lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-  preservation = import ./tests/nixos/preservation.nix { inherit pkgs preservation; };
-  ephemeral-root = import ./tests/nixos/ephemeral-root.nix { inherit pkgs lib disko; };
-  impermanence = import ./tests/nixos/impermanence.nix { inherit lib pkgs; };
-  storage-provisioning = import ./tests/nixos/storage-provisioning.nix { inherit lib pkgs disko; };
-  storage-provisioning-vm = import ./tests/nixos/storage-provisioning-vm.nix {
-    inherit lib pkgs disko;
-  };
-  impermanence-vm = import ./tests/nixos/impermanence-vm.nix {
-    inherit
-      home-manager
-      pkgs
-      lib
-      disko
-      preservation
-      ;
-  };
+(lib.removeAttrs nonVm [ "treefmt" ])
+// vm
+// {
+  non-vm = pkgs.linkFarm "non-vm-checks" (
+    lib.mapAttrsToList (name: path: { inherit name path; }) nonVm
+  );
 }

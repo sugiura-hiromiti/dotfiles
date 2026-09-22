@@ -5,50 +5,22 @@
   ...
 }:
 let
-  filesystemUuid = "11111111-2222-4333-8444-555555555555";
   system = lib.nixosSystem {
     system = pkgs.stdenv.hostPlatform.system;
-    modules = [
-      (import ../../modules/nixos/features/storage/provisioning.nix { inherit disko; })
-      {
-        dotfiles = {
-          features = {
-            storage = {
-              inherit filesystemUuid;
-              partitionLabel = "test-system";
-              provisioning = {
-                enable = true;
-                disk = "/dev/test-disk";
-              };
-            };
-          };
-        };
-      }
-    ];
+    modules = [ (import ../../modules/nixos/features/storage/provisioning.nix { inherit disko; }) ];
   };
   disk = system.config.disko.devices.disk.main;
-  systemPartition = disk.content.partitions.system;
-  subvolumes = systemPartition.content.subvolumes;
-  esp = disk.content.partitions.ESP;
+  partition = disk.content.partitions.system;
+  fs = system.config.fileSystems;
 in
-assert disk.device == "/dev/test-disk";
+assert disk.device == "/dev/dotfiles-install-target";
 assert disk.content.type == "gpt";
-
-assert esp.type == "EF00";
-assert esp.content.type == "filesystem";
-assert esp.content.format == "vfat";
-assert esp.content.mountpoint == "/boot";
-
-assert systemPartition.label == "test-system";
-assert systemPartition.device == "/dev/disk/by-partlabel/test-system";
-assert systemPartition.content.type == "btrfs";
-
-assert subvolumes ? "@root";
-assert subvolumes ? "@nix";
-assert subvolumes ? "@persist";
-
-assert system.config.disko.enableConfig;
-
-assert system.config.dotfiles.features.storage.device == "/dev/disk/by-uuid/${filesystemUuid}";
-
+assert disk.content.partitions.ESP.type == "EF00";
+assert disk.content.partitions.ESP.content.mountpoint == "/boot";
+assert partition.label == "dotfiles-system";
+assert partition.content.type == "btrfs";
+assert fs."/".device == "/dev/disk/by-partlabel/dotfiles-system";
+assert builtins.elem "subvol=@root" fs."/".options;
+assert builtins.elem "subvol=@nix" fs."/nix".options;
+assert builtins.elem "subvol=@persist" fs."/persist".options;
 pkgs.runCommandLocal "storage-provisioning-eval-test" { } ''touch "$out"''

@@ -60,6 +60,19 @@ If =direnv= is installed:
 direnv allow
 #+end_src
 
+** Install NixOS
+
+Edit and version the dotfiles for the intended host, then build its installer
+on a machine with the same system architecture:
+
+#+begin_src sh
+nix run .#build-installer -- --host HOST
+#+end_src
+
+Use the reported store output's =iso/= image. Write or attach that ISO to the
+target machine, boot it, and enter the administrator password. When installation
+powers the machine off, remove the installer media and boot the installed system.
+
 ** First switch
 
 Before the shell helper is installed, run the flake commands directly from the

@@ -19,22 +19,22 @@
 (winner-mode 1)
 
 (defun my/other-window-backward ()
-	"前のwindowに移動する。"
+	"前のwindowに移動する。."
 	(interactive)
 	(other-window -1))
 
 (defun my/shrink-window-vertically ()
-	"現在のwindowの高さを1行小さくする。"
+	"現在のwindowの高さを1行小さくする。."
 	(interactive)
 	(enlarge-window -1))
 
 (defun my/tab-move-left ()
-	"現在のtabを左に移動する。"
+	"現在のtabを左に移動する。."
 	(interactive)
 	(tab-move -1))
 
 (defun my/switch-to-buffer-other-tab ()
-	"bufferを選んで別tabで開く。"
+	"Bufferを選んで別tabで開く。."
 	(interactive)
 	(call-interactively #'switch-to-buffer-other-tab))
 
@@ -82,7 +82,7 @@
 			(("l" xref-find-references "list")
 				("f" xref-find-definitions "def")
 				("o" consult-eglot-symbols "outline")
-				("d" consult-flymake "diagnostic")
+				("d" my/project-consult-flymake "diagnostic")
 				("a" eglot-code-actions "actions")
 				("r" eglot-rename "rename")
 				("h" my/eldoc-box-help-at-point "hover")
@@ -104,7 +104,7 @@
 				("s" org-store-link "store link")))))
 
 (defun my/eldoc-box-help-at-point ()
-	"Show eldoc document and focus its child frame"
+	"Show eldoc document and focus its child frame."
 	(interactive)
 	(eldoc-box-help-at-point)
 	(eldoc-box-focus-frame))
@@ -159,6 +159,11 @@
 		(make-directory path t)
 		(make-empty-file path t))
 	(revert-buffer))
+
+(defun my/project-consult-flymake ()
+	"Search project wide diagnostics."
+	(interactive)
+	(consult-flymake t))
 
 (provide 'init-navi)
 ;;; init-navi.el ends here

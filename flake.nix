@@ -11,6 +11,8 @@
 # 1) 新しい端末を追加:
 #    nix/profiles/hosts/<host>/meta.nix を作成し system/accounts/targets を指定
 #    (必要なら同ディレクトリに nixos.nix / hardware-configuration.nix)
+#    NixOS installer: nix run .#build-installer -- --host <host>
+#    facter.json はインストーラーが対象端末で生成します。
 # 2) まとめて更新/反映:
 #    nix run --no-write-lock-file path:.#update -- --host <host> --account <account> --theme <theme> --session <session>
 #    - account は未指定なら current user を使う

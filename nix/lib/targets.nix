@@ -90,7 +90,13 @@ let
     )
   ) hostNames;
   mkTargetConfigEntries =
-    target: if target == "home" then mkHomeTargetConfigEntries else mkHostTargetConfigEntries target;
+    target:
+    if target == "home" then
+      mkHomeTargetConfigEntries
+    else if target == "nixos" then
+      declaredNixosTargetEntries
+    else
+      mkHostTargetConfigEntries target;
   assertUniqueTargetNames =
     target: entries:
     let
@@ -99,22 +105,54 @@ let
     assert lib.assertMsg (builtins.length (lib.unique names) == builtins.length names)
       "Generated duplicate ${target} target names; check runtime.targetAxes for hidden multi-value axes";
     entries;
+  declaredNixosTargetEntries = assertUniqueTargetNames "nixos" (mkHostTargetConfigEntries "nixos");
+  readyNixosTargetEntries = lib.filter (entry: entry.config.facterReady) declaredNixosTargetEntries;
+  mkReadyTargetConfigEntries =
+    target: if target == "nixos" then readyNixosTargetEntries else mkTargetConfigEntries target;
+  declaredNixosHostsForSystem =
+    system:
+    lib.filter (host: host.system == system && lib.elem "nixos" host.targets) (
+      map (name: hosts.${name}) hostNames
+    );
+  defaultTargetEntry =
+    target: hostName:
+    let
+      host = hosts.${hostName};
+      matches = lib.filter (
+        entry:
+        entry.config.host == hostName
+        && entry.config.themeName == host.runtime.defaultTheme
+        && entry.config.sessionName == host.runtime.defaultSession
+        && (target != "home" || entry.config.accountName == host.primaryAccountName)
+      ) (mkTargetConfigEntries target);
+    in
+    assert lib.assertMsg (
+      builtins.length matches == 1
+    ) "Expected exactly one default ${target} target for ${hostName}";
+    lib.head matches;
+  defaultTarget = target: hostName: (defaultTargetEntry target hostName).name;
   mkTargetConfigs =
     target: mkConf:
     lib.listToAttrs (
       map (entry: {
         inherit (entry) name;
         value = mkConf entry.config;
-      }) (assertUniqueTargetNames target (mkTargetConfigEntries target))
+      }) (assertUniqueTargetNames target (mkReadyTargetConfigEntries target))
     );
   targetConfigNamesForSystem =
     target: system:
     map (entry: entry.name) (
-      lib.filter (entry: entry.config.system == system) (mkTargetConfigEntries target)
+      lib.filter (entry: entry.config.system == system) (mkReadyTargetConfigEntries target)
     );
 in
 {
   inherit
+    declaredNixosTargetEntries
+    readyNixosTargetEntries
+    declaredNixosHostsForSystem
+    defaultTarget
+    defaultTargetEntry
+    mkReadyTargetConfigEntries
     mkHomeTargetConfig
     mkTargetConfigEntries
     mkTargetConfigs

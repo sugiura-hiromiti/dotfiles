@@ -13,21 +13,20 @@ jobs:
     - uses: cachix/install-nix-action@v31
       with:
         install_url: https://releases.nixos.org/nix/nix-${{ matrix.nix_version }}/install
-    - name: Show Nix versions
+    - name: Evaluate ready NixOS targets
       run: |-
-        nix --version
-        nix store info --json
-    - name: Evaluate NixOS target directly
-      run: |-
-        nix eval --raw \
-          ".#nixosConfigurations.aarch64-linux-a--theme-light--session-gui.config.system.build.toplevel.drvPath"
+        nix flake check --no-build --no-update-lock-file .
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--theme-dark--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--theme-dark--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--theme-light--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--theme-light--session-tty.config.system.build.toplevel.drvPath
     strategy:
       fail-fast: false
       matrix:
         nix_version:
         - 2.34.8
         - 2.35.2
-    timeout-minutes: 45
-name: temporalily diagnostics
+    timeout-minutes: 120
+name: Nix evaluation compatibility
 'on':
   pull_request: {}

@@ -71,6 +71,7 @@ let
         };
         # Derivation roots include their build closures, allowing configuration
         # files affected by the real facter report to be rebuilt offline.
+        isoImage.squashfsCompression = "zstd -Xcompression-level 1";
         isoImage.storeContents = [
           seedTarget.config.system.build.toplevel
           seedTarget.config.system.build.toplevel.drvPath
@@ -87,7 +88,6 @@ let
   };
   qemu = qemuCommon.qemuBinaryWith {
     qemuPkg = pkgs.qemu_test;
-    forceAccel = true;
   };
   commonFlags = lib.concatStringsSep " " [
     "-m 4096"
@@ -109,28 +109,47 @@ let
 in
 pkgs.testers.runNixOSTest {
   name = "dotfiles-installer-e2e";
-  requiredFeatures.kvm = true;
+  globalTimeout = 2 * 60 * 60;
   nodes = { };
   testScript = ''
+    from datetime import timedelta
     import subprocess
+    import time
 
     subprocess.run(["${pkgs.qemu_test}/bin/qemu-img", "create", "-f", "qcow2",
                     "/tmp/dotfiles-e2e-target.qcow2", "24G"], check=True)
     installer = create_machine("${qemu} ${commonFlags} ${isoFlags}", name="installer")
+    machines_qemu.append(installer)
 
     with subtest("boot the actual ISO and run the installer"):
         installer.start()
+        installer.wait_for_console_text("connecting to host...", timeout=timedelta(minutes=15))
         installer.wait_for_unit("getty@tty2.service")
         installer.wait_until_tty_matches("1", "[Pp]assword")
         installer.send_chars("installer-test-password\n")
         installer.wait_until_tty_matches("1", "[Cc]onfirm|[Rr]epeat|[Aa]gain")
         installer.send_chars("installer-test-password\n")
-        installer.wait_for_file("/run/e2e-before-unmount", timeout=1800)
+        next_report = 0.0
+
+        def installation_finished(last_try):
+            global next_report
+            if time.monotonic() >= next_report or last_try:
+                installer.log(installer.get_tty_text("1"))
+                installer.log(installer.execute("systemctl status dotfiles-installer.service --no-pager --full")[1])
+                next_report = time.monotonic() + 60
+            status, _ = installer.execute("systemctl is-failed --quiet dotfiles-installer.service")
+            assert status != 0, installer.get_tty_text("1")
+            return installer.execute("test -e /run/e2e-before-unmount")[0] == 0
+
+        retry(installation_finished, timeout=timedelta(hours=1))
 
     with subtest("verify physical backing state before unmount"):
         for mount in ["/mnt", "/mnt/nix", "/mnt/persist", "/mnt/boot"]:
             installer.succeed(f"mountpoint -q {mount}")
+        for mount in ["/mnt", "/mnt/nix", "/mnt/persist"]:
+            installer.succeed(f"test $(stat -c '%a' {mount}) = 755")
         installer.succeed("test -b /dev/disk/by-partlabel/dotfiles-system")
+        installer.succeed("test $(stat -c '%a' /mnt/persist/etc) = 755")
         installer.succeed("test $(stat -c '%u:%g:%a' /mnt/persist/etc/dotfiles) = 0:0:700")
         installer.succeed("test $(stat -c '%u:%g:%a' /mnt/persist/etc/dotfiles/password-operator.hash) = 0:0:600")
         installer.succeed("grep -q '^[$]y[$]' /mnt/persist/etc/dotfiles/password-operator.hash")
@@ -143,8 +162,10 @@ pkgs.testers.runNixOSTest {
         installer.wait_for_shutdown()
 
     target = create_machine("${qemu} ${commonFlags}", name="installed")
+    machines_qemu.append(target)
     with subtest("boot without ISO and authenticate the administrator"):
         target.start(allow_reboot=True)
+        target.wait_for_console_text("connecting to host...", timeout=timedelta(minutes=15))
         target.wait_for_unit("multi-user.target")
         target.wait_until_tty_matches("1", "login:")
         target.send_chars("operator\n")
@@ -153,6 +174,7 @@ pkgs.testers.runNixOSTest {
         target.wait_until_succeeds("pgrep -u operator -x bash")
         target.succeed("su - operator -c 'printf \"installer-test-password\\n\" | sudo -S -k id -u' | grep -qx 0")
         target.succeed("test $(stat -c '%u:%g:%a' /persist/etc/dotfiles/password-operator.hash) = 0:0:600")
+        target.succeed("su - operator -c 'test -r /etc/machine-id'")
         target.succeed("su - operator -c 'test -w ~/dotfiles/flake.nix && test -x ~/dotfiles/executable-probe && echo survived > ~/dotfiles/persistent-marker'")
 
     with subtest("root resets while nix and preserved state survive reboot"):
@@ -160,6 +182,7 @@ pkgs.testers.runNixOSTest {
         target.succeed("echo survived > /nix/persistent-marker")
         target.succeed("echo survived > /persist/persistent-marker")
         target.reboot()
+        target.wait_for_console_text("connecting to host...", timeout=timedelta(minutes=15))
         target.wait_for_unit("multi-user.target")
         target.succeed("test ! -e /disposable-marker")
         target.succeed("grep -qx survived /nix/persistent-marker")

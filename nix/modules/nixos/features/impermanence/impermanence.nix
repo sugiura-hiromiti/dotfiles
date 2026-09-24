@@ -8,7 +8,7 @@ let
   layout = import ../storage/layout.nix;
   mountPoint = "/run/impermanence-root";
   root = "${mountPoint}/${layout.subvolumes.root}";
-  selectRootDevice = pkgs.writeShellScript "impermanence-root-device" (
+  selectRootDevice = pkgs.writeShellScriptBin "impermanence-root-device" (
     builtins.readFile ./root-device.sh
   );
 in
@@ -21,6 +21,7 @@ in
       supportedFilesystems = [ "btrfs" ];
       systemd = {
         enable = true;
+        additionalUpstreamUnits = [ "systemd-udev-settle.service" ];
         services.impermanence-reset = {
           requires = [ "systemd-udev-settle.service" ];
           after = [ "systemd-udev-settle.service" ];
@@ -28,6 +29,7 @@ in
           before = [ "sysroot.mount" ];
           unitConfig.DefaultDependencies = false;
           path = [
+            selectRootDevice
             pkgs.btrfs-progs
             pkgs.util-linux
             pkgs.coreutils
@@ -38,7 +40,7 @@ in
           };
           script = ''
             set -euo pipefail
-            device=$(${selectRootDevice} ${lib.escapeShellArg layout.partitionLabel})
+            device=$(impermanence-root-device ${lib.escapeShellArg layout.partitionLabel})
             mkdir -p ${mountPoint}
             mount -t btrfs -o subvolid=5 "$device" ${mountPoint}
             trap 'umount ${mountPoint}' EXIT

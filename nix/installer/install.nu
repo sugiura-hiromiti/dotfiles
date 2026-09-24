@@ -136,6 +136,7 @@ def install-password [metadata: record] {
 	let destination = $"($MOUNT_ROOT)($metadata.primaryUser.hashedPasswordFile)"
 	let directory = $destination | path dirname
 	^$MKDIR --parents $directory
+	^$CHMOD 0755 ($directory | path dirname)
 	^$CHOWN root:root $directory
 	^$CHMOD 0700 $directory
 	let temporary = $"($directory)/.password-hash-(random uuid).tmp"
@@ -160,8 +161,14 @@ def run-installer [] {
 	create-target-alias $disk
 	^$disko_script
 	validate-mounts
+	# Disko inherits the private service umask. System mount roots must be
+	# traversable by installed users; secret directories keep their own modes.
+	^$CHMOD 0755 $MOUNT_ROOT $"($MOUNT_ROOT)/nix" $"($MOUNT_ROOT)/persist"
 	install-password $metadata
-	^$NIXOS_INSTALL --root $MOUNT_ROOT --flake $"path:($post_source)#($TARGET)" --no-update-lock-file --no-channel-copy --no-root-password
+	# nixos-install invokes nix and nix-env through PATH.
+	with-env {PATH: ($env.PATH? | default [] | prepend ($NIX | path dirname))} {
+		^$NIXOS_INSTALL --root $MOUNT_ROOT --flake $"path:($post_source)#($TARGET)" --no-update-lock-file --no-channel-copy --no-root-password
+	}
 	let fallback_loader = $"($MOUNT_ROOT)/boot/EFI/BOOT/BOOT($EFI_ARCH).EFI"
 	require ($fallback_loader | path exists) $"fallback EFI loader is missing: ($fallback_loader)"
 	install-dotfiles $post_source $metadata

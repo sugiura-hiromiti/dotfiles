@@ -22,7 +22,10 @@ let
       home-manager.nixosModules.home-manager
 
       ({ modulesPath, ... }: {
-        imports = [ (modulesPath + "/testing/test-instrumentation.nix") ];
+        imports = [
+          (modulesPath + "/profiles/minimal.nix")
+          (modulesPath + "/testing/test-instrumentation.nix")
+        ];
       })
 
       {
@@ -84,6 +87,7 @@ let
 in
 pkgs.testers.runNixOSTest {
   name = "dotfiles.impermanence-vm";
+  requiredFeatures.kvm = false;
   nodes = {
     target = {
       virtualisation = {
@@ -120,6 +124,9 @@ pkgs.testers.runNixOSTest {
   testScript = ''
     with subtest("provision and install impermanent system"):
         installer.start()
+        # The driver shell handshake has a fixed 300s limit. Wait for the
+        # instrumentation readiness marker first so TCG can finish booting.
+        installer.wait_for_console_text("connecting to host...", timeout=900)
         installer.wait_for_unit("multi-user.target")
         installer.succeed("test -b /dev/vda")
         installer.succeed("ln -s /dev/vda /dev/dotfiles-install-target")
@@ -155,6 +162,8 @@ pkgs.testers.runNixOSTest {
     with subtest("boot installed impermanent system"):
         target.state_dir = installer.state_dir
         target.start(allow_reboot=True)
+        target.wait_for_console_text("connecting to host...|Kernel panic", timeout=900)
+        assert "Kernel panic" not in target.get_console_log(), target.get_console_log()[-20000:]
         target.wait_for_unit("multi-user.target")
         target.wait_for_unit("home-manager-a.service")
         target.succeed("grep -qx reconstructed " "/home/a/.config/impermanence-reconstruction-probe")
@@ -170,6 +179,8 @@ pkgs.testers.runNixOSTest {
         target.wait_for_unit("tailscaled.service")
         target.wait_for_unit("NetworkManager.service")
         machine_id = target.succeed("cat /etc/machine-id").strip()
+        assert len(machine_id) == 32 and all(c in "0123456789abcdef" for c in machine_id)
+        target.succeed("su - a -c 'test -r /etc/machine-id'")
         ssh_key = target.succeed("ssh-keygen -y -f /etc/ssh/ssh_host_ed25519_key").strip()
         target.succeed("nmcli connection add type dummy ifname ptest0 con-name ptest0")
         nm_uuid = target.succeed("nmcli -g connection.uuid connection show ptest0").strip()
@@ -200,6 +211,8 @@ pkgs.testers.runNixOSTest {
     with subtest("reboot impermanent system"):
         target.succeed("sync")
         target.reboot()
+        target.wait_for_console_text("connecting to host...|Kernel panic", timeout=900)
+        assert "Kernel panic" not in target.get_console_log(), target.get_console_log()[-20000:]
         target.wait_for_unit("multi-user.target")
         target.wait_for_unit("home-manager-a.service")
 

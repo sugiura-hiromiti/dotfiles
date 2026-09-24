@@ -18,7 +18,7 @@ let
     nix = lib.getExe pkgs.nix;
     nixStore = lib.getExe' pkgs.nix "nix-store";
     facter = lib.getExe pkgs.nixos-facter;
-    mkpasswd = lib.getExe' pkgs.whois "mkpasswd";
+    mkpasswd = lib.getExe pkgs.mkpasswd;
     rm = lib.getExe' pkgs.coreutils "rm";
     mkdir = lib.getExe' pkgs.coreutils "mkdir";
     cp = lib.getExe' pkgs.coreutils "cp";
@@ -85,6 +85,14 @@ pkgs.writeTextFile {
     ${builtins.readFile ./install.nu}
   '';
   checkPhase = ''
+    ${lib.concatStringsSep "\n" (
+      lib.mapAttrsToList (name: tool: ''
+        if ! test -x ${lib.escapeShellArg tool}; then
+          echo ${lib.escapeShellArg "Installer tool '${name}' is not executable: ${tool}"} >&2
+          exit 1
+        fi
+      '') tools
+    )}
     INSTALLER_SCRIPT="$target" \
     ${lib.getExe pkgs.nushell} --no-config-file --commands \
       'if not (nu-check --debug $env.INSTALLER_SCRIPT) { exit 1 }'

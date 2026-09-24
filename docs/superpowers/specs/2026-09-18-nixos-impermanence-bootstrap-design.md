@@ -124,6 +124,11 @@ The installer service uses `UMask=0077`. The password directory is
 `root:root 0700`; the hash is `root:root 0600` and is installed atomically
 via a same-directory temporary file.
 
+The installed `/`, `/nix`, `/persist`, and `/persist/etc` directories are
+`0755`, allowing normal users to access the system and persisted machine ID.
+These directory modes are established explicitly despite the private service
+umask.
+
 The installed system uses:
 
 ```nix
@@ -162,6 +167,7 @@ sanitized staged flake
 → validate exactly one eligible target disk
 → create /dev/dotfiles-install-target
 → Disko provisions /mnt
+→ validate mounts and establish traversable system-directory permissions
 → write root-only persistent password hash atomically
 → nixos-install from the same post-facter source
 → verify fallback EFI loader
@@ -210,9 +216,10 @@ Verification has three layers:
 
 - **evaluation:** `nix flake check --no-build .`;
 - **universal:** evaluation plus `checks.<system>.non-vm`;
-- **lifecycle:** the impermanence VM and installer E2E on a KVM-capable builder.
+- **lifecycle:** the impermanence VM and installer E2E, using KVM when
+  available and QEMU software emulation otherwise.
 
-Hosted non-KVM CI runs evaluation and universal checks only.
+Hosted CI runs evaluation and universal checks only.
 
 On Linux, prepare the evaluation gate by instantiating
 `checks.<system>.installer-e2e.drvPath` with `nix eval --no-update-lock-file

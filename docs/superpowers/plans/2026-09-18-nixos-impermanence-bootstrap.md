@@ -16,7 +16,7 @@ nix eval --no-update-lock-file --option allow-import-from-derivation false --raw
 nix flake check --no-build .
 nix build -L .#checks.$checkSystem.non-vm
 
-# KVM-capable builder only
+# Lifecycle checks (KVM when available, otherwise QEMU software emulation)
 nix flake check -L .
 ```
 
@@ -72,9 +72,8 @@ it does not build the ISO or run a VM. Hosted Linux CI performs this preparation
 
 - [x] Classify checks once as non-VM or VM-backed.
 - [x] Expose `checks.<system>.non-vm` as the aggregate non-VM gate.
-- [x] Keep VM tests KVM-requiring.
 - [x] Hosted Linux CI runs evaluation + the non-VM aggregate only.
-- [ ] Lifecycle tests run on a KVM-capable builder.
+- [x] Allow lifecycle tests to fall back to QEMU software emulation.
 
 ---
 
@@ -141,8 +140,12 @@ Prove:
 - [x] stale/incomplete locks fail and every flake command uses
       `--no-update-lock-file`;
 - [x] invalid metadata and Disko-realization failure remain pre-destructive;
-- [x] disk cardinality is fail-closed; and
-- [x] alias-path handling is safe.
+- [x] disk cardinality is fail-closed;
+- [x] alias-path handling is safe;
+- [x] service umask preserves private credentials while system directories
+      remain traversable;
+- [x] `nixos-install` inherits the selected Nix tools through `PATH`; and
+- [x] the ISO check builds the installer and validates its executable dependencies.
 
 ---
 
@@ -191,8 +194,7 @@ Source tests prove:
 
 ### 3.3 Lifecycle E2E
 
-Implementation is present. Execution remains pending on a working KVM builder;
-the local QEMU launch reported that the KVM kernel module was unavailable.
+Implementation is present. Lifecycle verification is in progress.
 
 Use `pkgs.testers.runNixOSTest` with UEFI, the actual installer ISO, one blank
 eligible disk, and all required source/store dependencies supplied inside the

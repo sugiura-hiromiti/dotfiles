@@ -99,6 +99,10 @@ let
   fakeNixosInstall = pkgs.writeShellScriptBin "nixos-install" ''
     set -eu
     state=''${TEST_STATE:?}
+    test "$(command -v nix)" = ${lib.getExe fakeNix}
+    for mount in ${testRoot}/mnt ${testRoot}/mnt/nix ${testRoot}/mnt/persist; do
+      test "$(stat -c %a "$mount")" = 755
+    done
     printf '%s\n' "$@" > "$state/install-args"
     frozen_lock_count=0
     for argument in "$@"; do

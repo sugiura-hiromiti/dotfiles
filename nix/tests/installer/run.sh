@@ -1,4 +1,5 @@
 set -eu
+umask 0077
 
 root=$TEST_ROOT
 rm -rf "$root"
@@ -215,7 +216,11 @@ grep -Fx -- --no-update-lock-file "$state/install-args"
 
 test "$(readlink "$root/dev/dotfiles-install-target")" = /dev/vda
 password_file="$root/mnt/persist/etc/dotfiles/password-alice.hash"
+for mount in "$root/mnt" "$root/mnt/nix" "$root/mnt/persist"; do
+  test "$(stat -c %a "$mount")" = 755
+done
 test "$(cat "$password_file")" = '$y$fixture-password-hash'
+test "$(stat -c %a "$root/mnt/persist/etc")" = 755
 test "$(stat -c %a "$root/mnt/persist/etc/dotfiles")" = 700
 test "$(stat -c %a "$password_file")" = 600
 password_temporary=$(sed -n '1p' "$state/password-mv-args")

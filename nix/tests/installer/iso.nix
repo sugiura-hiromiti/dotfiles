@@ -40,4 +40,7 @@ assert lib.assertMsg (lib.all
     "flakes"
   ]
 ) "Installer flake commands need the Nix CLI features";
-pkgs.writeText "installer-iso-eval-test" "ok\n"
+pkgs.runCommandLocal "installer-iso-test" { } ''
+  test -x ${service.serviceConfig.ExecStart}
+  touch "$out"
+''

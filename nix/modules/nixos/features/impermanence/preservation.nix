@@ -47,6 +47,8 @@ in
             {
               file = "/etc/machine-id";
               inInitrd = true;
+              how = "symlink";
+              configureParent = true;
             }
           ]
           ++ lib.optionals config.services.openssh.enable (
@@ -58,6 +60,18 @@ in
           );
         };
       };
+    };
+    # systemd places a transient machine ID over the symlink target on first
+    # boot. Commit it to persistent storage before that transient mount goes away.
+    systemd.services.systemd-machine-id-commit = {
+      unitConfig.ConditionPathIsMountPoint = [
+        ""
+        "/persist/etc/machine-id"
+      ];
+      serviceConfig.ExecStart = [
+        ""
+        "systemd-machine-id-setup --commit --root /persist"
+      ];
     };
   };
 }

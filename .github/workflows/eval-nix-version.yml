@@ -15,6 +15,7 @@ jobs:
         install_url: https://releases.nixos.org/nix/nix-${{ matrix.nix_version }}/install
     - name: Evaluate ready NixOS targets
       run: |-
+        nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.aarch64-linux.installer-e2e.drvPath
         nix flake check --no-build --no-update-lock-file .
         nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--theme-dark--session-gui.config.system.build.toplevel.drvPath
         nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--theme-dark--session-tty.config.system.build.toplevel.drvPath

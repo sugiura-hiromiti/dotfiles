@@ -17,12 +17,18 @@ let
     group = "\${{ github.workflow }}-\${{ github.ref }}";
     cancel-in-progress = true;
   };
+  # The offline ISO keeps full derivation closures. Instantiate them before
+  # flake check's read-only evaluator tries to traverse their store paths.
+  linuxEvaluation = ''
+    nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.${linuxPlatform}.installer-e2e.drvPath
+    nix flake check --no-build --no-update-lock-file .
+  '';
   linuxSteps = [
     checkout
     installNix
     {
       name = "Evaluate";
-      run = "nix flake check --no-build --no-update-lock-file .";
+      run = linuxEvaluation;
     }
     {
       name = "Build non-VM checks";
@@ -129,7 +135,7 @@ in
           {
             name = "Evaluate ready NixOS targets";
             run =
-              "nix flake check --no-build --no-update-lock-file .\n"
+              linuxEvaluation
               + lib.concatMapStringsSep "\n" (
                 name:
                 "nix eval --no-update-lock-file --raw .#nixosConfigurations.${name}.config.system.build.toplevel.drvPath"

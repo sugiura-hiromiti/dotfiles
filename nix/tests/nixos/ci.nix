@@ -21,14 +21,17 @@ let
     workflows
     ;
   commands = job: map (step: step.run) (lib.filter (step: step ? run) job.steps);
+  evaluation = ''
+    nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.aarch64-linux.installer-e2e.drvPath
+    nix flake check --no-build --no-update-lock-file .
+  '';
   universal = [
-    "nix flake check --no-build --no-update-lock-file ."
+    evaluation
     "nix build --no-update-lock-file --print-build-logs .#checks.aarch64-linux.non-vm"
   ];
 in
 assert commands workflows.".github/workflows/ci.yml".jobs.linux == universal;
 assert commands workflows.".github/workflows/full-build.yml".jobs.linux == universal;
 assert
-  commands workflows.".github/workflows/eval-nix-version.yml".jobs.eval-nix-version
-  == [ "nix flake check --no-build --no-update-lock-file .\n" ];
+  commands workflows.".github/workflows/eval-nix-version.yml".jobs.eval-nix-version == [ evaluation ];
 pkgs.runCommandLocal "ci-contract-test" { } ''touch "$out"''

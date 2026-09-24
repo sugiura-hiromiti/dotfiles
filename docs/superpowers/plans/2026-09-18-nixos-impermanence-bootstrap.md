@@ -11,12 +11,19 @@ The spec owns behavior/safety; this plan owns implementation order and tests.
 ## Verification
 
 ```bash
+checkSystem=$(nix eval --raw --impure --expr builtins.currentSystem)
+nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.$checkSystem.installer-e2e.drvPath
 nix flake check --no-build .
-nix build -L   .#checks.$(nix eval --raw --impure --expr builtins.currentSystem).non-vm
+nix build -L .#checks.$checkSystem.non-vm
 
 # KVM-capable builder only
 nix flake check -L .
 ```
+
+On Linux, instantiate the installer test before the read-only evaluation gate.
+Nix's `--no-build` evaluator cannot traverse fresh derivation store paths for
+the ISO's offline build closure. The `nix eval` step writes those derivations;
+it does not build the ISO or run a VM. Hosted Linux CI performs this preparation.
 
 ---
 

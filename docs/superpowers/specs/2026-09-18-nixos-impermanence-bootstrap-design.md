@@ -214,6 +214,13 @@ Verification has three layers:
 
 Hosted non-KVM CI runs evaluation and universal checks only.
 
+On Linux, prepare the evaluation gate by instantiating
+`checks.<system>.installer-e2e.drvPath` with `nix eval --no-update-lock-file
+--option allow-import-from-derivation false --raw`. This writes derivations
+without building or running a VM. Nix's read-only `flake check --no-build`
+evaluator cannot traverse fresh derivation store paths for the ISO's offline
+build closure. CI runs this preparation before the unchanged evaluation gate.
+
 Non-VM tests cover source selection, frozen-lock behavior, facter readiness,
 post-facter identity, root-device cardinality, destructive-barrier failures,
 password permissions, Preservation backing paths, retry behavior, fixed

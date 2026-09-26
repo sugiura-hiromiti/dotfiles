@@ -51,7 +51,7 @@ def publish-candidate [flake: string, repository: string] {
 def run-operation [repository: string, source: string, targets: list<record>] {
 	let lock = acquire-operation-lock $repository
 	try {
-		let temporary = (mktemp -d)
+		let temporary = (mktemp -d | path expand --strict)
 		let flake = $temporary | path join "source"
 		try {
 			cp -r $source $flake

@@ -221,12 +221,15 @@ Verification has three layers:
 
 Hosted CI runs evaluation and universal checks only.
 
-On Linux, prepare the evaluation gate by instantiating
+On Linux, first evaluate `checks.<system>.non-vm.drvPath` with normal IFD
+enabled. This may build inputs that configurations read during evaluation;
+it does not build the non-VM aggregate or run a VM. Then instantiate
 `checks.<system>.installer-e2e.drvPath` with `nix eval --no-update-lock-file
 --option allow-import-from-derivation false --raw`. This writes derivations
-without building or running a VM. Nix's read-only `flake check --no-build`
-evaluator cannot traverse fresh derivation store paths for the ISO's offline
-build closure. CI runs this preparation before the unchanged evaluation gate.
+without building the ISO or running a VM. The preparation gives the
+read-only `flake check --no-build` evaluator the required evaluation-time
+inputs and fresh derivation store paths for the ISO's offline build closure.
+CI runs both preparation steps before the evaluation gate.
 
 Non-VM tests cover source selection, frozen-lock behavior, facter readiness,
 post-facter identity, root-device cardinality, destructive-barrier failures,

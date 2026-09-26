@@ -12,18 +12,21 @@ The spec owns behavior/safety; this plan owns implementation order and tests.
 
 ```bash
 checkSystem=$(nix eval --raw --impure --expr builtins.currentSystem)
+nix eval --no-update-lock-file --raw .#checks.$checkSystem.non-vm.drvPath
 nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.$checkSystem.installer-e2e.drvPath
-nix flake check --no-build .
-nix build -L .#checks.$checkSystem.non-vm
+nix flake check --no-build --no-update-lock-file .
+nix build --no-update-lock-file -L .#checks.$checkSystem.non-vm
 
 # Lifecycle checks (KVM when available, otherwise QEMU software emulation)
-nix flake check -L .
+nix flake check --no-update-lock-file -L .
 ```
 
-On Linux, instantiate the installer test before the read-only evaluation gate.
-Nix's `--no-build` evaluator cannot traverse fresh derivation store paths for
-the ISO's offline build closure. The `nix eval` step writes those derivations;
-it does not build the ISO or run a VM. Hosted Linux CI performs this preparation.
+On Linux, first evaluate the non-VM aggregate derivation with normal IFD
+enabled. This may build configuration inputs read during evaluation, but does
+not build the aggregate or run a VM. Then instantiate the installer test with
+IFD disabled. The second `nix eval` writes derivations for the ISO's offline
+build closure without building the ISO or running a VM. Hosted Linux CI
+performs both preparation steps before the read-only evaluation gate.
 
 ---
 

@@ -17,9 +17,11 @@ let
     group = "\${{ github.workflow }}-\${{ github.ref }}";
     cancel-in-progress = true;
   };
-  # The offline ISO keeps full derivation closures. Instantiate them before
-  # flake check's read-only evaluator tries to traverse their store paths.
+  # Evaluate the non-VM aggregate with IFD enabled to realize configuration
+  # inputs needed by flake check's read-only evaluator. The offline ISO also
+  # keeps full derivation closures; instantiate them before that check.
   linuxEvaluation = ''
+    nix eval --no-update-lock-file --raw .#checks.${linuxPlatform}.non-vm.drvPath
     nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.${linuxPlatform}.installer-e2e.drvPath
     nix flake check --no-build --no-update-lock-file .
   '';

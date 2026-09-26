@@ -39,6 +39,7 @@ jobs:
     - uses: cachix/install-nix-action@v31
     - name: Evaluate
       run: |-
+        nix eval --no-update-lock-file --raw .#checks.aarch64-linux.non-vm.drvPath
         nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.aarch64-linux.installer-e2e.drvPath
         nix flake check --no-build --no-update-lock-file .
     - name: Build non-VM checks

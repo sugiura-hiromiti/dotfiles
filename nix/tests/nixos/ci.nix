@@ -22,6 +22,7 @@ let
     ;
   commands = job: map (step: step.run) (lib.filter (step: step ? run) job.steps);
   evaluation = ''
+    nix eval --no-update-lock-file --raw .#checks.aarch64-linux.non-vm.drvPath
     nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.aarch64-linux.installer-e2e.drvPath
     nix flake check --no-build --no-update-lock-file .
   '';

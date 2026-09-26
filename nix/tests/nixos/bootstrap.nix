@@ -45,15 +45,19 @@ assert metadata.preservation.backingPath == "/persist/srv/admin/dotfiles";
 assert metadata.preservation.runtimePath == "/srv/admin/dotfiles";
 assert metadata.boot.systemdBoot && !metadata.boot.canTouchEfiVariables;
 assert !metadata.mutableUsers && metadata.sudoEnabled;
-assert system.config.boot.initrd.systemd.tmpfiles.settings.preservation."/sysroot/persist/etc".d.mode == "0755";
-assert system.config.systemd.services.systemd-machine-id-commit.unitConfig.ConditionPathIsMountPoint == [
-  ""
-  "/persist/etc/machine-id"
-];
-assert system.config.systemd.services.systemd-machine-id-commit.serviceConfig.ExecStart == [
-  ""
-  "systemd-machine-id-setup --commit --root /persist"
-];
+assert
+  system.config.boot.initrd.systemd.tmpfiles.settings.preservation."/sysroot/persist/etc".d.mode
+  == "0755";
+assert
+  system.config.systemd.services.systemd-machine-id-commit.unitConfig.ConditionPathIsMountPoint == [
+    ""
+    "/persist/etc/machine-id"
+  ];
+assert
+  system.config.systemd.services.systemd-machine-id-commit.serviceConfig.ExecStart == [
+    ""
+    "systemd-machine-id-setup --commit --root /persist"
+  ];
 assert rejects { users.mutableUsers = lib.mkForce true; };
 assert rejects { users.users.admin.home = lib.mkForce "/srv/../admin"; };
 assert rejects { users.users.admin.home = lib.mkForce "/"; };

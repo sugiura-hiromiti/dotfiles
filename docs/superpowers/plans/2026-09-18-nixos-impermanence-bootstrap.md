@@ -28,6 +28,45 @@ IFD disabled. The second `nix eval` writes derivations for the ISO's offline
 build closure without building the ISO or running a VM. Hosted Linux CI
 performs both preparation steps before the read-only evaluation gate.
 
+### Verification results (2026-09-27)
+
+With the current locked Nixpkgs revision
+`e94cb152ed51bd6e24eb4a41f1460252beb52cd2`, the CI preparation steps, Linux
+evaluation gate, and complete non-VM aggregate passed. The impermanence VM
+also passed all seven lifecycle subtests, including activation-written state,
+machine-ID and service-state preservation, and disposable-root reset.
+The actual installer ISO also passed all four lifecycle subtests: offline
+installation with real Facter, physical backing-state and permission checks,
+booting without the ISO and authenticating with login/sudo, and root reset
+while persistent state survives reboot. The ISO test ran under QEMU software
+emulation and completed in 1,940 seconds.
+
+The VM exposed two production defects, now fixed: `/var/lib/nixos` must remain
+mounted through activation and switch-root, and the machine-ID symlink needs
+an empty backing file on first boot. The installer fixture also now seeds the
+graphics build closure that real QEMU Facter detection enables. Offline
+restrictions and lifecycle assertions remain intact.
+
+The user approved and applied the builder increase to 8 GiB RAM and 128 GiB
+disk, including `nixos-test` advertisement and root filesystem growth. This
+resolved the original scheduling and resource limits, but the completed
+build cache left insufficient room to create the offline ISO. ISO creation
+retains both a temporary SquashFS and the final image: level-1 compression
+required an 18.1 GiB ISO with only 13.9 GiB free at that point. A retry with
+standard level-19 compression still required 16.5 GiB with only 9.9 GiB free.
+The test retains its original fast compression setting.
+
+The Darwin declaration now requests a 256 GiB disk with 8 GiB RAM. Its system
+build and effective resource assertions passed, and the user applied the
+additional increase. Before the successful ISO run, a fresh build requiring
+`nixos-test` verified a 252 GiB filesystem with 147 GiB free and about 8 GiB RAM.
+Changing the Nix `diskSize` option alone does not resize an existing image;
+the helper grows the stopped image after cloning it for backup, and ext4
+`autoResize` grows the filesystem during the following boot.
+
+Both lifecycle checks and the non-VM aggregate passed with the frozen lock.
+The user's existing changes to `flake.lock` were preserved throughout.
+
 ---
 
 ## Task 1: Final NixOS model and verification split
@@ -197,7 +236,7 @@ Source tests prove:
 
 ### 3.3 Lifecycle E2E
 
-Implementation is present. Lifecycle verification is in progress.
+Implementation and lifecycle verification are complete.
 
 Use `pkgs.testers.runNixOSTest` with UEFI, the actual installer ISO, one blank
 eligible disk, and all required source/store dependencies supplied inside the

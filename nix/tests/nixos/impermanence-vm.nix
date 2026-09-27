@@ -30,6 +30,11 @@ let
 
       {
         services.openssh.enable = true;
+        system.activationScripts.impermanenceActivationProbe = ''
+          mkdir -p /var/lib/nixos
+          previous=$(cat /var/lib/nixos/impermanence-activation-count 2>/dev/null || echo 0)
+          printf '%s\n' "$((previous + 1))" > /var/lib/nixos/impermanence-activation-count
+        '';
         services.tailscale = {
           enable = true;
           disableUpstreamLogging = true;
@@ -169,6 +174,9 @@ pkgs.testers.runNixOSTest {
         target.succeed("grep -qx reconstructed " "/home/a/.config/impermanence-reconstruction-probe")
 
         target.succeed("mountpoint -q /var/lib/nixos")
+        activation_count = int(target.succeed("cat /var/lib/nixos/impermanence-activation-count").strip())
+        assert activation_count >= 1
+        assert int(target.succeed("cat /persist/var/lib/nixos/impermanence-activation-count").strip()) == activation_count
         target.succeed('test "$(findmnt -n -o FSTYPE /)" = btrfs')
         target.succeed('test "$(findmnt -n -o FSROOT /)" = /@root')
         target.succeed('test "$(findmnt -n -o FSROOT /nix)" = /@nix')
@@ -215,6 +223,7 @@ pkgs.testers.runNixOSTest {
         assert "Kernel panic" not in target.get_console_log(), target.get_console_log()[-20000:]
         target.wait_for_unit("multi-user.target")
         target.wait_for_unit("home-manager-a.service")
+        assert int(target.succeed("cat /persist/var/lib/nixos/impermanence-activation-count").strip()) > activation_count
 
     with subtest("persistent services after reboot"):
         target.wait_for_unit("sshd.service")

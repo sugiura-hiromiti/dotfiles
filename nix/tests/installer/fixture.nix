@@ -21,6 +21,11 @@ let
         };
       })
       ./target.nix
+      {
+        # The real report detects QEMU's virtio display and enables graphics.
+        # Seed its build closure in the ISO so that transition stays offline.
+        hardware.graphics.enable = true;
+      }
     ];
   };
   mkPathInput = input: {

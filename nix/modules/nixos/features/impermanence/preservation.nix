@@ -18,6 +18,12 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
+    boot.initrd.systemd.services = {
+      initrd-switch-root.unitConfig.RequiresMountsFor = [ "/sysroot/var/lib/nixos" ];
+      initrd-nixos-activation = lib.mkIf (!config.system.nixos-init.enable) {
+        unitConfig.RequiresMountsFor = [ "/sysroot/var/lib/nixos" ];
+      };
+    };
     preservation = {
       enable = true;
       preserveAt = {
@@ -36,6 +42,7 @@ in
               directory = "/var/lib/nixos";
               inInitrd = true;
             }
+            "/var/lib/nixos"
           ]
           ++ lib.optionals config.services.tailscale.enable [ "/var/lib/tailscale" ]
           ++ lib.optionals config.hardware.bluetooth.enable [ "/var/lib/bluetooth" ]
@@ -48,6 +55,7 @@ in
               file = "/etc/machine-id";
               inInitrd = true;
               how = "symlink";
+              createLinkTarget = true;
               configureParent = true;
             }
           ]

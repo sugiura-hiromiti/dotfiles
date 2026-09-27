@@ -40,6 +40,19 @@ in
       enable = lib.mkDefault true;
       linux-builder = {
         enable = true;
+        supportedFeatures = [
+          "kvm"
+          "benchmark"
+          "big-parallel"
+          "nixos-test"
+        ];
+        config.virtualisation = {
+          darwin-builder = {
+            memorySize = 8 * 1024;
+            diskSize = 256 * 1024;
+          };
+          fileSystems."/".autoResize = true;
+        };
       };
       settings.experimental-features = [
         "nix-command"

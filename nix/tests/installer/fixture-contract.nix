@@ -15,6 +15,13 @@ let
       preservation
       ;
   };
+  wrongDeployment = fixture.seedTarget.extendModules {
+    modules = [
+      {
+        hardware.facter.reportPath = lib.mkForce ../fixtures/hosts/ready/deployments/vm/facter.json;
+      }
+    ];
+  };
   sourceClosure = pkgs.closureInfo { rootPaths = [ fixture.source ]; };
   expectedMetadata = pkgs.writeText "installer-fixture-metadata.json" (
     builtins.toJSON {
@@ -42,6 +49,9 @@ let
     }
   );
 in
+assert
+  !(builtins.tryEval (builtins.deepSeq wrongDeployment.config.dotfiles.installer.metadata true))
+  .success;
 pkgs.runCommandLocal "installer-fixture-contract"
   {
     nativeBuildInputs = [

@@ -17,8 +17,9 @@ let
   # and whether each concept contributes to configuration identity.
   # Once these semantics are explicit, derive assertions from the model
   # instead of encoding assumptions from the current repository shape.
-  facterRelativePath = host: "nix/profiles/hosts/${host}/facter.json";
-  facterPath = host: hostDir + "/${host}/facter.json";
+  facterRelativePath =
+    host: deployment: "nix/profiles/hosts/${host}/deployments/${deployment}/facter.json";
+  facterPath = host: deployment: hostDir + "/${host}/deployments/${deployment}/facter.json";
   defaultRuntime = {
     themes = [ runtimeContexts.defaults.theme ];
     sessions = [ runtimeContexts.defaults.session ];
@@ -63,6 +64,21 @@ let
           builtins.length systemTargetKinds <= 1
         ) "Host '${host}' cannot target both NixOS and Darwin";
         if systemTargetKinds == [ ] then null else lib.head systemTargetKinds;
+
+      normalizeDeployment =
+        name: deployment:
+        {
+          inherit name;
+          modules = deployment.modules or [ ];
+        }
+        // lib.optionalAttrs (systemTargetKind == "nixos") {
+          facterPath = facterPath host name;
+          facterRelativePath = facterRelativePath host name;
+          facterReady = builtins.pathExists (facterPath host name);
+        };
+      deployments = lib.mapAttrs normalizeDeployment (meta.deployments or { });
+      deploymentNames = lib.attrNames deployments;
+      defaultDeploymentName = meta.defaultDeployment or null;
 
       accountsMeta =
         assert lib.assertMsg (meta ? accounts) "Host '${host}' must define accounts";
@@ -170,10 +186,13 @@ let
     assert lib.assertMsg (
       targetAxes.session || builtins.length runtimeSessions == 1
     ) "Host '${host}' has multiple runtime.sessions, so runtime.targetAxes.session must be true";
+    assert lib.assertMsg (
+      systemTargetKind == null || deploymentNames != [ ]
+    ) "System-capable host '${host}' must declare at least one deployment";
+    assert lib.assertMsg (
+      defaultDeploymentName == null || builtins.hasAttr defaultDeploymentName deployments
+    ) "Host '${host}' defaultDeployment '${toString defaultDeploymentName}' is not declared";
     {
-      facterPath = facterPath host;
-      facterRelativePath = facterRelativePath host;
-      facterReady = builtins.pathExists (facterPath host);
       inherit
         host
         os
@@ -189,6 +208,9 @@ let
         hostVariants
         targets
         systemTargetKind
+        deployments
+        deploymentNames
+        defaultDeploymentName
         runtime
         ;
     };

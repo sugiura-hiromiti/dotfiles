@@ -4,6 +4,9 @@ in
 {
   system = "aarch64-linux";
   hostName = "nixos";
+  deployments.parallels.modules = [ ];
+  deployments.qemu.modules = [ ./deployments/qemu/nixos.nix ];
+  defaultDeployment = "parallels";
   accounts = {
     primary = "a";
     users = {

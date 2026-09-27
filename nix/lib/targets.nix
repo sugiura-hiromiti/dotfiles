@@ -16,16 +16,30 @@ let
         h = hosts.${host};
       in
       lib.optionals (lib.elem target h.targets) (
-        map (
-          runtimeContext:
+        lib.concatMap (
+          deploymentName:
           let
-            config = mkHostTargetConfig (applyRuntimeContext h runtimeContext);
+            deployment = h.deployments.${deploymentName};
+            deployedHost =
+              h
+              // {
+                inherit deploymentName deployment;
+              }
+              // lib.optionalAttrs (target == "nixos") {
+                inherit (deployment) facterPath facterRelativePath facterReady;
+              };
           in
-          {
-            name = config.configName;
-            inherit config;
-          }
-        ) (mkRuntimeContexts h.runtime)
+          map (
+            runtimeContext:
+            let
+              config = mkHostTargetConfig (applyRuntimeContext deployedHost runtimeContext);
+            in
+            {
+              name = config.configName;
+              inherit config;
+            }
+          ) (mkRuntimeContexts h.runtime)
+        ) h.deploymentNames
       )
     ) hostNames;
   mkHomeTargetConfig =
@@ -53,7 +67,12 @@ let
     config
     // {
       configName = targetNames.mkSystemTargetName {
-        inherit (config) targetHost themeName sessionName;
+        inherit (config)
+          targetHost
+          deploymentName
+          themeName
+          sessionName
+          ;
         inherit (config.runtime) targetAxes;
       };
       accountRoles = [ ];
@@ -96,7 +115,7 @@ let
     else if target == "nixos" then
       declaredNixosTargetEntries
     else
-      mkHostTargetConfigEntries target;
+      assertUniqueTargetNames target (mkHostTargetConfigEntries target);
   assertUniqueTargetNames =
     target: entries:
     let
@@ -115,22 +134,30 @@ let
       map (name: hosts.${name}) hostNames
     );
   defaultTargetEntry =
-    target: hostName:
+    {
+      target,
+      hostName,
+      deploymentName ? null,
+    }:
     let
       host = hosts.${hostName};
+      selectedDeployment = if deploymentName != null then deploymentName else host.defaultDeploymentName;
       matches = lib.filter (
         entry:
         entry.config.host == hostName
+        && (target == "home" || entry.config.deploymentName == selectedDeployment)
         && entry.config.themeName == host.runtime.defaultTheme
         && entry.config.sessionName == host.runtime.defaultSession
         && (target != "home" || entry.config.accountName == host.primaryAccountName)
       ) (mkTargetConfigEntries target);
     in
     assert lib.assertMsg (
-      builtins.length matches == 1
-    ) "Expected exactly one default ${target} target for ${hostName}";
+      target == "home" || selectedDeployment != null
+    ) "Host '${hostName}' requires an explicit deployment or defaultDeployment for ${target}";
+    assert lib.assertMsg (builtins.length matches == 1)
+      "Expected exactly one default ${target} target for host '${hostName}', deployment '${toString selectedDeployment}'";
     lib.head matches;
-  defaultTarget = target: hostName: (defaultTargetEntry target hostName).name;
+  defaultTarget = selection: (defaultTargetEntry selection).name;
   mkTargetConfigs =
     target: mkConf:
     lib.listToAttrs (

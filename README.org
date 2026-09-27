@@ -62,12 +62,23 @@ direnv allow
 
 ** Install NixOS
 
-Edit and version the dotfiles for the intended host, then build its installer
+Edit and version the dotfiles for the intended host and deployment, then build its installer
 on a machine with the same system architecture:
 
 #+begin_src sh
-nix run .#build-installer -- --host HOST
+nix run .#build-installer -- --host aarch64-linux-a --deployment qemu
+nix run .#build-installer -- --host aarch64-linux-a --deployment parallels
 #+end_src
+
+Each NixOS deployment owns its hardware report at
+=nix/profiles/hosts/<host>/deployments/<deployment>/facter.json=.
+The installer can be built before this report exists; it collects Facter on the
+destination machine and installs the same selected target. Parallels is the
+default deployment for =aarch64-linux-a=; QEMU is declared without a report.
+
+Use =--target <system-target>= to select an exact theme/session target.
+Host-only selection (=--host HOST=) requires that host's =defaultDeployment=.
+The build machine's installed identity never selects the installer destination.
 
 Use the reported store output's =iso/= image. Write or attach that ISO to the
 target machine, boot it, and enter the administrator password. When installation
@@ -102,6 +113,19 @@ After Home Manager installs the shell functions, use =u= for normal updates:
 u --host <host> --account <account> --theme <theme> --session <session>
 #+end_src
 
+To select a system deployment explicitly:
+
+#+begin_src sh
+nix run .#update -- --host aarch64-linux-a --deployment qemu
+#+end_src
+
+QEMU system updates fail until its Facter report has been captured. On an
+installed system, ordinary updates can omit =--deployment=: the active
+generation exposes its host and deployment in =/etc/dotfiles/identity.json=.
+Activation and rollback update that identity with the system generation.
+An explicit host never borrows a different host's installed deployment.
+Home-only updates do not require deployment selection.
+
 =u= updates =flake.lock=, evaluates the selected Home Manager and system
 configuration, switches Home Manager, switches the matching system
 configuration on NixOS or macOS.
@@ -130,19 +154,23 @@ Home target shape:
 System target shape:
 
 #+begin_src text
-<host>[--theme-<theme>][--session-<session>]
+<host>--deployment-<deployment>[--theme-<theme>][--session-<session>]
 #+end_src
 
 Current examples:
 
 #+begin_src text
 aarch64-linux-a--account-a--theme-dark--session-gui
-aarch64-linux-a--theme-dark--session-gui
+aarch64-linux-a--deployment-parallels--theme-dark--session-gui
 aarch64-darwin-a--account-a--theme-dark
-aarch64-darwin-a--theme-dark
+aarch64-darwin-a--deployment-native--theme-dark
 aarch64-darwin-hiromichisugiura--account-hiromichisugiura--theme-dark
-aarch64-darwin-hiromichisugiura--theme-dark
+aarch64-darwin-hiromichisugiura--deployment-native--theme-dark
 #+end_src
+
+Home target names and counts are independent of system deployments. NixOS
+system outputs are published only for deployments with a Facter report;
+Darwin deployments have no Facter requirement.
 
 List all generated outputs:
 
@@ -153,9 +181,11 @@ nix flake show
 ** Add a Host
 
 1. Create =nix/profiles/hosts/<host>/meta.nix=.
-2. Set =system=, =accounts=, =targets=, =variants=, and =runtime=.
-3. For NixOS hosts, add =nixos.nix= and =hardware-configuration.nix= in the
-   same host directory when needed.
+2. Set =system=, =accounts=, =targets=, =variants=, and =runtime=. System-capable
+   hosts must also declare =deployments=; optionally set =defaultDeployment=.
+3. Put system deployment modules in =deployments.<name>.modules= and NixOS
+   hardware reports in =deployments/<name>/facter.json=. Shared host modules
+   can remain in the host directory.
 4. Check the generated targets:
 
 #+begin_src sh

@@ -79,21 +79,6 @@ Optional argument ENCLOSURE-INDEX index passed by elfeed."
 (with-eval-after-load 'elfeed-show
 	(keymap-set elfeed-show-mode-map "P" #'my/elfeed-play-enclosure-with-mpv))
 
-(use-package eww
-	:ensure nil
-	:custom
-	;; サイト側の色、フォントを無視する
-	(shr-use-colors nil)
-	(shr-use-fonts nil))
-
-(use-package browse-url
-	:ensure nil
-	:custom
-	(browse-url-browser-function #'eww-browse-url)
-	(browse-url-secondary-browser-function #'browse-url-default-browser))
-
-(provide 'init-misc)
-
 (provide 'init-misc)
 
 ;;; init-misc.el ends here

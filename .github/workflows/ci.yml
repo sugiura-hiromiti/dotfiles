@@ -15,7 +15,7 @@ jobs:
         persist-credentials: false
     - uses: cachix/install-nix-action@v31
     - name: Build representative Darwin targets
-      run: nix build --no-update-lock-file .#checks.aarch64-darwin.build-darwin-aarch64-darwin-a--theme-light
+      run: nix build --no-update-lock-file .#checks.aarch64-darwin.build-darwin-aarch64-darwin-a--deployment-native--theme-light
         .#checks.aarch64-darwin.build-home-aarch64-darwin-a--account-a--theme-light
     timeout-minutes: 120
   generated-workflows:

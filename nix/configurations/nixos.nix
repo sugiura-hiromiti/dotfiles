@@ -63,14 +63,17 @@ let
       (nixosProfileModule config)
       (homeManagerModule config)
       ../nixos/configuration.nix
+      (import ./system-identity.nix { targetConfig = config; })
     ]
     ++ profileModules "nixos" config
+    ++ config.deployment.modules
     ++ [
       catppuccin.nixosModules.catppuccin
       nix-agent.nixosModules.default
     ];
 in
 {
+  inherit modulesFor;
   build =
     config:
     nixpkgs.lib.nixosSystem {

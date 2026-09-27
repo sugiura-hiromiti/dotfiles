@@ -16,17 +16,23 @@ let
       );
     };
   };
+  modulesFor =
+    config:
+    [
+      (darwinProfileModule config)
+      ../nix-darwin
+      (import ./system-identity.nix { targetConfig = config; })
+    ]
+    ++ profileModules "darwin" config
+    ++ config.deployment.modules;
 in
 {
+  inherit modulesFor;
   build =
     config:
     nix-darwin.lib.darwinSystem {
       inherit (config) system;
       specialArgs = systemSpecialArgs config;
-      modules = [
-        (darwinProfileModule config)
-        ../nix-darwin
-      ]
-      ++ profileModules "darwin" config;
+      modules = modulesFor config;
     };
 }

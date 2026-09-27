@@ -5,6 +5,9 @@
   disko,
   preservation,
   nixpkgs,
+  nixos,
+  darwin,
+  mkTargetConfigEntries,
   mkReadyTargetConfigEntries,
   targetConfigNamesForSystem,
 }:
@@ -33,7 +36,11 @@
           self
           disko
           nixpkgs
+          nixos
+          darwin
           ;
+        deploymentNixosTargetEntries = mkReadyTargetConfigEntries "nixos";
+        deploymentDarwinTargetEntries = mkTargetConfigEntries "darwin";
         formattingCheck = config.treefmt.build.check self;
         targetConfigNames = {
           home = targetConfigNamesForSystem "home" system;

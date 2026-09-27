@@ -37,8 +37,14 @@ let
       run = "nix build --no-update-lock-file --print-build-logs .#checks.${linuxPlatform}.non-vm";
     }
   ];
-  darwinTarget = defaultTarget "darwin" "aarch64-darwin-a";
-  darwinHome = defaultTarget "home" "aarch64-darwin-a";
+  darwinTarget = defaultTarget {
+    target = "darwin";
+    hostName = "aarch64-darwin-a";
+  };
+  darwinHome = defaultTarget {
+    target = "home";
+    hostName = "aarch64-darwin-a";
+  };
   readyNames = map (entry: entry.name) (
     lib.filter (entry: entry.config.system == linuxPlatform) readyNixosTargetEntries
   );

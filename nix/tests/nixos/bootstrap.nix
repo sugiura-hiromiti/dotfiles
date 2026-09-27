@@ -14,7 +14,7 @@ let
           inherit disko preservation;
           hostConfig = {
             accounts.primary = "admin";
-            facterPath = ../../profiles/hosts/aarch64-linux-a/facter.json;
+            facterPath = ../../profiles/hosts/aarch64-linux-a/deployments/parallels/facter.json;
           };
         })
         {

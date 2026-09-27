@@ -1,7 +1,7 @@
 # Deployment Identity Design
 
-Date: 2026-09-28  
-Status: Proposed for implementation  
+Date: 2026-09-28\
+Status: Proposed for implementation\
 Repository baseline: `51b1ab6f2258921e1a6cdb21a60923f0e4813682`
 
 ## 1. Purpose
@@ -296,8 +296,8 @@ The identity contains only:
 
 ```json
 {
-  "host": "aarch64-linux-a",
-  "deployment": "parallels"
+	"host": "aarch64-linux-a",
+	"deployment": "parallels"
 }
 ```
 
@@ -497,30 +497,30 @@ Errors must identify both host and deployment when deployment resolution is invo
 
 The implementation is complete only when tests cover the following behaviors.
 
-| Case | Expected result |
-| --- | --- |
-| One host declares Parallels and QEMU | Two distinct system deployment identities exist |
-| Same host/deployments with runtime target axes | Distinct system targets include deployment and enabled axes |
-| Same host has two deployments | Standalone Home targets are not duplicated |
-| `--host A --deployment qemu`, A/qemu exists | A/qemu is selected |
-| Explicit deployment does not exist under selected host | Error; no fallback |
-| Installed identity is A/qemu and no explicit system identity is supplied | A/qemu may be selected |
-| Installed identity is A/qemu but `--host B` is supplied | A/qemu deployment is not reused for B |
-| Matching installed identity names a deployment removed from the current flake | System update errors |
-| Home-only update path | Deployment is not required |
-| Runtime and host require a NixOS system update but selected deployment lacks Facter | Error; no Home-only fallback |
-| One deployment has Facter and another does not | Only the ready deployment's normal NixOS targets are published |
-| Deployment lacks Facter | Installer generation remains possible |
-| Installer `--target` names a declared but unready NixOS target | Target is accepted |
-| Installer `--target` names an undeclared target | Error |
-| Installer is built while running under a different installed identity | Build-machine identity does not affect installer destination |
-| Installer runs for a selected deployment | Facter is written to that deployment's canonical path |
-| NixOS deployment module changes an overridable shared default | Nix option priority produces the intended final configuration |
-| Final configuration violates an installer contract | Installer metadata evaluation fails |
-| Darwin host declares multiple deployments | Darwin targets are distinct and selected deployment modules are composed |
-| Darwin deployment lacks Facter | Darwin target is not suppressed |
-| Switch to a generation with identity A/parallels | `/etc/dotfiles/identity.json` reports A/parallels |
-| Activate a previous NixOS generation via rollback | `identity.json` changes with the activated generation |
+| Case                                                                                | Expected result                                                          |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| One host declares Parallels and QEMU                                                | Two distinct system deployment identities exist                          |
+| Same host/deployments with runtime target axes                                      | Distinct system targets include deployment and enabled axes              |
+| Same host has two deployments                                                       | Standalone Home targets are not duplicated                               |
+| `--host A --deployment qemu`, A/qemu exists                                         | A/qemu is selected                                                       |
+| Explicit deployment does not exist under selected host                              | Error; no fallback                                                       |
+| Installed identity is A/qemu and no explicit system identity is supplied            | A/qemu may be selected                                                   |
+| Installed identity is A/qemu but `--host B` is supplied                             | A/qemu deployment is not reused for B                                    |
+| Matching installed identity names a deployment removed from the current flake       | System update errors                                                     |
+| Home-only update path                                                               | Deployment is not required                                               |
+| Runtime and host require a NixOS system update but selected deployment lacks Facter | Error; no Home-only fallback                                             |
+| One deployment has Facter and another does not                                      | Only the ready deployment's normal NixOS targets are published           |
+| Deployment lacks Facter                                                             | Installer generation remains possible                                    |
+| Installer `--target` names a declared but unready NixOS target                      | Target is accepted                                                       |
+| Installer `--target` names an undeclared target                                     | Error                                                                    |
+| Installer is built while running under a different installed identity               | Build-machine identity does not affect installer destination             |
+| Installer runs for a selected deployment                                            | Facter is written to that deployment's canonical path                    |
+| NixOS deployment module changes an overridable shared default                       | Nix option priority produces the intended final configuration            |
+| Final configuration violates an installer contract                                  | Installer metadata evaluation fails                                      |
+| Darwin host declares multiple deployments                                           | Darwin targets are distinct and selected deployment modules are composed |
+| Darwin deployment lacks Facter                                                      | Darwin target is not suppressed                                          |
+| Switch to a generation with identity A/parallels                                    | `/etc/dotfiles/identity.json` reports A/parallels                        |
+| Activate a previous NixOS generation via rollback                                   | `identity.json` changes with the activated generation                    |
 
 ## 15. Expected implementation surface
 

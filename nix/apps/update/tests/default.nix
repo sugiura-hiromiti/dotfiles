@@ -93,6 +93,8 @@ let
         lib.range 0 23
       )) (_: "dark");
       hosts.test = {
+        deployments = [ ];
+        defaultDeployment = null;
         autoSession = {
           gui = "tty";
           tty = "tty";
@@ -118,72 +120,165 @@ let
   fixtureApp = mkUpdateScript {
     source = fixtureSource;
     planFile = fixturePlan;
+    identityPath = "identity.json";
   };
 
+  fixtureSystemTarget = deployment: session: ready: {
+    name = "nixos-${deployment}-${session}-test";
+    eval = "nixosConfigurations.nixos-${deployment}-${session}-test.config.system.build.toplevel.drvPath";
+    inherit ready;
+    authorize = [ ];
+    # Reuse fake activation to test selection without switching the test machine.
+    switch = [
+      "nix"
+      "run"
+      "nixpkgs#home-manager"
+      "--"
+      "switch"
+      "--flake"
+    ];
+  };
+  fixtureSystemHost = {
+    deployments = [
+      "parallels"
+      "qemu"
+      "pending"
+    ];
+    defaultDeployment = "parallels";
+    autoSession = {
+      gui = "tty";
+      tty = "tty";
+    };
+    defaultSession = "gui";
+    # A Home target exists so readiness regressions cannot hide behind a missing Home.
+    home.tester.dark.tty = fixtureSystemTarget "home" "tty" true;
+    system = {
+      kind = "nixos";
+      targets = lib.genAttrs [ "parallels" "qemu" "pending" ] (deployment: {
+        dark = lib.genAttrs [ "gui" "tty" ] (
+          session: fixtureSystemTarget deployment session (deployment != "pending")
+        );
+      });
+    };
+  };
   fixtureNixosPlan = pkgs.writeText "update-nixos-plan-fixture.json" (
     builtins.toJSON {
-      aliases.test = "test";
+      aliases = {
+        test = "test";
+        logical-test = "test";
+        other = "other";
+        nodefault = "nodefault";
+      };
       defaultHosts.tester = "test";
 
       themeByHour = lib.genAttrs (map (hour: if hour < 10 then "0${toString hour}" else toString hour) (
         lib.range 0 23
       )) (_: "dark");
 
-      hosts.test = {
-        autoSession = {
-          gui = "tty";
-          tty = "tty";
-        };
-
-        defaultSession = "gui";
-
-        home = { };
-
-        system = {
-          kind = "nixos";
-
-          targets = {
-            dark = {
-              gui = {
-                name = "nixos-gui-test";
-                eval = "nixosConfigurations.nixos-gui-test.config.system.build.toplevel.drvPath";
-                authorize = [ ];
-                switch = [
-                  "nix"
-                  "run"
-                  "nixpkgs#home-manager"
-                  "--"
-                  "switch"
-                  "--flake"
-                ];
-              };
-              tty = {
-                name = "nixos-tty-test";
-                eval = "nixosConfigurations.nixos-tty-test.config.system.build.toplevel.drvPath";
-                authorize = [ ];
-
-                # Deliberately reuse the fake activation command.
-                # This test cares about target selection, not nixos-rebuild itself.
-                switch = [
-                  "nix"
-                  "run"
-                  "nixpkgs#home-manager"
-                  "--"
-                  "switch"
-                  "--flake"
-                ];
-              };
-            };
-          };
+      hosts = {
+        test = fixtureSystemHost;
+        other = fixtureSystemHost;
+        nodefault = fixtureSystemHost // {
+          defaultDeployment = null;
         };
       };
     }
   );
-  fixtureNixosApp = mkUpdateScript {
+  fixtureNativeNixosApp = mkUpdateScript {
     source = fixtureSource;
     planFile = fixtureNixosPlan;
+    identityPath = "identity.json";
   };
+  fixtureNixosApp = pkgs.runCommandLocal "update-nixos-fixture-runtime" { } ''
+    # Linux exercises the native detector through libredirect. Darwin simulates
+    # the same NixOS environment without changing the production script.
+    ${
+      if pkgs.stdenv.hostPlatform.isLinux then
+        "cp ${fixtureNativeNixosApp} \"$out\""
+      else
+        ''
+          substitute ${fixtureNativeNixosApp} "$out" \
+            --replace-fail '$nu.os-info.name == "macos"' 'false' \
+            --replace-fail '$nu.os-info.name == "linux"' 'true' \
+            --replace-fail '/etc/os-release' '${launcherOsRelease}'
+        ''
+    }
+    chmod +x "$out"
+  '';
+  generatedPlan =
+    kind:
+    (import ../plan.nix {
+      inherit lib;
+      system = "test-system";
+      hostNames = [ "logical-test" ];
+      hosts.logical-test = {
+        system = "test-system";
+        targetHost = "test";
+        matchNames = [
+          "logical-test"
+          "test"
+        ];
+        runtime = {
+          defaultSession = "tty";
+          targetAxes.session = false;
+        };
+        primaryAccountName = "tester";
+        systemTargetKind = kind;
+        deploymentNames = [
+          "parallels"
+          "qemu"
+        ];
+        defaultDeploymentName = "parallels";
+      };
+      mkTargetConfigEntries =
+        target:
+        if target == kind then
+          map
+            (deployment: {
+              name = "test--deployment-${deployment}";
+              config = {
+                system = "test-system";
+                targetHost = "test";
+                deploymentName = deployment;
+                themeName = "dark";
+                sessionName = "tty";
+              }
+              // lib.optionalAttrs (kind == "nixos") { facterReady = deployment == "parallels"; };
+            })
+            [
+              "parallels"
+              "qemu"
+            ]
+        else if target == "home" then
+          [
+            {
+              name = "test--account-tester";
+              config = {
+                system = "test-system";
+                targetHost = "test";
+                accountName = "tester";
+                themeName = "dark";
+                sessionName = "tty";
+              };
+            }
+          ]
+        else
+          [ ];
+    }).data;
+  generatedNixosPlan = generatedPlan "nixos";
+  generatedDarwinPlan = generatedPlan "darwin";
 in
+assert generatedNixosPlan.aliases.logical-test == "test";
+assert
+  generatedNixosPlan.hosts.test.deployments == [
+    "parallels"
+    "qemu"
+  ];
+assert generatedNixosPlan.hosts.test.defaultDeployment == "parallels";
+assert generatedNixosPlan.hosts.test.system.targets.parallels.dark.tty.ready;
+assert !generatedNixosPlan.hosts.test.system.targets.qemu.dark.tty.ready;
+assert generatedNixosPlan.hosts.test.home.tester.dark.tty.name == "test--account-tester";
+assert generatedDarwinPlan.hosts.test.system.targets.qemu.dark.tty.ready;
 {
   update-source-pin = pkgs.runCommandLocal "update-source-pin-check" { } ''
     grep -F 'const SOURCE = "${fixtureSource}"' ${fixtureApp}

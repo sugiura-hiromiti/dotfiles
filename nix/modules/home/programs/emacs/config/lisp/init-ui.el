@@ -99,6 +99,7 @@
 	(doom-modeline-set-modeline 'my-main t))
 
 (use-package vc-jj
+	:ensure t
 	:demand t)
 
 (use-package breadcrumb
@@ -277,18 +278,24 @@ alist used when creating the tab."
 	;; Global binding
 	(keymap-global-set "C-," #'my/toggle-popup-tab))
 
-;; TODO: 何故か現在動かないので治す
-;; NOTE: codex-acp is archived and moved to new repository.
-;; but current codex-acp package in nixpkgs points to older archived one.
-;; so currently, codex-acp is outdated. that's the reason agent-shell doesn't work
-;; (use-package agent-shell
-;; 	:bind (:map agent-shell-mode-map
-;; 				("RET" . newline)
-;; 				("S-<return>" . shell-maker-submit)))
+(use-package nameframe
+	:ensure t)
 
-(use-package flymake-popon
+(use-package nameframe-project
+	:after
+	(nameframe project)
+	:config
+	(nameframe-project-mode 1))
+
+(use-package flyover
 	:hook
-	(flymake-mode . flymake-popon-mode))
+	(flymake-mode . flyover-mode)
+	:custom
+	(flyover-checkers '(flymake))
+	(flyover-levels '(error warning info))
+	(flyover-show-virtual-line t)
+	(flyover-wrap-messages t)
+	(flyover-display-mode 'always))
 
 (provide 'init-ui)
 ;;; init-ui.el ends here

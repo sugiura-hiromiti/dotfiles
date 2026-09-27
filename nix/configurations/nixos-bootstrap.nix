@@ -58,7 +58,7 @@ let
     }
     {
       assertion = config.hardware.facter.reportPath == hostConfig.facterPath;
-      message = "Installer requires the canonical host facter report.";
+      message = "Installer requires the canonical deployment facter report.";
     }
   ];
 in

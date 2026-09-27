@@ -5,6 +5,7 @@
 {
   source,
   planFile,
+  identityPath ? "/etc/dotfiles/identity.json",
 }:
 pkgs.writeTextFile {
   name = "dotfiles-update";
@@ -12,6 +13,7 @@ pkgs.writeTextFile {
   text = ''
     #!${lib.getExe pkgs.nushell} --no-config-file
     const PLAN = "${planFile}"
+    const IDENTITY = "${identityPath}"
     const SOURCE = "${source}"
     const GIT = "${lib.getExe pkgs.git}"
     const MKDIR = "${lib.getExe' pkgs.coreutils "mkdir"}"

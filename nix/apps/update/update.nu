@@ -1,8 +1,30 @@
 def key [...path: string] {
 	get -o ($path | into cell-path)
 }
+def read-identity [] {
+	if not ($IDENTITY | path exists) { return null }
+	let identity = try {
+		open --raw $IDENTITY | from json
+	} catch {
+		error make $"invalid installed identity: ($IDENTITY)"
+	}
+	if not (($identity | describe) | str starts-with "record") {
+		error make $"invalid installed identity: ($IDENTITY) requires host and deployment strings"
+	}
+	for field in [host deployment] {
+		let value = $identity | key $field
+		if ($value | describe) != "string" {
+			error make $"invalid installed identity: ($IDENTITY) requires a non-empty ($field) string"
+		}
+		if ($value | str trim) == "" {
+			error make $"invalid installed identity: ($IDENTITY) requires a non-empty ($field) string"
+		}
+	}
+	$identity
+}
 def main [
 	--host: string
+	--deployment: string
 	--account: string
 	--theme: string
 	--session: string
@@ -11,10 +33,13 @@ def main [
 	let plan = open $PLAN
 	let account = $account | default (whoami | str trim)
 	let hostname = (sys host).hostname
+	let explicit_host = $host != null
+	let host_identity = if $explicit_host { null } else { read-identity }
 	let candidates = if $host != null {
 		[$host]
 	} else {
 		[
+			$host_identity.host?
 			$env.DOTFILES_HOST?
 			($hostname | split row "." | first)
 			$hostname
@@ -25,7 +50,7 @@ def main [
 		$candidates
 		| each {|name| $plan.aliases | key $name }
 		| compact
-		| first
+		| get -o 0
   )
 	if $host == null { error make "could not resolve target host" }
 	let host_plan = $plan.hosts | key $host
@@ -52,9 +77,36 @@ def main [
 	let system = if $host_plan.system == null or $runtime_kind != $host_plan.system.kind {
 		null
 	} else {
-		let target = $host_plan.system.targets | key $theme $effective_system_session
+		let identity = if $deployment != null {
+			null
+		} else if $explicit_host {
+			read-identity
+		} else {
+			$host_identity
+		}
+		let identity_matches = $identity != null and (($plan.aliases | key $identity.host) == $host)
+		let deployment = if $deployment != null {
+			$deployment
+		} else if $identity_matches {
+			$identity.deployment
+		} else {
+			$host_plan.defaultDeployment
+		}
+		if $deployment == null {
+			error make $"could not resolve deployment for ($host); supply --deployment"
+		}
+		if $deployment not-in $host_plan.deployments {
+			if $identity_matches {
+				error make $"installed identity deployment is not declared for ($host): ($deployment)"
+			}
+			error make $"deployment is not declared for ($host): ($deployment)"
+		}
+		let target = $host_plan.system.targets | key $deployment $theme $effective_system_session
 		if $target == null {
-			error make $"system configuration is not defined for ($host): kind=($host_plan.system.kind), theme=($theme), session=($effective_system_session)"
+			error make $"system configuration is not defined for ($host)/($deployment): kind=($host_plan.system.kind), theme=($theme), session=($effective_system_session)"
+		}
+		if $host_plan.system.kind == "nixos" and not $target.ready {
+			error make $"deployment requires a Facter report: ($host)/($deployment)"
 		}
 		$target
 	}

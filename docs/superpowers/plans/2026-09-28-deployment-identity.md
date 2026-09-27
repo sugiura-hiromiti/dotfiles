@@ -38,6 +38,7 @@
 ### Task 1: Introduce the Deployment Domain Model and System Target Identity
 
 **Files:**
+
 - Modify: `nix/lib/hosts.nix`
 - Modify: `nix/lib/targets.nix`
 - Modify: `nix/lib/target-names.nix`
@@ -59,6 +60,7 @@
 - Modify: `nix/tests/nixos/ci.nix`
 
 **Interfaces:**
+
 - Consumes: existing host `system`, `targets`, accounts, variants, runtime axes.
 - Produces:
   - `host.deployments :: attrsOf Deployment`
@@ -169,6 +171,7 @@ jj commit -m "refactor: add deployment system identity"
 ### Task 2: Compose Deployment Modules and Publish Generation Identity
 
 **Files:**
+
 - Create: `nix/configurations/system-identity.nix`
 - Modify: `nix/configurations/nixos.nix`
 - Modify: `nix/configurations/darwin.nix`
@@ -179,6 +182,7 @@ jj commit -m "refactor: add deployment system identity"
 - Create: `nix/tests/nixos/deployment-identity-vm.nix`
 
 **Interfaces:**
+
 - Consumes: Task 1 target config with `host`, `deploymentName`, `deployment.modules`.
 - Produces:
   - `system-identity.nix { targetConfig } -> NixOS/nix-darwin module`
@@ -272,6 +276,7 @@ jj commit -m "feat: publish active deployment identity"
 ### Task 3: Make Update Resolution Deployment-Aware
 
 **Files:**
+
 - Modify: `nix/apps/update/plan.nix`
 - Modify: `nix/apps/update/script.nix`
 - Modify: `nix/apps/update/update.nu`
@@ -279,6 +284,7 @@ jj commit -m "feat: publish active deployment identity"
 - Modify: `nix/apps/update/tests/run.sh`
 
 **Interfaces:**
+
 - Consumes: declared target entries from Task 1 and runtime identity from Task 2.
 - Produces:
   - update CLI option `--deployment: string`
@@ -385,6 +391,7 @@ jj commit -m "feat: resolve deployment during system updates"
 ### Task 4: Generate Installers from Declared Targets and Add Deployment-Aware CLI Selection
 
 **Files:**
+
 - Modify: `nix/flake/installer.nix`
 - Modify: `nix/flake/default.nix`
 - Modify: `nix/apps/build-installer/build.nu`
@@ -393,6 +400,7 @@ jj commit -m "feat: resolve deployment during system updates"
 - Modify: `nix/apps/build-installer/tests/fake-nix.sh`
 
 **Interfaces:**
+
 - Consumes: `declaredNixosTargetEntries`, Task 1 `defaultTarget`, host deployment metadata.
 - Produces installer package attrs:
   - `installer-<declared-system-target-name>` for every declared NixOS target, ready or not;
@@ -473,6 +481,7 @@ jj commit -m "feat: select installers by deployment target"
 ### Task 5: Verify Deployment-Specific Facter Bootstrap End to End
 
 **Files:**
+
 - Modify: `nix/configurations/nixos-bootstrap.nix`
 - Modify: `nix/installer/iso.nix`
 - Modify: `nix/installer/script.nix`
@@ -484,6 +493,7 @@ jj commit -m "feat: select installers by deployment target"
 - Modify as needed: `nix/tests/installer/fixture-contract.nix`, `nix/tests/installer/iso.nix`
 
 **Interfaces:**
+
 - Consumes: exact installer target and selected deployment's `facterRelativePath`.
 - Produces: unchanged installer lifecycle, except Facter is written under the selected deployment and every post-Facter selector uses the same target string selected before Facter.
 
@@ -562,6 +572,7 @@ jj commit -m "test: verify deployment facter bootstrap"
 ### Task 6: Add the QEMU Production Deployment, Update Documentation/CI, and Run Full Verification
 
 **Files:**
+
 - Modify: `nix/profiles/hosts/aarch64-linux-a/meta.nix`
 - Create: `nix/profiles/hosts/aarch64-linux-a/deployments/qemu/nixos.nix`
 - Modify: `README.org`
@@ -572,6 +583,7 @@ jj commit -m "test: verify deployment facter bootstrap"
 - Modify if generated expectations require it: `nix/tests/nixos/ci.nix`
 
 **Interfaces:**
+
 - Consumes: all prior tasks.
 - Produces:
   - production `aarch64-linux-a/parallels` as the ready/default deployment;

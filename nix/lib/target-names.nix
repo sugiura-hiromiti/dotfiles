@@ -15,6 +15,7 @@ let
   mkSystemTargetName =
     {
       targetHost,
+      deploymentName,
       targetAxes ? {
         theme = true;
         session = true;
@@ -23,7 +24,10 @@ let
       sessionName ? null,
     }:
     lib.concatStringsSep "--" (
-      [ targetHost ]
+      [
+        targetHost
+        "deployment-${deploymentName}"
+      ]
       ++ mkRuntimeSegments {
         inherit
           sessionName
@@ -70,6 +74,7 @@ in
     };
     system = mkSystemTargetName {
       targetHost = "HOST";
+      deploymentName = "DEPLOYMENT";
       themeName = "THEME";
       sessionName = "SYSTEM_SESSION";
     };

@@ -1,11 +1,11 @@
 {
   lib,
   pkgs,
+  testRoot ? "/build/dotfiles-installer-runtime",
 }:
 let
-  testRoot = "/build/dotfiles-installer-runtime";
   fixtureSource = pkgs.runCommandLocal "installer-runtime-source" { } ''
-    mkdir -p "$out/nix/profiles/hosts/test" "$out/bin"
+    mkdir -p "$out/nix/profiles/hosts/test-host/deployments/qemu" "$out/bin"
     printf '%s\n' locked > "$out/flake.lock"
     printf '%s\n' immutable > "$out/source-marker"
     printf '#!/bin/sh\nprintf executable\\n' > "$out/bin/probe"
@@ -152,10 +152,10 @@ let
     })
       {
         host = "test-host";
-        target = "test-target";
+        target = "test-host--deployment-qemu--theme-dark--session-tty";
         primaryAccount = "alice";
         source = fixtureSource;
-        facterRelativePath = "nix/profiles/hosts/test/facter.json";
+        facterRelativePath = "nix/profiles/hosts/test-host/deployments/qemu/facter.json";
         efiArch = "X64";
       };
 in

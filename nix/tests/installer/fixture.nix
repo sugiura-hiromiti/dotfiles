@@ -8,7 +8,8 @@
 let
   system = pkgs.stdenv.hostPlatform.system;
   efiArch = lib.toUpper pkgs.stdenv.hostPlatform.efiArch;
-  facterRelativePath = "nix/profiles/hosts/e2e/facter.json";
+  target = "e2e--deployment-qemu";
+  facterRelativePath = "nix/profiles/hosts/e2e/deployments/qemu/facter.json";
   seedReport = ./facter.json;
   seedTarget = nixpkgs.lib.nixosSystem {
     inherit system;
@@ -70,7 +71,7 @@ let
         preservation.url = "path:${preservation}";
       };
       outputs = { self, nixpkgs, disko, preservation }: {
-        nixosConfigurations.e2e = nixpkgs.lib.nixosSystem {
+        nixosConfigurations.${target} = nixpkgs.lib.nixosSystem {
           system = "${system}";
           modules = [
             (import ./nix/configurations/nixos-bootstrap.nix {
@@ -87,7 +88,7 @@ let
     }
   '';
   source = pkgs.runCommand "dotfiles-installer-e2e-source" { } ''
-    mkdir -p "$out/nix/configurations" "$out/nix/modules/nixos/features" "$out/nix/profiles/hosts/e2e"
+    mkdir -p "$out/nix/configurations" "$out/nix/modules/nixos/features" "$out/nix/profiles/hosts/e2e/deployments/qemu"
     cp ${fixtureFlake} "$out/flake.nix"
     cp ${fixtureLockFile} "$out/flake.lock"
     cp ${../../configurations/nixos-bootstrap.nix} "$out/nix/configurations/nixos-bootstrap.nix"
@@ -109,8 +110,8 @@ in
     seedTarget
     source
     fixtureLock
+    target
     ;
   host = "e2e";
-  target = "e2e";
   primaryAccount = "operator";
 }

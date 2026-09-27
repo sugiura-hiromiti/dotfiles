@@ -1,7 +1,7 @@
 # ~/dotfiles/flake.nix
 # -----------------------------------------------------------------------------
 # 概要
-# - nix/profiles/hosts/<host>/meta.nix が system/accounts/targets/roles/variants/runtime を定義
+# - nix/profiles/hosts/<host>/meta.nix が system/accounts/targets/deployments/roles/variants/runtime を定義
 # - nix/home/ が Home Manager、nix/nixos/ が NixOS、nix/nix-darwin/ が macOS 設定の入口
 # - nix/profiles/{os,systems,hosts} は各target入口から解決して取り込み
 # - nix/runtime-contexts.nix が theme/session と runtime profile の対応を定義
@@ -10,19 +10,21 @@
 # 使い方
 # 1) 新しい端末を追加:
 #    nix/profiles/hosts/<host>/meta.nix を作成し system/accounts/targets を指定
-#    (必要なら同ディレクトリに nixos.nix / hardware-configuration.nix)
-#    NixOS installer: nix run .#build-installer -- --host <host>
-#    facter.json はインストーラーが対象端末で生成します。
+#    system target には deployments.<name>.modules を定義
+#    NixOS installer: nix run .#build-installer -- --host <host> --deployment <deployment>
+#    deployments/<deployment>/facter.json はインストーラーが対象端末で生成します。
+#    Facter 未取得でも installer は生成できます。通常の NixOS 更新には取得済み report が必要です。
 # 2) まとめて更新/反映:
 #    nix run --no-write-lock-file path:.#update -- --host <host> --account <account> --theme <theme> --session <session>
 #    - account は未指定なら current user を使う
 #    - theme/session は未指定なら実行時に検出する
+#    - deployment は --deployment で指定、または /etc/dotfiles/identity.json と host の defaultDeployment から解決
 #    - macOS なら nix-darwin / NixOS なら nixos-rebuild も実行
 # 3) 直接 switch:
 #    - Home Manager target:
 #      <targetHost>--account-<account>[--theme-<theme>][--session-<session>]
 #    - NixOS / macOS target:
-#      <targetHost>[--theme-<theme>][--session-<session>]
+#      <targetHost>--deployment-<deployment>[--theme-<theme>][--session-<session>]
 #    - Home Manager: nix run nixpkgs#home-manager -- switch --flake path:.#<target>
 #    - NixOS: sudo nixos-rebuild switch --flake path:.#<target>
 #    - macOS: sudo -H nix --extra-experimental-features "nix-command flakes" run nix-darwin -- switch --flake path:.#<target>

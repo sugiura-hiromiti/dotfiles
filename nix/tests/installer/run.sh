@@ -86,8 +86,8 @@ invalid_metadata_file() {
 }
 
 run_installer() {
-  state=$1
-  metadata=$2
+  local state=$1
+  local metadata=$2
   shift 2
   mkdir -p "$state"
   env \
@@ -193,7 +193,9 @@ run_installer "$state" "$metadata" TEST_MUTATE_WORKSPACE=1
 
 test ! -e "$root/run/source/stale-marker"
 test "$(cat "$state/facter-path")" = \
-  "$root/run/source/nix/profiles/hosts/test/facter.json"
+  "$root/run/source/nix/profiles/hosts/test-host/deployments/qemu/facter.json"
+test ! -e "$root/run/source/nix/profiles/hosts/test-host/facter.json"
+test "$(cat "$state/store-snapshot/nix/profiles/hosts/test-host/deployments/qemu/facter.json")" = '{"fixture":true}'
 test "$(cat "$state/store-add-count")" = 1
 test -L "$root/run/post-facter-source"
 test "$(cat "$state/store-snapshot/source-marker")" = immutable
@@ -207,9 +209,9 @@ test "$(cat "$state/root-args")" = \
     "$post_source" \
     --add-root \
     "$root/run/post-facter-source")"
-grep -Fx -- "path:$post_source#nixosConfigurations.test-target.config.dotfiles.installer.metadata" "$state/eval-args"
-grep -Fx -- "path:$post_source#nixosConfigurations.test-target.config.system.build.diskoScript" "$state/build-args"
-grep -Fx -- "path:$post_source#test-target" "$state/install-args"
+grep -Fx -- "path:$post_source#nixosConfigurations.test-host--deployment-qemu--theme-dark--session-tty.config.dotfiles.installer.metadata" "$state/eval-args"
+grep -Fx -- "path:$post_source#nixosConfigurations.test-host--deployment-qemu--theme-dark--session-tty.config.system.build.diskoScript" "$state/build-args"
+grep -Fx -- "path:$post_source#test-host--deployment-qemu--theme-dark--session-tty" "$state/install-args"
 grep -Fx -- --no-update-lock-file "$state/eval-args"
 grep -Fx -- --no-update-lock-file "$state/build-args"
 grep -Fx -- --no-update-lock-file "$state/install-args"
@@ -228,6 +230,7 @@ test "$(dirname "$password_temporary")" = "$(dirname "$password_file")"
 test "$(sed -n '2p' "$state/password-mv-args")" = "$password_file"
 test ! -e "$password_temporary"
 test "$(cat "$root/mnt/persist/custom/alice-dotfiles/source-marker")" = immutable
+test "$(cat "$root/mnt/persist/custom/alice-dotfiles/nix/profiles/hosts/test-host/deployments/qemu/facter.json")" = '{"fixture":true}'
 test -x "$root/mnt/persist/custom/alice-dotfiles/bin/probe"
 test "$(cat "$state/mountpoints")" = \
   "$(printf '%s\n%s\n%s\n%s' \
@@ -302,6 +305,11 @@ do
     exit 1
   fi
   assert_pre_destructive "$failure_state"
+  case "$scenario" in
+    build|no-disk|two-disks|alias-create)
+      test -e "$failure_state/build-args"
+      ;;
+  esac
 done
 
 # An unexpected object at the alias path is preserved and blocks Disko.
@@ -314,4 +322,5 @@ if run_installer "$alias_state" "$metadata"; then
   exit 1
 fi
 test "$(cat "$root/dev/dotfiles-install-target")" = keep
+test -e "$alias_state/build-args"
 test ! -e "$alias_state/disko-ran"

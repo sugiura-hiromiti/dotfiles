@@ -72,9 +72,99 @@ wait_for_file() {
 root=$(mktemp -d)
 trap 'rm -rf "$root"' EXIT
 
+check_selection() {
+  case_name=$1
+  identity=$2
+  expected=$3
+  shift 3
+  repository="$root/$case_name-repo"
+  state="$root/$case_name-state"
+  new_repository "$repository"
+  if [ -n "$identity" ]; then
+    printf '%s\n' "$identity" > "$repository/identity.json"
+  fi
+  (
+    cd "$repository"
+    env TEST_STATE="$state" TEST_REPOSITORY="$repository" TEST_CANDIDATE=LA \
+      DOTFILES_HOST=other "$UPDATE_NIXOS_APP" \
+      --account tester --theme dark --session tty "$@"
+  ) >"$root/$case_name.log" 2>&1 || {
+    cat "$root/$case_name.log" >&2
+    printf 'selection case failed: %s\n' "$case_name" >&2
+    exit 1
+  }
+  test "$(cat "$state/preflight-targets")" = "$expected"
+  test "$(cat "$state/activation")" = 'S0 LA'
+}
+
+check_selection_error() {
+  case_name=$1
+  identity=$2
+  expected_error=$3
+  shift 3
+  repository="$root/$case_name-repo"
+  state="$root/$case_name-state"
+  new_repository "$repository"
+  if [ -n "$identity" ]; then
+    printf '%s\n' "$identity" > "$repository/identity.json"
+  fi
+  if (
+    cd "$repository"
+    env TEST_STATE="$state" TEST_REPOSITORY="$repository" TEST_CANDIDATE=LA \
+      DOTFILES_HOST=test "$UPDATE_NIXOS_APP" \
+      --account tester --theme dark --session tty "$@"
+  ) >"$root/$case_name.log" 2>&1
+  then
+    printf 'selection case unexpectedly succeeded: %s\n' "$case_name" >&2
+    exit 1
+  fi
+  grep -F "$expected_error" "$root/$case_name.log"
+  test ! -e "$state/generated"
+  test ! -e "$state/activation"
+  test "$(cat "$repository/flake.lock")" = L0
+}
+
+check_selection explicit-deployment '' \
+  'nixosConfigurations.nixos-qemu-tty-test.config.system.build.toplevel.drvPath' \
+  --host test --deployment qemu
+check_selection installed-deployment '{"host":"test","deployment":"qemu"}' \
+  'nixosConfigurations.nixos-qemu-tty-test.config.system.build.toplevel.drvPath'
+check_selection different-host '{"host":"test","deployment":"qemu"}' \
+  'nixosConfigurations.nixos-parallels-tty-test.config.system.build.toplevel.drvPath' \
+  --host other
+check_selection logical-host '{"host":"logical-test","deployment":"qemu"}' \
+  'nixosConfigurations.nixos-qemu-tty-test.config.system.build.toplevel.drvPath' \
+  --host test
+check_selection explicit-ignores-malformed '{broken' \
+  'nixosConfigurations.nixos-qemu-tty-test.config.system.build.toplevel.drvPath' \
+  --host test --deployment qemu
+check_selection explicit-overrides-stale '{"host":"test","deployment":"removed"}' \
+  'nixosConfigurations.nixos-qemu-tty-test.config.system.build.toplevel.drvPath' \
+  --host test --deployment qemu
+check_selection_error unknown-deployment '{"host":"test","deployment":"qemu"}' \
+  'deployment is not declared for test: missing' --host test --deployment missing
+check_selection_error stale-identity '{"host":"test","deployment":"removed"}' \
+  'installed identity deployment is not declared for test: removed' --host test
+check_selection_error unready-deployment '' \
+  'deployment requires a Facter report: test/pending' --host test --deployment pending
+check_selection_error no-default '' \
+  'could not resolve deployment for nodefault' --host nodefault
+check_selection_error malformed-identity-host '{broken' \
+  'invalid installed identity' --deployment qemu
+check_selection_error malformed-identity-deployment '{broken' \
+  'invalid installed identity' --host test
+check_selection_error invalid-identity-host '{"host":1,"deployment":"qemu"}' \
+  'invalid installed identity'
+check_selection_error invalid-identity-deployment '{"host":"test","deployment":""}' \
+  'invalid installed identity' --host test
+check_selection_error unknown-explicit-host '{"host":"test","deployment":"qemu"}' \
+  'could not resolve target host' --host missing --deployment qemu
+
 publish_repo="$root/publish-repo"
 publish_state="$root/publish-state"
 new_repository "$publish_repo"
+# Home-only updates have no deployments/default and need not parse identity.
+printf '%s\n' '{broken' > "$publish_repo/identity.json"
 run_update "$publish_repo" \
   TEST_STATE="$publish_state" \
   TEST_REPOSITORY="$publish_repo" \
@@ -211,7 +301,7 @@ run_nixos_update "$nixos_repo" \
   TEST_CANDIDATE=LA
 
 test "$(cat "$nixos_state/preflight-targets")" = \
-  'nixosConfigurations.nixos-tty-test.config.system.build.toplevel.drvPath'
+  'nixosConfigurations.nixos-parallels-tty-test.config.system.build.toplevel.drvPath'
 
 nixos_legacy_session_repo="$root/nixos-legacy-session-repo"
 nixos_legacy_session_state="$root/nixos-legacy-session-state"

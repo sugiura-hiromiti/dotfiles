@@ -80,17 +80,22 @@ in
     (import ./installer.nix {
       inherit lib self;
       inherit (inputs) nixpkgs;
-      inherit (targets) declaredNixosHostsForSystem defaultTarget;
+      inherit (targets) declaredNixosHostsForSystem declaredNixosTargetEntries defaultTarget;
     })
     (import ./checks.nix {
-      inherit lib self;
+      inherit
+        lib
+        self
+        nixos
+        darwin
+        ;
       inherit (inputs)
         disko
         preservation
         home-manager
         nixpkgs
         ;
-      inherit (targets) mkReadyTargetConfigEntries targetConfigNamesForSystem;
+      inherit (targets) mkReadyTargetConfigEntries mkTargetConfigEntries targetConfigNamesForSystem;
     })
     (import ./ci.nix {
       inherit lib hosts;

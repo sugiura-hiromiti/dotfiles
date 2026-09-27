@@ -3,6 +3,8 @@ let
 in
 {
   system = "aarch64-darwin";
+  deployments.native.modules = [ ];
+  defaultDeployment = "native";
   accounts = {
     primary = "hiromichisugiura";
     users = {

@@ -6,7 +6,9 @@
 
 (require 'init-paths)
 
-(use-package org)
+(use-package org
+	:custom
+	(org-startup-indented t))
 
 (setq org-directory my/dotfiles-org-directory)
 
@@ -39,7 +41,10 @@
 
 (use-package org-modern
 	:hook ((org-mode . org-modern-mode)
-				(org-agenda-finalize . org-modern-agenda)))
+				(org-agenda-finalize . org-modern-agenda))
+	:custom
+	(org-modern-hide-stars nil)
+	(org-modern-table nil))
 
 (defun my/org-raw-view ()
 	"Show org source syntax for editing."
@@ -68,6 +73,13 @@
 		(my/org-rendered-view)))
 
 (add-hook 'org-mode-hook #'my/org-meow-rendering-setup)
+
+(use-package org-modern-indent
+	:vc (:url "https://github.com/jdtsmith/org-modern-indent")
+	:config
+	(add-hook 'org-mode-hook #'org-modern-indent-mode 90))
+
+(use-package org-ql)
 
 (require 'org-protocol)
 

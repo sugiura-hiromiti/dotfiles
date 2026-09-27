@@ -8,6 +8,10 @@
   disko,
   nixosTargetEntries,
   nixpkgs,
+  nixos,
+  darwin,
+  deploymentNixosTargetEntries,
+  deploymentDarwinTargetEntries,
   formattingCheck,
 }:
 let
@@ -60,6 +64,17 @@ let
     }) nixosTargetEntries
   );
   nonVm = {
+    deployment-model = import ./tests/system/deployment.nix {
+      inherit
+        lib
+        pkgs
+        nixpkgs
+        nixos
+        darwin
+        ;
+      nixosTargetEntries = deploymentNixosTargetEntries;
+      darwinTargetEntries = deploymentDarwinTargetEntries;
+    };
     treefmt = formattingCheck;
     deadnix = mkLintCheck "deadnix" pkgs.deadnix "deadnix --fail .";
     statix = mkLintCheck "statix" pkgs.statix "statix check .";
@@ -115,6 +130,7 @@ let
         '';
   };
   vm = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    deployment-identity-vm = import ./tests/nixos/deployment-identity-vm.nix { inherit pkgs; };
     installer-e2e = import ./tests/installer/e2e.nix {
       inherit
         lib

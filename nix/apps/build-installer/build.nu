@@ -3,9 +3,31 @@ def print-command-error [result: record] {
 		print --stderr --no-newline $result.stderr
 	}
 }
-def main [--host: string] {
-	if $host == null or ($host | is-empty) {
-		error make "--host is required"
+def main [--target: string, --host: string, --deployment: string] {
+	if $target != null and ($host != null or $deployment != null) {
+		error make "--target cannot be combined with --host or --deployment"
+	}
+	if $deployment != null and $host == null {
+		error make "--deployment requires --host"
+	}
+	if $target == null and $host == null {
+		error make "--target or --host is required"
+	}
+	for argument in [
+		{name: "--target", value: $target}
+		{name: "--host", value: $host}
+		{name: "--deployment", value: $deployment}
+	] {
+		if $argument.value != null and ($argument.value | is-empty) {
+			error make $"($argument.name) must not be empty"
+		}
+	}
+	let package = if $target != null {
+		$"installer-($target)"
+	} else if $deployment != null {
+		$"installer-selection-($host)--deployment-($deployment)"
+	} else {
+		$"installer-selection-($host)"
 	}
 	let root_result = (^$JJ --ignore-working-copy root | complete)
 	if $root_result.exit_code != 0 {
@@ -46,7 +68,7 @@ def main [--host: string] {
 		}
 	}
 	let build_result = (
-		^$NIX build $"path:($stage)#installer-($host)"
+		^$NIX build $"path:($stage)#($package)"
 			--no-link
 			--print-out-paths
 			--no-update-lock-file

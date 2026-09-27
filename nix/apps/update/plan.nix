@@ -20,6 +20,8 @@ let
         value = {
           aliases = host.matchNames;
           defaultSession = host.runtime.defaultSession;
+          deployments = host.deploymentNames;
+          defaultDeployment = host.defaultDeploymentName;
           hasSessionAxis = host.runtime.targetAxes.session;
           inherit (host) primaryAccountName systemTargetKind;
         };
@@ -91,6 +93,7 @@ let
 
       path = config: [
         config.targetHost
+        config.deploymentName
         config.themeName
         config.sessionName
       ];
@@ -119,6 +122,7 @@ let
 
       path = config: [
         config.targetHost
+        config.deploymentName
         config.themeName
         config.sessionName
       ];
@@ -133,6 +137,7 @@ let
       inherit (entry) name;
       inherit (policy) authorize switch;
       eval = policy.eval entry.name;
+      ready = kind != "nixos" || entry.config.facterReady;
     };
   targetPath = kind: entry: targetPolicies.${kind}.path entry.config;
 
@@ -162,7 +167,7 @@ let
     aliases = lib.listToAttrs aliasPairs;
     defaultHosts = lib.listToAttrs primaryHostPairs;
     hosts = lib.mapAttrs (hostName: host: {
-      inherit (host) defaultSession;
+      inherit (host) defaultSession deployments defaultDeployment;
       autoSession = {
         gui = if host.hasSessionAxis then "gui" else host.defaultSession;
         tty = if host.hasSessionAxis then "tty" else host.defaultSession;

@@ -26,6 +26,11 @@
 		'(embark-keybinding grid))
 	(vertico-multiform-mode 1))
 
+(use-package  vertico-buffer
+	:after  vertico
+	:init
+	(vertico-buffer-mode 1))
+
 (use-package marginalia :init (marginalia-mode 1))
 
 (use-package
@@ -245,11 +250,6 @@
 
 (use-package embark-consult :after (embark consult))
 
-(use-package wgrep
-	:custom
-	;; wgrep終了時に自動保存するか とりあえずoff
-	(wgrep-auto-save-buffer nil))
-
 ;; NOTE: vertico-directory, vertico-quick, vertico-indexed導入検討
 
 (use-package nerd-icons-completion
@@ -257,18 +257,6 @@
 	:config
 	(nerd-icons-completion-mode)
 	(add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
-
-(use-package consult-gh
-	:after consult
-	:custom
-	(consult-gh-show-preview t)
-	(consult-gh-default-clone-directory my/dotfiles-workspace-root)
-	(consult-gh-confirm-before-clone t))
-
-(use-package consult-gh-embark
-	:after (consult-gh embark)
-	:config
-	(consult-gh-embark-mode))
 
 (use-package consult-eglot :after (consult eglot))
 
@@ -308,7 +296,8 @@
 	:init
 	(add-hook 'completion-at-point-functions #'cape-file)
 	(add-hook 'completion-at-point-functions #'cape-dabbrev)
-	(add-hook 'completion-at-point-functions #'cape-emoji))
+													 ;(add-hook 'completion-at-point-functions #'cape-emoji)
+	)
 
 (context-menu-mode t)
 
@@ -322,6 +311,4 @@
 
 (provide 'init-search)
 
-(provide 'init-search)
-
-;;; init-search.el ends here
+;; init-search.el ends here

@@ -46,6 +46,9 @@
 - Modify: `nix/tests/fixtures/hosts/ready/meta.nix`
 - Create: `nix/tests/fixtures/hosts/multi/meta.nix`
 - Create: `nix/tests/fixtures/hosts/multi/deployments/ready/facter.json`
+- Create: `nix/tests/fixtures/hosts/darwin-multi/meta.nix`
+- Create: `nix/tests/fixtures/invalid-hosts/no-deployments/bad/meta.nix`
+- Create: `nix/tests/fixtures/invalid-hosts/bad-default/bad/meta.nix`
 - Modify: `nix/profiles/hosts/aarch64-linux-a/meta.nix`
 - Move: `nix/profiles/hosts/aarch64-linux-a/facter.json` → `nix/profiles/hosts/aarch64-linux-a/deployments/parallels/facter.json`
 - Modify: `nix/profiles/hosts/aarch64-darwin-a/meta.nix`
@@ -77,6 +80,9 @@ Update `nix/tests/nixos/readiness.nix` so fixtures prove:
 - declared system names contain `--deployment-<name>`.
 - ready NixOS entries filter by selected deployment Facter.
 - Home target count for `multi` is independent of its two deployments.
+- fixture host `darwin-multi` produces distinct Darwin targets for two deployments even though neither has Facter.
+- importing the isolated `no-deployments` fixture fails when a system-capable host declares no deployment.
+- importing the isolated `bad-default` fixture fails when `defaultDeployment` is not declared by that host.
 - `defaultTarget { target = "nixos"; hostName = "multi"; deploymentName = "ready"; }` selects the host's default theme/session for that deployment.
 
 - [ ] **Step 2: Run the deployment/readiness check and verify it fails**
@@ -186,6 +192,7 @@ Create `nix/tests/system/deployment.nix` to assert against real target entries:
 - replacing `entry.config.deployment.modules` with a probe module makes that exact probe appear in `nixos.modulesFor` and `darwin.modulesFor`;
 - a built NixOS target's `environment.etc."dotfiles/identity.json".text` parses to only `host` and `deployment`;
 - a built Darwin target exposes the same JSON shape;
+- a synthetic NixOS merge with a shared `lib.mkDefault false` option and a selected deployment module setting the same option to `true` evaluates to `true`, proving override behavior comes from Nix priorities rather than module-list position;
 - no Home target is involved in these assertions.
 
 Add the check to `checks.nix`.

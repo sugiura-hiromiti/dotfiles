@@ -486,7 +486,7 @@ The model must reject at evaluation or selection time:
 - a `defaultDeployment` not declared by its host;
 - duplicate generated system target names;
 - an explicit deployment not declared by the resolved host;
-- an installed deployment identity reused with a different resolved host;
+- reuse of an installed deployment for a different resolved host;
 - a stale installed deployment that is no longer declared by the matching host when it is selected for a system update;
 - an explicit installer target that is not declared;
 - a required NixOS system update whose selected target is not ready.

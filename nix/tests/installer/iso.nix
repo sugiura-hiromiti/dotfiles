@@ -68,7 +68,39 @@ let
     facterRelativePath = "nix/profiles/hosts/unprobed-host/deployments/qemu/facter.json";
   };
   service = installer.config.systemd.services.dotfiles-installer;
+  collidingPackages =
+    (
+      (import ../../flake/installer.nix {
+        inherit lib nixpkgs;
+        self.outPath = source;
+        declaredNixosTargetEntries =
+          map
+            (
+              host:
+              (mkEntry host "qemu" "dark")
+              // {
+                name = "${host}--deployment-qemu";
+              }
+            )
+            [
+              "test-host"
+              "selection-test-host"
+            ];
+        declaredNixosHostsForSystem = _: [
+          {
+            host = "test-host";
+            deploymentNames = [ "qemu" ];
+            defaultDeploymentName = null;
+          }
+        ];
+        defaultTarget = _: "test-host--deployment-qemu";
+      }).perSystem
+        { inherit system; }
+    ).packages;
 in
+assert lib.assertMsg (
+  !(builtins.tryEval (builtins.attrNames collidingPackages)).success
+) "Installer selection aliases must not silently overwrite declared target packages";
 assert
   builtins.attrNames packages == [
     "installer-no-default--deployment-qemu--theme-dark--session-tty"

@@ -23,7 +23,9 @@ in
         enable = true;
         additionalUpstreamUnits = [ "systemd-udev-settle.service" ];
         services.impermanence-reset = {
-          requires = [ "systemd-udev-settle.service" ];
+          # Initrd cleanup stops udev-settle before switching root. Requiring
+          # it would propagate that stop through this service to sysroot.mount.
+          wants = [ "systemd-udev-settle.service" ];
           after = [ "systemd-udev-settle.service" ];
           requiredBy = [ "sysroot.mount" ];
           before = [ "sysroot.mount" ];

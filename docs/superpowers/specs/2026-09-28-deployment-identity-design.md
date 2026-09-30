@@ -1,8 +1,11 @@
 # Deployment Identity Design
 
 Date: 2026-09-28\
-Status: Proposed for implementation\
+Status: Implemented and verified (2026-10-11)\
 Repository baseline: `51b1ab6f2258921e1a6cdb21a60923f0e4813682`
+
+Implementation outcomes and verification evidence are recorded in the
+[implementation plan](../plans/2026-09-28-deployment-identity.md#execution-status-2026-10-11).
 
 ## 1. Purpose
 

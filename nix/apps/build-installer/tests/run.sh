@@ -6,6 +6,12 @@ export HOME="$test_root/home"
 export XDG_CONFIG_HOME="$test_root/config"
 mkdir -p "$HOME" "$XDG_CONFIG_HOME"
 
+# Linux exposes an actual foreign identity at the production path. Darwin runs
+# the portable selection and staging cases without the Linux preload hook.
+if [ "$INSTALLER_IDENTITY_REDIRECT" = 1 ]; then
+  cmp /etc/dotfiles/identity.json "$INSTALLED_IDENTITY"
+fi
+
 repository="$test_root/repository"
 state="$test_root/state"
 mkdir -p "$repository/bin" "$repository/tmp"
@@ -69,7 +75,18 @@ test "$(cat "$state/package-3")" = installer-selection-test-host--deployment-qem
 target_output=$(run_build --target test-host--deployment-qemu--theme-dark--session-tty)
 test "$target_output" = /nix/store/fake-installer-4
 test "$(cat "$state/package-4")" = installer-test-host--deployment-qemu--theme-dark--session-tty
-test "$(cat "$state/eval-count")" = 4
+
+for target in selection-test-host selection-test-host--deployment-qemu; do
+  if run_build --target "$target" > "$test_root/alias-target.log" 2>&1; then
+    printf 'selection alias accepted as an exact target: %s\n' "$target" >&2
+    exit 1
+  fi
+  grep -F 'not a declared NixOS target' "$test_root/alias-target.log"
+  test "$(cat "$state/count")" = 4
+  eval_count=$(cat "$state/eval-count")
+  test ! -e "$(cat "$state/eval-stage-path-$eval_count")"
+done
+test "$(cat "$state/eval-count")" = 6
 
 expect_selection_failure() {
   if run_build "$@" > "$test_root/selection.log" 2>&1; then
@@ -77,7 +94,7 @@ expect_selection_failure() {
     exit 1
   fi
   test "$(cat "$state/count")" = 4
-  test "$(cat "$state/eval-count")" = 4
+  test "$(cat "$state/eval-count")" = 6
 }
 
 expect_selection_failure --deployment qemu
@@ -94,19 +111,8 @@ if run_build --target undeclared-target > "$test_root/unknown-target.log" 2>&1; 
 fi
 grep -F 'does not provide attribute' "$test_root/unknown-target.log"
 test "$(cat "$state/count")" = 4
-test "$(cat "$state/eval-package-5")" = installer-undeclared-target
-test ! -e "$(cat "$state/eval-stage-path-5")"
-
-for target in selection-test-host selection-test-host--deployment-qemu; do
-  if run_build --target "$target" > "$test_root/alias-target.log" 2>&1; then
-    printf 'selection alias accepted as an exact target: %s\n' "$target" >&2
-    exit 1
-  fi
-  grep -F 'not a declared NixOS target' "$test_root/alias-target.log"
-  test "$(cat "$state/count")" = 4
-  eval_count=$(cat "$state/eval-count")
-  test ! -e "$(cat "$state/eval-stage-path-$eval_count")"
-done
+test "$(cat "$state/eval-package-7")" = installer-undeclared-target
+test ! -e "$(cat "$state/eval-stage-path-7")"
 test "$(cat "$state/eval-count")" = 7
 
 if run_build --host test-host--deployment-qemu > "$test_root/alias-host.log" 2>&1; then
@@ -122,6 +128,14 @@ selection_host_output=$(run_build --target selection-host--deployment-qemu--them
 test "$selection_host_output" = /nix/store/fake-installer-5
 test "$(cat "$state/package-5")" = installer-selection-host--deployment-qemu--theme-dark--session-tty
 test "$(cat "$state/eval-count")" = 9
+
+if run_build --host host --deployment qemu--theme-dark--session-tty > "$test_root/alias-deployment.log" 2>&1; then
+  printf '%s\n' 'exact target accepted as an undeclared host/deployment selection' >&2
+  exit 1
+fi
+grep -F 'not a declared installer selection' "$test_root/alias-deployment.log"
+test "$(cat "$state/count")" = 5
+test ! -e "$(cat "$state/eval-stage-path-10")"
 
 unsafe_state="$test_root/unsafe-state"
 if (

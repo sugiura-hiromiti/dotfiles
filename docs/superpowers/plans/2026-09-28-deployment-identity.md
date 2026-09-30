@@ -1,6 +1,6 @@
 # Deployment Identity Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Status:** Implementation and verification are complete. The checklists record completed outcomes; the final commit scope and original task procedures are retained below.
 
 **Goal:** Add deployment as an explicit system identity dimension so one logical host can safely represent multiple concrete NixOS or Darwin deployment environments without multiplying standalone Home targets.
 
@@ -9,6 +9,124 @@
 **Tech Stack:** Nix flakes, NixOS/nix-darwin module systems, Home Manager, NixOS Facter, Nushell, Disko, Preservation, NixOS VM tests, Jujutsu/GitHub Actions.
 
 **Spec:** `docs/superpowers/specs/2026-09-28-deployment-identity-design.md`
+
+## Execution status (2026-10-11)
+
+- [x] Task 1: Deployment domain model, system target naming, and host migration.
+- [x] Task 2: Deployment module composition, generation identity, and rollback verification.
+- [x] Task 3: Deployment-aware update resolution and regression checks.
+- [x] Task 4: Declared-target installers and deployment-aware CLI selection.
+- [x] Task 5: Deployment-scoped Facter bootstrap and real-ISO end-to-end verification.
+- [x] Task 6: Declared QEMU deployment, documentation/CI updates, and full verification.
+
+The host/deployment model, generation identity, update resolution, installer
+selection, deployment-scoped Facter bootstrap, production QEMU deployment,
+documentation, and generated workflows are implemented. The implementation
+from the September session is already present in the repository history.
+
+Final review found and fixed installer selection collisions: an undeclared
+target or host could match another selection mode's package alias, and an alias
+could overwrite a declared target's installer package. Selection now validates
+canonical metadata from the staged package before building it, and package
+generation rejects duplicate names. Regression tests and a second review cover
+both cases.
+
+Fresh verification on Darwin passed the deployment model, update operation,
+source pinning, launcher lock safety, formatting, deadnix, and statix checks.
+The readiness check evaluates successfully, and workflow regeneration produces
+no changes. Installer selection regressions and the portable installer runtime
+check pass on Darwin. Linux installer-fixture, installer-e2e, and
+deployment-identity-vm derivations evaluate with import-from-derivation disabled.
+The QEMU installer exposes the expected identity before its Facter report exists.
+
+The configured Linux builder recovered on October 9. Empty/corrupted store
+files in its persistent overlay caused SSH authentication to close after key
+acceptance. Repair through a trusted local cache restored 26 store paths and
+verified all 518 paths in the active system closure. The original launchd
+service is running again, strict host-key verification succeeds, and a fresh
+`aarch64-linux` build through `ssh-ng://builder@linux-builder` completed with
+`--max-jobs 0`, including copying its output back to Darwin. The pre-repair disk
+backup is retained at
+`/var/root/linux-builder-repair.7PXt7Ci2/nixos.before-repair.qcow2`.
+
+That successful build reported a nonfatal corrupt binary-cache SQLite database
+at `/root/.cache/nix/binary-cache-v7.sqlite` in the guest. The build itself
+exited successfully; the cache cleanup completed on October 11 as recorded below.
+
+Linux verification resumed after builder recovery. The full `aarch64-linux`
+non-VM aggregate passed, including its Firefox theme dependencies, system/Home
+builds, formatting, lint, and deployment/update/installer regression checks.
+The aggregate passed again after the rollback-test correction below.
+`nix flake check --all-systems --no-build --no-update-lock-file .` also passed.
+
+The deployment identity VM passed activation of generation A, activation of B,
+and rollback to A with exact identity and system-profile assertions. Its first
+run failed because `nixos-rebuild` tried to rebuild itself from nixpkgs inside
+the offline VM. The test now uses `--rollback --no-reexec`, which skips that
+self-rebuild while retaining the real profile rollback and system activation;
+the corrected test passed. The existing impermanence VM also passed installation,
+disk boot, reboot, persistent service state, root reset, and Home reconstruction.
+
+The first real-ISO installer E2E run passed installation, physical backing-state
+checks, disk boot, and administrator authentication, then timed out during reboot.
+The initrd cleanup unit stops `systemd-udev-settle.service`; the reset service's
+`Requires` dependency propagated that stop to `sysroot.mount`, unmounting the
+installed system before activation. The reset service now uses `Wants` with
+the same ordering, preserving device discovery without that stop propagation.
+Root-device uniqueness and mount errors still fail the reset service, which
+remains required by `sysroot.mount`. The corrected impermanence check and VM
+passed, including udev cleanup followed by activation on both disk boot and
+reboot, and all persistence/root-reset assertions. All-system no-build flake
+evaluation passed after the normal E2E derivation evaluation required by CI.
+The full Linux aggregate and identity VM also passed with this correction.
+The corrected real-ISO E2E passed in 2203 seconds: offline installation,
+physical backing-state checks, disk boot, administrator login and sudo, and
+reboot with root reset and preserved state all succeeded. This completes the
+Linux verification step, including all three VM tests.
+Darwin's full build-enabled `nix flake check --no-update-lock-file
+--print-build-logs .` also passed with exit code 0 and `all checks passed!`.
+It built all declared Darwin system and standalone Home targets, with deployment
+model, update, installer selection, formatting, and lint checks. Together with
+the Linux aggregate and three VM tests above, implementation verification is
+complete. These checks build configurations without activating the local system.
+The existing local Darwin generation was also inspected: `/run/current-system`
+points to `/nix/store/kps2yabh4hrn1lzr5vcijq9g8zkk4w2r-darwin-system-26.11.4cff07d`,
+matching the verified `aarch64-darwin-a` system output. Its installed identity is
+`{"host":"aarch64-darwin-a","deployment":"native"}`. No additional local
+activation is required for this implementation.
+
+Builder SQLite cache cleanup also completed on October 11. The first attempt
+rolled back after treating Nix's expected offline warning as a cache failure.
+With explicit `--offline`, the corrected maintenance run passed cache recreation,
+two independent cache queries, and SQLite `integrity_check` (`ok`). Both host
+and guest repair exit codes are 0; the original service and strict SSH recovered.
+The pre-cleanup disk is retained at
+`/var/root/linux-builder-cache.CL7rhscc/nixos.before-cleanup.qcow2`, and the guest
+cache backup is `/root/.cache/nix/binary-cache-v7-backup.TaFL9KWO`.
+A fresh `aarch64-linux` build with `--max-jobs 0` ran through the configured
+builder and copied its `aarch64` output back to Darwin, exiting 0 without
+warnings or errors. Cleanup and post-cleanup build evidence are under
+`logs/builder-cache-20261010/` (`applied.d7HpVbbf` and `post-cleanup-smoke`).
+Implementation verification and the remaining builder maintenance are complete.
+Verification logs and exit-code files are
+retained under `logs/deployment-verification-20261009/`; the successful identity
+run is `deployment-identity-vm-retry` (the original run records the failure).
+
+### Final commit scope
+
+The final Jujutsu commit covers installer identity validation and package-name
+collision checks, the initrd root-mount fix, regression/rollback tests, and these
+completion records. The unrelated Emacs and `flake.lock` changes are excluded.
+
+An actual installation of the production QEMU deployment and deletion of the
+retained repair backups are optional follow-up operations. QEMU intentionally
+remains declared but unready until its own Facter report is collected.
+
+The original task procedures below retain the planned implementation sequence.
+Their red-test and per-task commit commands are historical instructions, not a
+claim that each command ran in that exact order. Outcome checkboxes above and
+the final review checklist record the verified result; the final commit scope
+is recorded above.
 
 ## Global Constraints
 
@@ -71,7 +189,7 @@
   - `defaultTarget = { target, hostName, deploymentName ? null } -> string`
   - `mkSystemTargetName` requires `deploymentName`; `mkHomeTargetName` remains unchanged.
 
-- [ ] **Step 1: Write failing host/target assertions**
+- **Step 1: Write failing host/target assertions**
 
 Update `nix/tests/nixos/readiness.nix` so fixtures prove:
 
@@ -87,7 +205,7 @@ Update `nix/tests/nixos/readiness.nix` so fixtures prove:
 - importing the isolated `bad-default` fixture fails when `defaultDeployment` is not declared by that host.
 - `defaultTarget { target = "nixos"; hostName = "multi"; deploymentName = "ready"; }` selects the host's default theme/session for that deployment.
 
-- [ ] **Step 2: Run the deployment/readiness check and verify it fails**
+- **Step 2: Run the deployment/readiness check and verify it fails**
 
 Run:
 
@@ -97,7 +215,7 @@ nix eval --no-update-lock-file --raw .#checks.aarch64-linux.facter-readiness.drv
 
 Expected: evaluation fails because host deployment fields and deployment-aware target names do not exist yet.
 
-- [ ] **Step 3: Normalize deployments in `hosts.nix`**
+- **Step 3: Normalize deployments in `hosts.nix`**
 
 Implement:
 
@@ -112,7 +230,7 @@ Implement:
 
 Do not retain host-owned Facter fields.
 
-- [ ] **Step 4: Expand system targets across deployments in `targets.nix`**
+- **Step 4: Expand system targets across deployments in `targets.nix`**
 
 Keep Home enumeration unchanged.
 
@@ -128,7 +246,7 @@ Change readiness filtering to the selected deployment's readiness.
 
 Change `defaultTarget` / `defaultTargetEntry` to the set interface above. A system call without `deploymentName` may use `host.defaultDeploymentName`; if neither exists, assert instead of guessing. Home ignores deployment.
 
-- [ ] **Step 5: Extend public system target naming**
+- **Step 5: Extend public system target naming**
 
 Change `mkSystemTargetName` to emit:
 
@@ -138,7 +256,7 @@ Change `mkSystemTargetName` to emit:
 
 Keep Home naming byte-for-byte compatible.
 
-- [ ] **Step 6: Migrate current production hosts without changing behavior**
+- **Step 6: Migrate current production hosts without changing behavior**
 
 Use:
 
@@ -149,7 +267,7 @@ Use:
 
 Update current callers of `defaultTarget` and the default-host installer path so the flake remains evaluable after the signature change. Do not add QEMU to the production host yet; Task 6 adds it after installer selection is deployment-aware.
 
-- [ ] **Step 7: Run focused and no-build verification**
+- **Step 7: Run focused and no-build verification**
 
 Run:
 
@@ -160,7 +278,7 @@ nix flake check --no-build --no-update-lock-file .
 
 Expected: both succeed; public system names now contain deployment segments, while Home names do not.
 
-- [ ] **Step 8: Commit**
+- **Step 8: Commit**
 
 ```bash
 jj commit -m "refactor: add deployment system identity"
@@ -189,7 +307,7 @@ jj commit -m "refactor: add deployment system identity"
   - both configuration builders expose internal `modulesFor config` for checks and use it from `build`
   - active system contains `/etc/dotfiles/identity.json` with exactly `{"host": config.host, "deployment": config.deploymentName}`.
 
-- [ ] **Step 1: Add failing composition/identity checks**
+- **Step 1: Add failing composition/identity checks**
 
 Create `nix/tests/system/deployment.nix` to assert against real target entries:
 
@@ -201,7 +319,7 @@ Create `nix/tests/system/deployment.nix` to assert against real target entries:
 
 Add the check to `checks.nix`.
 
-- [ ] **Step 2: Run the new check and verify it fails**
+- **Step 2: Run the new check and verify it fails**
 
 Run:
 
@@ -211,7 +329,7 @@ nix eval --no-update-lock-file --raw .#checks.aarch64-linux.deployment-model.drv
 
 Expected: failure because builders do not expose/compose deployment modules or identity yet.
 
-- [ ] **Step 3: Implement `system-identity.nix`**
+- **Step 3: Implement `system-identity.nix`**
 
 The module must set only:
 
@@ -225,7 +343,7 @@ environment.etc."dotfiles/identity.json".text =
 
 Do not add theme/session/account and do not add Preservation entries.
 
-- [ ] **Step 4: Compose deployment modules in both builders**
+- **Step 4: Compose deployment modules in both builders**
 
 Refactor each builder to use an exported `modulesFor config`.
 
@@ -237,7 +355,7 @@ For NixOS and Darwin:
 - do not route deployment modules through `profileModules` or `resolve-profiles.nix`;
 - do not rely on module-list order for override semantics.
 
-- [ ] **Step 5: Add the rollback VM test**
+- **Step 5: Add the rollback VM test**
 
 Create two minimal NixOS generations using `system-identity.nix`:
 
@@ -254,7 +372,7 @@ In the VM:
 
 This proves identity follows activated generation rather than persistent mutable state.
 
-- [ ] **Step 6: Verify composition and instantiate the VM test**
+- **Step 6: Verify composition and instantiate the VM test**
 
 Run:
 
@@ -265,7 +383,7 @@ nix eval --no-update-lock-file --raw .#checks.aarch64-linux.deployment-identity-
 
 Expected: both succeed.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 jj commit -m "feat: publish active deployment identity"
@@ -293,7 +411,7 @@ jj commit -m "feat: publish active deployment identity"
   - system target index path `[ targetHost deploymentName themeName sessionName ]`
   - target field `ready :: bool` (`true` for Darwin; NixOS from deployment Facter readiness).
 
-- [ ] **Step 1: Extend fixtures with failing resolution cases**
+- **Step 1: Extend fixtures with failing resolution cases**
 
 Modify the update test plan so host `test` has declared deployments `qemu` and `parallels`, default `parallels`, and NixOS targets indexed by deployment.
 
@@ -310,7 +428,7 @@ Add test cases for:
 - malformed identity errors when identity is needed;
 - logical identity host is normalized through the plan alias map before comparing it with the canonical selected host.
 
-- [ ] **Step 2: Run update-app tests and verify failure**
+- **Step 2: Run update-app tests and verify failure**
 
 Run:
 
@@ -320,7 +438,7 @@ nix build --no-update-lock-file -L .#checks.aarch64-linux.update-operation-consi
 
 Expected: new deployment-resolution cases fail.
 
-- [ ] **Step 3: Extend `plan.nix`**
+- **Step 3: Extend `plan.nix`**
 
 For system targets:
 
@@ -334,7 +452,7 @@ Include all declared system targets in the plan, including unready NixOS targets
 
 Include each host's declared deployment names and optional default deployment in plan data.
 
-- [ ] **Step 4: Add runtime identity injection to `script.nix`**
+- **Step 4: Add runtime identity injection to `script.nix`**
 
 Change `mkUpdateScript` to accept:
 
@@ -348,7 +466,7 @@ Change `mkUpdateScript` to accept:
 
 Embed `const IDENTITY = "..."` so tests can point at temporary identity files without redirecting real `/etc`.
 
-- [ ] **Step 5: Implement update resolution in `update.nu`**
+- **Step 5: Implement update resolution in `update.nu`**
 
 Preserve current theme-by-hour and session-by-display behavior.
 
@@ -369,7 +487,7 @@ Installed identity handling:
 - normalize identity.host through plan aliases before host/deployment comparison;
 - do not read/parse identity when explicit host+deployment makes it unnecessary.
 
-- [ ] **Step 6: Re-run update tests**
+- **Step 6: Re-run update tests**
 
 Run:
 
@@ -380,7 +498,7 @@ nix build --no-update-lock-file -L .#checks.aarch64-linux.update-source-pin
 
 Expected: PASS; existing source pin, locking, preflight, and activation consistency behavior remains unchanged.
 
-- [ ] **Step 7: Commit**
+- **Step 7: Commit**
 
 ```bash
 jj commit -m "feat: resolve deployment during system updates"
@@ -411,7 +529,7 @@ jj commit -m "feat: resolve deployment during system updates"
   - `--host HOST --deployment DEPLOYMENT`
   - `--host HOST` only when the host has a default deployment.
 
-- [ ] **Step 1: Add failing build-installer selection tests**
+- **Step 1: Add failing build-installer selection tests**
 
 Cover:
 
@@ -425,7 +543,7 @@ Cover:
 - a fake `/etc/dotfiles/identity.json` on the build machine is never consulted;
 - source staging, executable-bit preservation, symlink preservation, ignored/unversioned exclusion, and out-of-checkout temp safety remain unchanged.
 
-- [ ] **Step 2: Run build-installer tests and verify failure**
+- **Step 2: Run build-installer tests and verify failure**
 
 Run:
 
@@ -435,7 +553,7 @@ nix build --no-update-lock-file -L .#checks.aarch64-linux.build-installer-source
 
 Expected: deployment-aware argument cases fail.
 
-- [ ] **Step 3: Generate installer packages from declared entries**
+- **Step 3: Generate installer packages from declared entries**
 
 In `flake/installer.nix`:
 
@@ -446,7 +564,7 @@ In `flake/installer.nix`:
 
 Do not use `readyNixosTargetEntries`.
 
-- [ ] **Step 4: Implement build-installer CLI mode validation**
+- **Step 4: Implement build-installer CLI mode validation**
 
 Keep source staging unchanged.
 
@@ -460,7 +578,7 @@ Map arguments to package refs exactly:
 
 The script must not inspect runtime identity.
 
-- [ ] **Step 5: Re-run installer selection tests**
+- **Step 5: Re-run installer selection tests**
 
 Run:
 
@@ -470,7 +588,7 @@ nix build --no-update-lock-file -L .#checks.aarch64-linux.build-installer-source
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- **Step 6: Commit**
 
 ```bash
 jj commit -m "feat: select installers by deployment target"
@@ -497,7 +615,7 @@ jj commit -m "feat: select installers by deployment target"
 - Consumes: exact installer target and selected deployment's `facterRelativePath`.
 - Produces: unchanged installer lifecycle, except Facter is written under the selected deployment and every post-Facter selector uses the same target string selected before Facter.
 
-- [ ] **Step 1: Update tests first**
+- **Step 1: Update tests first**
 
 Change installer fixtures to use a deployment-scoped path such as:
 
@@ -516,7 +634,7 @@ Add assertions that:
 - changing/creating Facter does not change target identity;
 - bootstrap contract still rejects a final configuration whose configured Facter report differs from the selected target's canonical report.
 
-- [ ] **Step 2: Run runtime/fixture checks and verify failure**
+- **Step 2: Run runtime/fixture checks and verify failure**
 
 Run:
 
@@ -527,13 +645,13 @@ nix build --no-update-lock-file -L .#checks.aarch64-linux.installer-fixture
 
 Expected: failure until all fixture and contract paths are deployment-aware.
 
-- [ ] **Step 3: Update bootstrap wording and parameter flow**
+- **Step 3: Update bootstrap wording and parameter flow**
 
 Keep `hostConfig.facterPath` as the selected system target convenience field introduced in Task 1, but change contract wording from "canonical host facter report" to "canonical deployment facter report".
 
 Pass only the selected deployment's relative path into installer runtime. Do not rediscover deployment from hardware or build-machine state.
 
-- [ ] **Step 4: Preserve exact target through post-Facter evaluation**
+- **Step 4: Preserve exact target through post-Facter evaluation**
 
 Ensure the existing `TARGET` constant is the sole target selector for:
 
@@ -543,7 +661,7 @@ Ensure the existing `TARGET` constant is the sole target selector for:
 
 Facter collection may change readiness but must not rerun target selection.
 
-- [ ] **Step 5: Run installer checks**
+- **Step 5: Run installer checks**
 
 Run:
 
@@ -561,7 +679,7 @@ nix build --no-update-lock-file -L .#checks.aarch64-linux.installer-e2e
 
 Expected: all pass.
 
-- [ ] **Step 6: Commit**
+- **Step 6: Commit**
 
 ```bash
 jj commit -m "test: verify deployment facter bootstrap"
@@ -591,7 +709,7 @@ jj commit -m "test: verify deployment facter bootstrap"
   - QEMU deployment module enabling `services.qemuGuest.enable = true`;
   - a buildable QEMU installer before its Facter report exists.
 
-- [ ] **Step 1: Add QEMU as a declared unready deployment**
+- **Step 1: Add QEMU as a declared unready deployment**
 
 In `aarch64-linux-a/meta.nix`:
 
@@ -606,7 +724,7 @@ services.qemuGuest.enable = true;
 
 Do not add a QEMU Facter report to the repository.
 
-- [ ] **Step 2: Add/extend assertions for production declared-vs-ready behavior**
+- **Step 2: Add/extend assertions for production declared-vs-ready behavior**
 
 Verify:
 
@@ -615,7 +733,7 @@ Verify:
 - `installer-selection-aarch64-linux-a--deployment-qemu` evaluates successfully;
 - Parallels remains the host default and remains ready.
 
-- [ ] **Step 3: Update user-facing documentation**
+- **Step 3: Update user-facing documentation**
 
 Document:
 
@@ -634,7 +752,7 @@ Clarify:
 
 Update top-level `flake.nix` comments to match.
 
-- [ ] **Step 4: Regenerate workflows**
+- **Step 4: Regenerate workflows**
 
 Run:
 
@@ -645,7 +763,7 @@ git diff -- .github/workflows
 
 Expected: system target references include deployment segments; no unrelated workflow changes.
 
-- [ ] **Step 5: Run final no-build and non-VM verification**
+- **Step 5: Run final no-build and non-VM verification**
 
 Run:
 
@@ -664,7 +782,7 @@ nix flake check --no-update-lock-file --print-build-logs
 
 Expected: PASS.
 
-- [ ] **Step 6: Run VM verification**
+- **Step 6: Run VM verification**
 
 On a Linux builder/runner:
 
@@ -676,7 +794,7 @@ nix build --no-update-lock-file -L .#checks.aarch64-linux.impermanence-vm
 
 Expected: PASS, including identity rollback, installer bootstrap, and existing impermanence lifecycle.
 
-- [ ] **Step 7: Verify generated workflows are clean**
+- **Step 7: Verify generated workflows are clean**
 
 Run:
 
@@ -687,7 +805,7 @@ git diff --exit-code -- .github/workflows
 
 Expected: zero diff.
 
-- [ ] **Step 8: Commit**
+- **Step 8: Commit**
 
 ```bash
 jj commit -m "feat: add qemu deployment support"
@@ -697,19 +815,20 @@ jj commit -m "feat: add qemu deployment support"
 
 ## Final Review Checklist
 
-Before branch completion, verify against the spec:
+Reviewed against the spec and the implementation/verification evidence recorded
+above on 2026-10-11:
 
-- [ ] Every system-capable production host declares at least one deployment.
-- [ ] NixOS Facter reports exist only under deployment-owned paths.
-- [ ] Home target names are unchanged by deployment count.
-- [ ] System names include deployment before enabled runtime-axis segments.
-- [ ] Darwin target generation is deployment-aware but never Facter-gated.
-- [ ] Both builders compose deployment modules directly.
-- [ ] Runtime identity contains exactly host/deployment and is generation-owned.
-- [ ] Update uses installed identity only for the same canonical host.
-- [ ] Update decides system intent before readiness and never readiness-falls-back to Home.
-- [ ] Installer packages originate from declared targets, including unready targets.
-- [ ] Build-installer does not read installed identity.
-- [ ] Post-Facter evaluation preserves the pre-Facter target.
-- [ ] Existing installer boot/storage assertions still validate merged final configuration.
-- [ ] Roles/profile/runtime cleanup is absent from the diff.
+- [x] Every system-capable production host declares at least one deployment.
+- [x] NixOS Facter reports exist only under deployment-owned paths.
+- [x] Home target names are unchanged by deployment count.
+- [x] System names include deployment before enabled runtime-axis segments.
+- [x] Darwin target generation is deployment-aware but never Facter-gated.
+- [x] Both builders compose deployment modules directly.
+- [x] Runtime identity contains exactly host/deployment and is generation-owned.
+- [x] Update uses installed identity only for the same canonical host.
+- [x] Update decides system intent before readiness and never readiness-falls-back to Home.
+- [x] Installer packages originate from declared targets, including unready targets.
+- [x] Build-installer does not read installed identity.
+- [x] Post-Facter evaluation preserves the pre-Facter target.
+- [x] Existing installer boot/storage assertions still validate merged final configuration.
+- [x] Roles/profile/runtime cleanup is absent from the deployment-identity changes.

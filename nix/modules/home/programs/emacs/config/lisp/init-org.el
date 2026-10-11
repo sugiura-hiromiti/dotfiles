@@ -6,16 +6,26 @@
 
 (require 'init-paths)
 
+(defun my/org-enable-auto-update-dblocks ()
+	"Update dynamic block on save."
+	(add-hook 'before-save-hook
+		#'org-update-all-dblocks
+		nil
+		t))
+
 (use-package org
 	:custom
-	(org-startup-indented t))
+	(org-startup-indented t)
+	:hook
+	(org-mode . my/org-enable-auto-update-dblocks))
 
 (setq org-directory my/dotfiles-org-directory)
 
 (setq org-agenda-files
 	(mapcar (lambda (file) (expand-file-name file org-directory))
 		'("inbox.org"
-			 "journal.org")))
+			 "journal.org"
+			 "feed.org")))
 
 (setq org-default-notes-file (expand-file-name "inbox.org" org-directory))
 
@@ -79,7 +89,25 @@
 	:config
 	(add-hook 'org-mode-hook #'org-modern-indent-mode 90))
 
-(use-package org-ql)
+(use-package org-ql
+	:config
+	(require 'org-ql-search)
+	:custom
+	(org-ql--ask-unsafe-query nil))
+
+(use-package org-feed
+	:ensure nil
+	:after org
+	:custom
+	(org-feed-alist
+		`(("Rust"
+			  "https://blog.rust-lang.org/feed.xml"
+			  ,(expand-file-name "feed.org" org-directory)
+			  "Rust")
+			 ("Apribase"
+				 "https://apribase.net/program/feed"
+				 ,(expand-file-name "feed.org" org-directory)
+				 "Apribase"))))
 
 (require 'org-protocol)
 

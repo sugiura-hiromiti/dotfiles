@@ -1,4 +1,6 @@
-;;; -*- lexical-binding: t; -*-
+;;; init.el --- entry point of my emacs config -*- lexical-binding: t; -*-
+
+;;; Code:
 
 (add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
 (add-to-list 'load-path (expand-file-name "lib" user-emacs-directory))
@@ -10,6 +12,11 @@
 (when (file-exists-p custom-file)
 	(load custom-file nil 'nomessage))
 
+;;; Commentary:
+;;
+
+(require 'treesit)
+
 (require 'init-paths)
 (require 'init-core)
 (require 'init-ui)
@@ -20,3 +27,7 @@
 (require 'init-misc)
 (require 'init-ts)
 (require 'init-org)
+
+(provide 'init)
+
+;;; init.el ends here

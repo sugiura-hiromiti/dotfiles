@@ -27,6 +27,7 @@
 	(vertico-multiform-mode 1))
 
 (use-package  vertico-buffer
+	:ensure nil
 	:after  vertico
 	:init
 	(vertico-buffer-mode 1))

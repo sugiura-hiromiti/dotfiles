@@ -1,5 +1,4 @@
-;;; init-lsp.el --- lsp
-;;; -*- lexical-binding: t; -*-
+;;; init-lsp.el --- lsp -*- lexical-binding: t; -*-
 
 
 ;;; Commentary:

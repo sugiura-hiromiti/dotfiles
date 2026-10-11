@@ -43,42 +43,6 @@
 	:init
 	(add-hook 'prog-mode-hook #'my/hl-todo-flymake-setup 90))
 
-(use-package elfeed
-	:commands (elfeed)
-	:custom
-	;; 未読かつ直近1週間だけ表示
-	(elfeed-search-filter "@1-week-ago +unread ")
-	(elfeed-use-curl t)
-	:config
-	(setq elfeed-feeds
-		'(("https://apribase.net/program/feed")
-			 ("https://opaupafz2.hatenablog.com/rss")
-			 ("https://this-week-in-rust.org/rss.xml")
-			 ("https://www.matem.unam.mx/~omar/apropos-emacs.xml"))))
-
-(defun my/elfeed-play-enclosure-with-mpv (&optional enclosure-index)
-	"Play current elfeed enclosure with mpv.
-Optional argument ENCLOSURE-INDEX index passed by elfeed."
-	(interactive)
-	(unless (derived-mode-p 'elfeed-show-mode)
-		(user-error "not in elfeed-show-mode"))
-	(let* ((entry elfeed-show-entry)
-				(enclosures (elfeed-entry-enclosures entry)))
-		(unless enclosures
-			(user-error "No enclosure in this entry"))
-		(let* ((idx (or enclosure-index
-							(if (= 1 (length enclosures))
-								1
-								(read-number
-									(format "Enclosure 1-%d: " (length enclosures))
-									1))))
-					(url (car (elt enclosures (1- idx)))))
-			(start-process "elfeed-mpv" "*elfeed-mpv*" "mpv" "--no-video" url)
-			(message "Playing: %s" url))))
-
-(with-eval-after-load 'elfeed-show
-	(keymap-set elfeed-show-mode-map "P" #'my/elfeed-play-enclosure-with-mpv))
-
 (provide 'init-misc)
 
 ;;; init-misc.el ends here

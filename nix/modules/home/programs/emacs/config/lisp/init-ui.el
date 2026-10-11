@@ -62,12 +62,11 @@
 	;; dark 側を frappe にしたいならこれでよい
 	(auto-dark-themes '((batppuccin-frappe) (batppuccin-latte)))
 	:config
-	(defun my/auto-dark-on-first-gui-frame (frame)
-		(with-selected-frame frame
-			(when (display-graphic-p)
-				(auto-dark-mode 1)
-				(remove-hook 'after-make-frame-functions
-					#'my/auto-dark-on-first-gui-frame))))
+	(defun my/auto-dark-on-first-gui-frame (frame)		(with-selected-frame frame
+																			(when (display-graphic-p)
+																				(auto-dark-mode 1)
+																				(remove-hook 'after-make-frame-functions
+																					#'my/auto-dark-on-first-gui-frame))))
 
 	(if (display-graphic-p)
 		(auto-dark-mode 1)
@@ -146,147 +145,6 @@
 
 (require 'seq)
 
-(defvar my/popup-tab-name "Popper")
-(defvar my/popup-return-tab nil)
-
-(defconst my/popper-buffer-name-regexp
-	(rx bos "*"
-		(or "Help"
-			"helpful"
-			"Backtrace"
-			"Occur"
-			"grep"
-			"xref"
-			"Async Shell Command"
-			"eshell"
-			"shell"
-			"ghostel")
-		(* any)
-		"*"
-		eos))
-
-(defconst my/popper-buffer-modes
-	'(help-mode
-		 helpful-mode
-		 compilation-mode
-		 grep-mode
-		 occur-mode
-		 eshell-mode
-		 shell-mode
-		 ghostel-mode))
-
-(defun my/current-tab-name ()
-	"Get current tab name."
-	(let ((tab (seq-find (lambda (tab)
-									(memq 'current-tab tab))
-					  (tab-bar-tabs))))
-		(alist-get 'name tab)))
-
-(defun my/tab-exists-p (name)
-	"Determine target tab with NAME exist or not."
-	(seq-some (lambda (tab)
-					 (equal (alist-get 'name tab) name))
-		(tab-bar-tabs)))
-
-(defun my/tab-number-by-name (name)
-	"Return 1-based tab number for tab NAME, or nil."
-	(let ((i 1)
-			  found)
-		(dolist (tab (tab-bar-tabs) found)
-			(when (and (not found)
-						(equal (alist-get 'name tab) name))
-				(setq found i))
-			(setq i (1+ i)))))
-
-(defun my/switch-tab-by-name (name)
-	"Switch to tab NAME."
-	(let ((n (my/tab-number-by-name name)))
-		(unless n
-			(error "No tab named %S" name))
-		(tab-bar-select-tab n)))
-
-(defun my/first-non-popup-tab-name ()
-	"Return the first tab name that is not the popup tab."
-	(catch 'found
-		(dolist (tab (tab-bar-tabs))
-			(let ((name (alist-get 'name tab)))
-				(unless (equal name my/popup-tab-name)
-					(throw 'found name))))
-		nil))
-
-(defun my/delete-popup-tab ()
-	"Delete `my/popup-tab-name' tab if it exists."
-	(let ((n (my/tab-number-by-name my/popup-tab-name)))
-		(when n
-			(tab-bar-close-tab n))))
-
-(defun my/toggle-popup-tab ()
-	"Toggle the transient popup tab when it exists.
-
-When called from a normal tab, switch to popup tab if it exists.
-When called from popup tab, return to previous tab and delete popup tab.
-When no popup tab exists, do nothing."
-	(interactive)
-	(if (equal (my/current-tab-name) my/popup-tab-name)
-		;; Inside popup tab: return, then delete popup tab.
-		(let ((return-tab my/popup-return-tab))
-			(cond
-				((and return-tab
-					 (my/tab-exists-p return-tab)
-					 (not (equal return-tab my/popup-tab-name)))
-					(my/switch-tab-by-name return-tab))
-				((my/first-non-popup-tab-name)
-					(my/switch-tab-by-name (my/first-non-popup-tab-name))))
-			(my/delete-popup-tab)
-			(setq my/popup-return-tab nil))
-
-		;; Outside popup tab: switch only when the popup tab already exists.
-		(when (my/tab-exists-p my/popup-tab-name)
-			(setq my/popup-return-tab (my/current-tab-name))
-			(my/switch-tab-by-name my/popup-tab-name))))
-
-(defun my/popper-display-in-tab (buffer alist)
-	"Display Popper BUFFER in `my/popup-tab-name' tab.
-
-Create the tab with BUFFER when needed.  Otherwise, replace the buffer
-in the selected window of the existing tab.  ALIST is the display action
-alist used when creating the tab."
-	(if (my/tab-exists-p my/popup-tab-name)
-		(progn
-			(my/switch-tab-by-name my/popup-tab-name)
-			(set-window-buffer (selected-window) buffer)
-			(selected-window))
-		(display-buffer-in-tab
-			buffer
-			(append
-				`((tab-name . ,my/popup-tab-name)
-					 (inhibit-same-window . t))
-				alist))))
-
-(use-package popper
-	:ensure t
-	:custom
-	(popper-display-control t)
-	(popper-display-function #'my/popper-display-in-tab)
-	(popper-reference-buffers
-		`(,my/popper-buffer-name-regexp
-			 ,@my/popper-buffer-modes))
-	:init
-	(popper-mode 1)
-	(popper-echo-mode 1)
-	:config
-	;; Global binding
-	(keymap-global-set "C-," #'my/toggle-popup-tab))
-
-(use-package nameframe
-	:ensure t)
-
-(use-package nameframe-project
-	:after
-	(nameframe project)
-	:config
-	(nameframe-project-mode 1))
-
 (use-package flyover
 	:hook
 	(flymake-mode . flyover-mode)
@@ -294,6 +152,7 @@ alist used when creating the tab."
 	(flyover-checkers '(flymake))
 	(flyover-levels '(error warning info))
 	(flyover-show-virtual-line t)
+	(flyover-use-theme-colors t)
 	(flyover-wrap-messages t)
 	(flyover-display-mode 'always))
 

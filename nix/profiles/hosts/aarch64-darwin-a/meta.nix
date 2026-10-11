@@ -22,6 +22,7 @@ in
     "ai-tools"
     "media"
     "terminal"
+    "game"
   ];
   runtime = {
     themes = [

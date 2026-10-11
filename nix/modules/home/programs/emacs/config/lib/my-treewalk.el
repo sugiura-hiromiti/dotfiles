@@ -1,16 +1,22 @@
-;;; -*- lexical-binding: t; -*-
+;;; my-treewalk.el --- treewalk -*- lexical-binding: t; -*-
+
+
+;;; Commentary:
+;;
 
 (require 'cl-lib)
 (require 'pulse)
 (require 'subr-x)
 (require 'treesit)
 
+;;; Code:
+
 (defgroup my/treesit-treewalk nil
-	"Tree-sitterとインデントを使った構造移動。"
+	"Tree-sitterとインデントを使った構造移動。."
 	:group 'editing)
 
 (defcustom my/treesit-treewalk-pulse t
-	"Non-nilなら移動先の構文ノードを短時間highlightする。"
+	"Non-nilなら移動先の構文ノードを短時間highlightする。."
 	:type 'boolean
 	:group 'my/treesit-treewalk)
 
@@ -38,18 +44,18 @@
 	node row start-row column indent line)
 
 (defvar my/treesit-treewalk--line-start-cache nil
-	"構造移動中だけ使う、各行の開始位置を収めたvector。")
+	"構造移動中だけ使う、各行の開始位置を収めたvector。.")
 
 (defvar my/treesit-treewalk--single-parser-cache nil
-	"構造移動中にbuffer唯一のparserを保持する。")
+	"構造移動中にbuffer唯一のparserを保持する。.")
 
 (defun my/treesit-treewalk-available-p ()
-	"現在のbufferに利用可能なTree-sitter parserがあればnon-nilを返す。"
+	"現在のbufferに利用可能なTree-sitter parserがあればnon-nilを返す。."
 	(and (treesit-available-p)
 	   (ignore-errors (treesit-parser-list))))
 
 (defun my/treesit-treewalk--collect-line-starts ()
-	"現在のbufferにある各行の開始位置をvectorで返す。"
+	"現在のbufferにある各行の開始位置をvectorで返す。."
 	(save-excursion
 		(goto-char (point-min))
 		(let ((starts (list (point))))
@@ -58,7 +64,7 @@
 			(vconcat (nreverse starts)))))
 
 (defun my/treesit-treewalk--line-start-position (row)
-	"現在のbufferの1始まりのROWの開始位置を返す。"
+	"現在のbufferの1始まりのROWの開始位置を返す。."
 	(if my/treesit-treewalk--line-start-cache
 		(and (<= 1 row (length my/treesit-treewalk--line-start-cache))
 			(aref my/treesit-treewalk--line-start-cache (1- row)))
@@ -67,7 +73,7 @@
 			(and (zerop (forward-line (1- row))) (point)))))
 
 (defun my/treesit-treewalk--row-at-position (position)
-	"POSITIONの1始まりの行番号を返す。"
+	"POSITIONの1始まりの行番号を返す。."
 	(if (not my/treesit-treewalk--line-start-cache)
 		(line-number-at-pos position)
 		(let ((low 0)
@@ -83,13 +89,13 @@
 			(1+ answer))))
 
 (defun my/treesit-treewalk--line-count ()
-	"現在のbufferの行数を返す。"
+	"現在のbufferの行数を返す。."
 	(if my/treesit-treewalk--line-start-cache
 		(length my/treesit-treewalk--line-start-cache)
 		(line-number-at-pos (point-max))))
 
 (defun my/treesit-treewalk--line-text (row)
-	"現在のbufferの1始まりのROWにある文字列を返す。"
+	"現在のbufferの1始まりのROWにある文字列を返す。."
 	(when-let* ((start
 						(and (integerp row)
 							(> row 0)
@@ -99,7 +105,7 @@
 			(buffer-substring-no-properties start (line-end-position)))))
 
 (defun my/treesit-treewalk--line-navigation-positions (row)
-	"ROWの最初の非blank位置と、その次の位置を返す。"
+	"ROWの最初の非blank位置と、その次の位置を返す。."
 	(when-let* ((start (my/treesit-treewalk--line-start-position row)))
 		(save-excursion
 			(goto-char start)
@@ -109,18 +115,18 @@
 				   (and (< (point) end) (1+ (point))))))))
 
 (defun my/treesit-treewalk--line-indent (line)
-	"LINE先頭にあるspace/tabのbyte数を1始まりで返す。"
+	"LINE先頭にあるspace/tabのbyte数を1始まりで返す。."
 	(1+ (string-bytes
 			 (or (and (string-match "\\`[ \t]*" line)
 			        (match-string 0 line))
 			    ""))))
 
 (defun my/treesit-treewalk--node-start-row (node)
-	"NODEの開始行を1始まりで返す。"
+	"NODEの開始行を1始まりで返す。."
 	(my/treesit-treewalk--row-at-position (treesit-node-start node)))
 
 (defun my/treesit-treewalk--node-start-column (node)
-	"NODEの開始byte列を1始まりで返す。"
+	"NODEの開始byte列を1始まりで返す。."
 	(save-excursion
 		(goto-char (treesit-node-start node))
 		(1+ (string-bytes
@@ -129,7 +135,7 @@
 					 (point))))))
 
 (defun my/treesit-treewalk--parser-at (position)
-	"POSITIONを担当するparserを返す。"
+	"POSITIONを担当するparserを返す。."
 	(or my/treesit-treewalk--single-parser-cache
 	   (and (fboundp 'treesit-local-parsers-at)
 	      (car (ignore-errors (treesit-local-parsers-at position))))
@@ -138,7 +144,7 @@
 	   (car (treesit-parser-list))))
 
 (defun my/treesit-treewalk--named-node-at (position)
-	"POSITIONを覆う最小のnamed nodeを返す。"
+	"POSITIONを覆う最小のnamed nodeを返す。."
 	(when-let* ((parser (my/treesit-treewalk--parser-at position))
 	              (seed (treesit-node-at position parser t))
 	              (root (treesit-parser-root-node (treesit-node-parser seed))))
@@ -146,19 +152,19 @@
 		   root)))
 
 (defun my/treesit-treewalk--named-node-on (beginning end)
-	"BEGINNINGからENDまでを覆う最小のnamed nodeを返す。"
+	"BEGINNINGからENDまでを覆う最小のnamed nodeを返す。."
 	(when-let* ((parser (my/treesit-treewalk--parser-at beginning)))
 		(treesit-node-on beginning end parser t)))
 
 (defun my/treesit-treewalk--named-parent (node)
-	"NODEに最も近いnamed parentを返す。"
+	"NODEに最も近いnamed parentを返す。."
 	(treesit-parent-until
 		node
 		(lambda (parent) (treesit-node-check parent 'named))))
 
 (defun my/treesit-treewalk-node-bounds ()
-	"現在の選択より真に大きいnamed構文nodeの境界を返す。
-Meow Thingのbounds関数として使い、rootではnilを返して展開を止める。"
+	"現在の選択より真に大きいnamed構文nodeの境界を返す.
+Meow Thingのbounds関数として使い、rootではnilを返して展開を止める."
 	(when (my/treesit-treewalk-available-p)
 		(condition-case nil
 			(let* ((selected (use-region-p))
@@ -181,7 +187,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 
 (defun my/treesit-treewalk--node-matches-p
 	(node patterns &optional language-patterns)
-	"NODEのtypeがPATTERNSまたはLANGUAGE-PATTERNSに一致するか返す。"
+	"NODEのtypeがPATTERNSまたはLANGUAGE-PATTERNSに一致するか返す."
 	(let ((case-fold-search nil)
 	        (type (treesit-node-type node)))
 		(or (cl-some (lambda (pattern) (string-match-p pattern type)) patterns)
@@ -190,11 +196,11 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 				(alist-get (treesit-node-language node) language-patterns)))))
 
 (defun my/treesit-treewalk--root-node-p (node)
-	"NODEが構文木のrootならnon-nilを返す。"
+	"NODEが構文木のrootならnon-nilを返す."
 	(null (treesit-node-parent node)))
 
 (defun my/treesit-treewalk--jump-target-p (node)
-	"NODEが移動先として扱えるならnon-nilを返す。"
+	"NODEが移動先として扱えるならnon-nilを返す."
 	(and node
 	   (not (my/treesit-treewalk--root-node-p node))
 	   (not
@@ -204,7 +210,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 				my/treesit-treewalk--language-jump-excluded-patterns))))
 
 (defun my/treesit-treewalk--highlight-target-p (node)
-	"NODEが正規化・highlight対象ならnon-nilを返す。"
+	"NODEが正規化・highlight対象ならnon-nilを返す."
 	(and node
 	   (not (my/treesit-treewalk--root-node-p node))
 	   (not
@@ -214,18 +220,18 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 				my/treesit-treewalk--language-highlight-excluded-patterns))))
 
 (defun my/treesit-treewalk--augment-target-p (node)
-	"NODEがcommentやdecoratorなどの付加要素ならnon-nilを返す。"
+	"NODEがcommentやdecoratorなどの付加要素ならnon-nilを返す."
 	(and node
 	   (not (my/treesit-treewalk--root-node-p node))
 	   (my/treesit-treewalk--node-matches-p
 			node my/treesit-treewalk--augment-patterns)))
 
 (defun my/treesit-treewalk--comment-node-p (node)
-	"NODEがcomment相当ならnon-nilを返す。"
+	"NODEがcomment相当ならnon-nilを返す."
 	(my/treesit-treewalk--node-matches-p node '("comment" "source" "text")))
 
 (defun my/treesit-treewalk--normalize-node (node)
-	"同じ行から始まる最も外側の表示可能なNODEを返す。"
+	"同じ行から始まる最も外側の表示可能なNODEを返す."
 	(let ((anchor node)
 	        (row (my/treesit-treewalk--node-start-row node))
 	        (iterator node))
@@ -237,7 +243,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 		anchor))
 
 (defun my/treesit-treewalk--node-at-row (row)
-	"ROWを代表する正規化済み構文nodeを返す。"
+	"ROWを代表する正規化済み構文nodeを返す."
 	(when-let* ((line (my/treesit-treewalk--line-text row))
 	              (positions (my/treesit-treewalk--line-navigation-positions row)))
 		(let ((node (when-let* ((candidate
@@ -260,7 +266,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 						(t (or next-node node))))))))
 
 (defun my/treesit-treewalk--anchor-from-node (node &optional row)
-	"NODEから移動用anchorを作る。ROWは移動先の表示行。"
+	"NODEから移動用anchorを作る。ROWは移動先の表示行."
 	(let* ((node (my/treesit-treewalk--normalize-node node))
 				(start-row (my/treesit-treewalk--node-start-row node))
 				(anchor-row (or row start-row))
@@ -282,7 +288,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 						:line line))))))
 
 (defun my/treesit-treewalk--anchor-at-row (row)
-	"ROWを代表する移動用anchorを返す。"
+	"ROWを代表する移動用anchorを返す."
 	(when-let* ((node (my/treesit-treewalk--node-at-row row)))
 		(my/treesit-treewalk--anchor-from-node
 			node
@@ -291,16 +297,16 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 				row))))
 
 (defun my/treesit-treewalk--current-anchor ()
-	"pointがある行の移動用anchorを返す。"
+	"Pointがある行の移動用anchorを返す."
 	(my/treesit-treewalk--anchor-at-row
 		(my/treesit-treewalk--row-at-position (point))))
 
 (defun my/treesit-treewalk--node-equal-p (first second)
-	"FIRSTとSECONDが同じ構文nodeならnon-nilを返す。"
+	"FIRSTとSECONDが同じ構文nodeならnon-nilを返す."
 	(and first second (treesit-node-eq first second)))
 
 (defun my/treesit-treewalk--strict-ancestor-p (ancestor node)
-	"ANCESTORがNODEのstrict ancestorならnon-nilを返す。"
+	"ANCESTORがNODEのstrict ancestorならnon-nilを返す."
 	(let ((iterator (treesit-node-parent node))
 	        found)
 		(while (and iterator (not found))
@@ -310,7 +316,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 		found))
 
 (defun my/treesit-treewalk--has-augment-child-p (node)
-	"NODEが付加要素の直接childを持つならnon-nilを返す。"
+	"NODEが付加要素の直接childを持つならnon-nilを返す."
 	(cl-loop for index below (treesit-node-child-count node)
 	   thereis
 	   (my/treesit-treewalk--augment-target-p
@@ -318,7 +324,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 
 (defun my/treesit-treewalk--has-same-indent-jump-ancestor-p
 	(current candidate)
-	"CANDIDATEが別scopeの同indent nodeに包まれていればnon-nilを返す。"
+	"CANDIDATEがCURRENTとは別scopeの同indent nodeに包まれていればnon-nilを返す."
 	(let ((current-node (my/treesit-treewalk--anchor-node current))
 	        (candidate-indent (my/treesit-treewalk--anchor-indent candidate))
 	        (candidate-row (my/treesit-treewalk--anchor-row candidate))
@@ -356,7 +362,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 			nil)))
 
 (defun my/treesit-treewalk--find-neighbor (direction current)
-	"CURRENTからDIRECTION方向にある同indentの移動先を返す。"
+	"CURRENTからDIRECTION方向にある同indentの移動先を返す."
 	(let* ((step (if (eq direction 'up) -1 1))
 				(row (+ (my/treesit-treewalk--anchor-row current) step))
 				(max-row (my/treesit-treewalk--line-count)))
@@ -379,7 +385,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 			nil)))
 
 (defun my/treesit-treewalk--find-in (current)
-	"CURRENTの内側にある最初の移動先を返す。"
+	"CURRENTの内側にある最初の移動先を返す."
 	(let ((row (1+ (my/treesit-treewalk--anchor-row current)))
 	        (max-row (my/treesit-treewalk--line-count)))
 		(catch 'target
@@ -406,7 +412,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 			nil)))
 
 (defun my/treesit-treewalk--find-out (current)
-	"CURRENTの外側にある最初の移動先を返す。"
+	"CURRENTの外側にある最初の移動先を返す."
 	(if (> (my/treesit-treewalk--anchor-row current)
 	       (my/treesit-treewalk--anchor-start-row current))
 		(my/treesit-treewalk--anchor-from-node
@@ -435,7 +441,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 				   (my/treesit-treewalk--anchor-from-node fallback))))))
 
 (defun my/treesit-treewalk--find-target (direction current)
-	"CURRENTからDIRECTIONへ移動するtargetを返す。"
+	"CURRENTからDIRECTIONへ移動するtargetを返す."
 	(pcase direction
 		('up (my/treesit-treewalk--find-neighbor 'up current))
 		('down (my/treesit-treewalk--find-neighbor 'down current))
@@ -443,7 +449,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 		('out (my/treesit-treewalk--find-out current))))
 
 (defun my/treesit-treewalk--opposite-direction (direction)
-	"DIRECTIONの反対方向を返す。"
+	"DIRECTIONの反対方向を返す."
 	(pcase direction
 		('up 'down)
 		('down 'up)
@@ -451,7 +457,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 		('out 'in)))
 
 (defun my/treesit-treewalk--jump (anchor)
-	"ANCHORの行の最初の非blank文字へ移動する。"
+	"ANCHORの行の最初の非blank文字へ移動する."
 	(when-let* ((positions
 						(my/treesit-treewalk--line-navigation-positions
 							(my/treesit-treewalk--anchor-row anchor))))
@@ -459,7 +465,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 		anchor))
 
 (defun my/treesit-treewalk--pulse (anchor)
-	"ANCHORの構文nodeを短時間highlightする。"
+	"ANCHORの構文nodeを短時間highlightする."
 	(when (and my/treesit-treewalk-pulse anchor)
 		(let ((pulse-flag t)
 		        (pulse-delay 0.025)
@@ -470,7 +476,7 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 				(treesit-node-end node)))))
 
 (defun my/treesit-treewalk--move (direction count fallback)
-	"DIRECTIONへCOUNT回構造移動し、parserがなければFALLBACKを呼ぶ。"
+	"DIRECTIONへCOUNT回構造移動し、parserがなければFALLBACKを呼ぶ."
 	(if (not (my/treesit-treewalk-available-p))
 		(progn
 			;; next-line/previous-line use `this-command' to preserve goal column.
@@ -503,23 +509,25 @@ Meow Thingのbounds関数として使い、rootではnilを返して展開を止
 			(my/treesit-treewalk--pulse last-target))))
 
 (defun my/treesit-treewalk-up (&optional count)
-	"同じindentにある前の構造へ移動する。"
+	"同じindentにあるCOUNT個前の構造へ移動する."
 	(interactive "p")
 	(my/treesit-treewalk--move 'up (or count 1) #'previous-line))
 
 (defun my/treesit-treewalk-down (&optional count)
-	"同じindentにある次の構造へ移動する。"
+	"同じindentにあるCOUNT個次の構造へ移動する."
 	(interactive "p")
 	(my/treesit-treewalk--move 'down (or count 1) #'next-line))
 
 (defun my/treesit-treewalk-in (&optional count)
-	"現在の構造の内側へ移動する。"
+	"現在の構造のCOUNT分内側へ移動する."
 	(interactive "p")
 	(my/treesit-treewalk--move 'in (or count 1) #'forward-char))
 
 (defun my/treesit-treewalk-out (&optional count)
-	"現在の構造の外側へ移動する。"
+	"現在の構造のCOUNT分外側へ移動する."
 	(interactive "p")
 	(my/treesit-treewalk--move 'out (or count 1) #'backward-char))
 
 (provide 'my-treewalk)
+
+;;; my-treewalk.el ends here

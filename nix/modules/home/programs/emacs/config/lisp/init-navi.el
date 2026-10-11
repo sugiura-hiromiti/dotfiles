@@ -97,7 +97,7 @@
 			(("e" eval-buffer "eval")
 				("x" ghostel-project "terminal")
 				("j" majutsu "jj")
-				("n" elfeed-update "rss notification"))
+				)
 			"org"
 			(("c" org-capture "capture")
 				("k" org-agenda "agenda")

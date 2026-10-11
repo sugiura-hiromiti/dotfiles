@@ -49,34 +49,7 @@ let
 
     (provide 'init-paths)
   '';
-  # TODO: emacsのpluginをnixpkgsと自前packageでnixから管理する方向にする
-  emacsPackage = (pkgs.emacsPackagesFor pkgs.emacs-pgtk).emacsWithPackages (epkgs: [
-    epkgs.tree-sitter-langs
-    (epkgs.treesit-grammars.with-grammars (grammars: [
-      grammars.tree-sitter-rust
-      grammars.tree-sitter-typescript
-      grammars.tree-sitter-haskell
-      grammars.tree-sitter-toml
-      grammars.tree-sitter-nu
-      grammars.tree-sitter-csv
-      grammars.tree-sitter-diff
-      grammars.tree-sitter-elisp
-      grammars.tree-sitter-gitcommit
-      grammars.tree-sitter-gitignore
-      grammars.tree-sitter-javascript
-      grammars.tree-sitter-json
-      grammars.tree-sitter-kdl
-      grammars.tree-sitter-lua
-      grammars.tree-sitter-markdown
-      grammars.tree-sitter-markdown-inline
-      grammars.tree-sitter-nix
-      grammars.tree-sitter-python
-      grammars.tree-sitter-sql
-      grammars.tree-sitter-yaml
-      grammars.tree-sitter-tsx
-      grammars.tree-sitter-html
-    ]))
-  ]);
+  emacsPackage = pkgs.emacs-pgtk;
   configuredEmacsPackage = config.programs.emacs.package;
   emacsEditor = toString (
     lib.getBin (

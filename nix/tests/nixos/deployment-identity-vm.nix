@@ -59,7 +59,8 @@ pkgs.testers.runNixOSTest {
         assert_identity("b")
 
     with subtest("rollback restores generation A identity"):
-        generationA.succeed("nixos-rebuild switch --rollback")
+        # The offline VM has no nixpkgs source for rebuilding nixos-rebuild itself.
+        generationA.succeed("nixos-rebuild switch --rollback --no-reexec")
         assert_identity("a")
         generationA.succeed(
             "test $(readlink -f /nix/var/nix/profiles/system) "

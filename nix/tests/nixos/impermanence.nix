@@ -34,9 +34,9 @@ pkgs.runCommandLocal "impermanence-eval-test"
     initrdUnits = system.config.boot.initrd.systemd.contents."/etc/systemd/system".source;
   }
   ''
-    for dependency in ${lib.escapeShellArgs service.requires}; do
+    for dependency in ${lib.escapeShellArgs (service.requires ++ service.wants)}; do
       test -e "$initrdUnits/$dependency" || {
-        echo "Missing required initrd unit: $dependency" >&2
+        echo "Missing initrd dependency unit: $dependency" >&2
         exit 1
       }
     done

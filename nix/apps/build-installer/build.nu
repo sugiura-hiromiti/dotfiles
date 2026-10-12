@@ -67,6 +67,35 @@ def main [--target: string, --host: string, --deployment: string] {
 			exit $copy_result.exit_code
 		}
 	}
+	let identity_result = (
+		^$NIX eval --json --no-update-lock-file --no-write-lock-file
+			$"path:($stage)#($package).installerIdentity"
+		| complete
+	)
+	if $identity_result.exit_code != 0 {
+		print-command-error $identity_result
+		^$RM --recursive --force -- $stage
+		exit $identity_result.exit_code
+	}
+	let selection_error = try {
+		let identity = $identity_result.stdout | from json
+		if $target != null and $identity.target? != $target {
+			$"not a declared NixOS target: ($target)"
+		} else if $host != null and (
+			$identity.host? != $host
+			or ($deployment != null and $identity.deployment? != $deployment)
+		) {
+			$"not a declared installer selection: host ($host), deployment ($deployment | default '<default>')"
+		} else {
+			null
+		}
+	} catch {
+		$"invalid installer identity for package ($package)"
+	}
+	if $selection_error != null {
+		^$RM --recursive --force -- $stage
+		error make $selection_error
+	}
 	let build_result = (
 		^$NIX build $"path:($stage)#($package)"
 			--no-link

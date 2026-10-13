@@ -13,11 +13,11 @@
 	display-line-numbers-type t
 	indent-tabs-mode t
 	tab-width 3)
-(setq whitespace-style '(face tabs tab-mark)
-	whitespace-display-mappings
-	'((tab-mark ?\t [?\│ ?\t] [?\t ?\t]))
-	;; flymake-show-diagnostics-at-end-of-line t
-	)
++(setq whitespace-style '(face tabs tab-mark)
+	 whitespace-display-mappings
+	 '((tab-mark ?\t [?\│ ?\t] [?\t ?\t]))
+	 ;; flymake-show-diagnostics-at-end-of-line t
+	 )
 (global-whitespace-mode 1)
 
 (global-display-line-numbers-mode 1)

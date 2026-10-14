@@ -8,4 +8,5 @@ with pkgs;
   sqlite
   jq
   bat
+  stdenv.cc
 ]

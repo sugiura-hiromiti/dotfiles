@@ -29,6 +29,12 @@ in
                 // {
                   "inode/directory" = "yazi.desktop";
                   "text/uri-list" = "yazi.desktop";
+                }
+                // lib.optionalAttrs config.programs.qutebrowser.enable {
+                  "text/html" = "org.qutebrowser.qutebrowser.desktop";
+                  "application/xhtml+xml" = "org.qutebrowser.qutebrowser.desktop";
+                  "x-scheme-handler/http" = "org.qutebrowser.qutebrowser.desktop";
+                  "x-scheme-handler/https" = "org.qutebrowser.qutebrowser.desktop";
                 };
               description = "Default applications registered with xdg.mimeApps.";
             };

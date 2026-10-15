@@ -112,6 +112,8 @@ pkgs.testers.runNixOSTest {
       };
     };
     installer = {
+      disko.devices.disk.main.content.partitions.system.content.subvolumes."@swap".swap.swapfile.size =
+        lib.mkForce "256M";
       virtualisation = {
         diskImage = "./target.qcow2";
         diskSize = 4096;

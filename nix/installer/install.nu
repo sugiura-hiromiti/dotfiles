@@ -45,6 +45,10 @@ def validate-metadata [metadata: record] {
 	require ($user.hashedPasswordFile == $expected_password) $"hashed password file must be ($expected_password)"
 	require (($metadata.sudoEnabled | describe) == "bool" and $metadata.sudoEnabled) "sudo must be enabled"
 	require (($metadata.mutableUsers | describe) == "bool" and not $metadata.mutableUsers) "users must be immutable"
+	require (($metadata.networkManagerEnabled | describe) == "bool") "NetworkManager enabled flag must be a boolean"
+	if ($WIFI_PROFILE | path exists) {
+		require $metadata.networkManagerEnabled "NetworkManager must be enabled to preserve the Wi-Fi connection"
+	}
 	require (
 		($metadata.boot.systemdBoot | describe) == "bool" and $metadata.boot.systemdBoot
 	) "systemd-boot must be enabled"
@@ -61,6 +65,48 @@ def validate-metadata [metadata: record] {
 	let expected_runtime = $"($user.home)/dotfiles"
 	require ($metadata.preservation.runtimePath == $expected_runtime) $"Preservation runtime path must be ($expected_runtime)"
 	require ($metadata.preservation.backingPath | str starts-with "/persist/") "Preservation backing path must be below /persist"
+}
+def configure-wifi [] {
+	let devices = (^$NMCLI --get-values TYPE device status | lines)
+	if "wifi" not-in $devices {
+		return
+	}
+	loop {
+		let ssid = (input "Wi-Fi SSID (leave empty to skip): ")
+		if ($ssid | is-empty) {
+			return
+		}
+		let connection_name = $"dotfiles-installer-(random uuid)"
+		try {
+			^$NMCLI radio wifi on
+			# nmcli owns password input; show typed characters as requested.
+			# Keep its interactive output on the terminal even when our caller
+			# captures the post-facter source path from stdout.
+			^$NMCLI --ask --show-secrets --wait 30 device wifi connect $ssid name $connection_name out> /dev/tty
+		} catch {
+			do { ^$NMCLI connection delete id $connection_name } | complete | ignore
+			print "Wi-Fi connection failed. Enter the SSID to retry, or leave it empty to skip."
+			continue
+		}
+		let uuid = (
+			^$NMCLI --get-values connection.uuid connection show id $connection_name
+			| str trim
+		)
+		require ($uuid | is-not-empty) "NetworkManager did not return the Wi-Fi connection UUID"
+		# Interface names can differ between the live ISO and installed OS.
+		^$NMCLI connection modify uuid $uuid connection.interface-name "" connection.autoconnect yes
+		let profiles = (
+			^$NMCLI --terse --escape no --fields UUID,FILENAME connection show
+			| lines
+			| parse --regex '^(?<uuid>[^:]+):(?<filename>.*)$'
+			| where uuid == $uuid
+		)
+		require (($profiles | length) == 1) "NetworkManager did not return exactly one Wi-Fi profile"
+		let profile = $profiles.0.filename
+		require ($profile | path exists) "NetworkManager did not save the Wi-Fi profile"
+		^$INSTALL --mode 0600 $profile $WIFI_PROFILE
+		return
+	}
 }
 def collect-password [] {
 	let password = (input --suppress-output "Administrator password: ")
@@ -80,6 +126,7 @@ def prepare-post-facter-source [] {
 	^$MKDIR --parents $WORK_SOURCE
 	^$CP --archive $"($BASE_SOURCE)/." $WORK_SOURCE
 	^$CHMOD --recursive u+w $WORK_SOURCE
+	configure-wifi
 	collect-password
 	let facter_path = [$WORK_SOURCE $FACTER_RELATIVE_PATH] | path join
 	^$MKDIR --parents ($facter_path | path dirname)
@@ -145,6 +192,18 @@ def install-password [metadata: record] {
 	^$CHMOD 0600 $temporary
 	^$MV $temporary $destination
 }
+def install-wifi [] {
+	if not ($WIFI_PROFILE | path exists) {
+		return
+	}
+	let directory = $"($MOUNT_ROOT)/persist/etc/NetworkManager/system-connections"
+	^$MKDIR --parents $directory
+	^$CHOWN root:root $directory
+	^$CHMOD 0700 $directory
+	let destination = $"($directory)/dotfiles-wifi.nmconnection"
+	^$INSTALL --mode 0600 $WIFI_PROFILE $destination
+	^$CHOWN root:root $destination
+}
 def install-dotfiles [post_source: string, metadata: record] {
 	let destination = $"($MOUNT_ROOT)($metadata.preservation.backingPath)"
 	^$MKDIR --parents $destination
@@ -165,6 +224,7 @@ def run-installer [] {
 	# traversable by installed users; secret directories keep their own modes.
 	^$CHMOD 0755 $MOUNT_ROOT $"($MOUNT_ROOT)/nix" $"($MOUNT_ROOT)/persist"
 	install-password $metadata
+	install-wifi
 	# nixos-install invokes nix and nix-env through PATH.
 	with-env {PATH: ($env.PATH? | default [] | prepend ($NIX | path dirname))} {
 		^$NIXOS_INSTALL --root $MOUNT_ROOT --flake $"path:($post_source)#($TARGET)" --no-update-lock-file --no-channel-copy --no-root-password

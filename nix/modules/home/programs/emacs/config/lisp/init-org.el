@@ -38,7 +38,7 @@
 			 "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
 		 ("p" "via protocol" entry
 			 (file ,(expand-file-name "inbox.org" org-directory))
-			 "* %:description\n%:link\n\n%i\n")))
+			 "* %:description :link:\n%:link\n\n%i\n")))
 
 (setq org-protocol-default-template-key "p")
 
@@ -93,7 +93,14 @@
 	:config
 	(require 'org-ql-search)
 	:custom
-	(org-ql--ask-unsafe-query nil))
+	(org-ql--ask-unsafe-query nil)
+	(org-ql-views
+		(list
+			(cons "link"
+				(list
+					:buffers-files #'org-agenda-files
+					:query '(tags "link")
+					:title "link")))))
 
 (use-package org-feed
 	:ensure nil

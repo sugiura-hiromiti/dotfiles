@@ -31,6 +31,7 @@ let
       ];
     };
   system = evaluate { };
+  networkManagerSystem = evaluate { networking.networkmanager.enable = true; };
   metadata = system.config.dotfiles.installer.metadata;
   rejects =
     extra:
@@ -45,6 +46,11 @@ assert metadata.preservation.backingPath == "/persist/srv/admin/dotfiles";
 assert metadata.preservation.runtimePath == "/srv/admin/dotfiles";
 assert metadata.boot.systemdBoot && !metadata.boot.canTouchEfiVariables;
 assert !metadata.mutableUsers && metadata.sudoEnabled;
+assert !metadata.networkManagerEnabled;
+assert networkManagerSystem.config.dotfiles.installer.metadata.networkManagerEnabled;
+assert lib.any (
+  directory: directory.directory == "/etc/NetworkManager/system-connections"
+) networkManagerSystem.config.preservation.preserveAt."/persist".directories;
 assert
   system.config.boot.initrd.systemd.tmpfiles.settings.preservation."/sysroot/persist/etc".d.mode
   == "0755";

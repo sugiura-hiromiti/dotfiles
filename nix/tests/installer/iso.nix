@@ -152,8 +152,26 @@ assert lib.assertMsg (lib.elem "multi-user.target"
   installer.config.systemd.services."getty@tty2".wantedBy
 ) "tty2 must remain available for recovery";
 assert lib.assertMsg (
-  lib.elem "network-online.target" service.after && lib.elem "network-online.target" service.wants
-) "The installer must wait for network readiness";
+  installer.config.networking.networkmanager.enable
+  && !installer.config.networking.useDHCP
+  && !installer.config.networking.wireless.autoDetectInterfaces
+  && installer.config.networking.wireless.dbusControlled
+) "NetworkManager must own installer network interfaces and Wi-Fi authentication";
+assert lib.assertMsg
+  (
+    lib.elem "NetworkManager.service" service.after
+    && lib.elem "NetworkManager.service" service.wants
+    && !(lib.elem "network-online.target" service.after)
+    && !(lib.elem "network-online.target" service.wants)
+    && !installer.config.systemd.services.NetworkManager-wait-online.enable
+  )
+  "The installer must prompt for Wi-Fi after NetworkManager starts, without waiting for a connection";
+assert lib.assertMsg
+  (
+    builtins.match "-.*/bin/nm-online --wait-for-startup --quiet --timeout [1-9][0-9]*" service.serviceConfig.ExecStartPre
+    != null
+  )
+  "NetworkManager device discovery must have a bounded startup wait whose timeout permits offline installation";
 assert lib.assertMsg (lib.all
   (feature: lib.elem feature installer.config.nix.settings.experimental-features)
   [

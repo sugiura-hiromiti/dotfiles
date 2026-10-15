@@ -161,6 +161,7 @@ by the evaluated UID:GID.
 sanitized staged flake
 → immutable base source
 → writable facter workspace
+→ optional interactive Wi-Fi connection and administrator password input
 → immutable post-facter store snapshot
 → validate final metadata
 → realize Disko script
@@ -169,6 +170,7 @@ sanitized staged flake
 → Disko provisions /mnt
 → validate mounts and establish traversable system-directory permissions
 → write root-only persistent password hash atomically
+→ copy the selected Wi-Fi profile into persistent NetworkManager state
 → nixos-install from the same post-facter source
 → verify fallback EFI loader
 → copy dotfiles to the evaluated Preservation backing path
@@ -202,7 +204,24 @@ the immutable base source and derives a fresh post-facter snapshot.
 ## Installer environment
 
 The installer owns tty1; tty2 remains available for diagnostics. It starts
-after and wants `network-online.target`.
+after and wants `NetworkManager.service`. A bounded `nm-online
+--wait-for-startup` step allows initial device discovery and wired
+autoconnection to settle; timing out still permits offline installation.
+The ISO's separate `NetworkManager-wait-online` service is disabled.
+
+When a Wi-Fi adapter is present, the installer asks for an SSID. Empty input
+skips Wi-Fi setup. NetworkManager prompts for the password with visible input
+(`--ask --show-secrets`); failed connections can be retried or skipped. The
+administrator password retains its separate, hidden confirmation prompts.
+
+Only the successful connection's profile is copied, first to
+`/run/dotfiles-installer/wifi.nmconnection` and then to
+`/mnt/persist/etc/NetworkManager/system-connections/dotfiles-wifi.nmconnection`.
+The profile remains outside both source snapshots, is owned by root with mode
+`0600`, and is configured to autoconnect without binding to the ISO's interface
+name. Before Disko runs, metadata validation requires NetworkManager on the
+target whenever Wi-Fi was selected. Existing Preservation configuration makes
+the profile available after installation and subsequent root resets.
 
 The real installer may require network access for locked content not already
 available locally. Supported installation assumes UEFI fallback-loader support,

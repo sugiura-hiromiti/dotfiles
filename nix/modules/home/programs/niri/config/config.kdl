@@ -20,8 +20,8 @@ input {
             // layout "us,ru"
             // options "grp:win_space_to
 			}
-        repeat-delay 5000
-        repeat-rate 250
+        repeat-delay 300
+        repeat-rate 150
 
         // Enable numlock on startup, omitting this setting disables it.
         // numlock

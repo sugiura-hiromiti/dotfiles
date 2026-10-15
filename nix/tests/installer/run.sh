@@ -26,6 +26,7 @@ metadata_file() {
     "hashedPasswordFile": "/persist/etc/dotfiles/password-alice.hash"
   },
   "sudoEnabled": $sudo_enabled,
+  "networkManagerEnabled": true,
   "mutableUsers": false,
   "boot": {
     "systemdBoot": true,
@@ -72,6 +73,9 @@ invalid_metadata_file() {
     metadata-mutable)
       sed -i 's/"mutableUsers": false/"mutableUsers": true/' "$destination"
       ;;
+    metadata-network-manager)
+      sed -i 's/"networkManagerEnabled": true/"networkManagerEnabled": "true"/' "$destination"
+      ;;
     metadata-boot)
       sed -i 's/"systemdBoot": true/"systemdBoot": false/' "$destination"
       ;;
@@ -95,23 +99,62 @@ run_installer() {
     TEST_METADATA="$metadata" \
     TEST_DISKO="$TEST_DISKO" \
     TEST_WORK_SOURCE="$root/run/source" \
+    TEST_WIFI=none \
+    TEST_WIFI_SSID='Cafe: $[corner] "guest" \ room' \
+    TEST_WIFI_PASSWORD='visible $[test] "password"\123!' \
     "$@" \
-    expect <<EOF
+    expect <<'EOF'
 set timeout 15
 log_user 1
-spawn -noecho $INSTALLER
+log_file -noappend $env(TEST_STATE)/transcript
+set wifi_prompts 0
+set awaiting_ssid 1
+set max_wifi_prompts 1
+if {$env(TEST_WIFI) eq "none"} {
+  set max_wifi_prompts 0
+} elseif {$env(TEST_WIFI) eq "retry" || $env(TEST_WIFI) eq "fail-skip"} {
+  set max_wifi_prompts 2
+}
+spawn -noecho $env(INSTALLER)
 expect {
+  "Wi-Fi connection failed." {
+    set awaiting_ssid 1
+    exp_continue -continue_timer
+  }
+  "Wi-Fi SSID (leave empty to skip): " {
+    # Nushell redraws visible input after each character. Only the first prompt
+    # in a connection attempt should submit a value.
+    if {!$awaiting_ssid} {
+      exp_continue -continue_timer
+    }
+    set awaiting_ssid 0
+    incr wifi_prompts
+    if {$wifi_prompts > $max_wifi_prompts} {
+      puts stderr "unexpected repeated Wi-Fi SSID prompt"
+      exit 1
+    }
+    if {$env(TEST_WIFI) eq "skip" || ($env(TEST_WIFI) eq "fail-skip" && $wifi_prompts > 1)} {
+      send -- "\r"
+    } else {
+      send -- "$env(TEST_WIFI_SSID)\r"
+    }
+    exp_continue -continue_timer
+  }
+  "Wi-Fi password: " {
+    send -- "$env(TEST_WIFI_PASSWORD)\r"
+    exp_continue -continue_timer
+  }
   "Administrator password:" {
-    send "secret\\r"
+    send "secret\r"
     expect "Confirm administrator password:"
-    send "secret\\r"
-    expect eof
+    send "secret\r"
+    exp_continue -continue_timer
   }
   eof {}
   timeout { exit 124 }
 }
 catch wait result
-exit [lindex \$result 3]
+exit [lindex $result 3]
 EOF
 }
 
@@ -244,6 +287,87 @@ grep -Fx -- '1000:100' "$state/chown-calls"
 test -e "$state/sync-ran"
 test "$(cat "$state/umount-args")" = "$(printf '%s\n%s' --recursive "$root/mnt")"
 test -e "$state/poweroff-ran"
+test ! -e "$state/wifi-attempts"
+test ! -e "$root/run/wifi.nmconnection"
+test ! -e "$root/mnt/persist/etc/NetworkManager/system-connections/dotfiles-wifi.nmconnection"
+if grep -F 'Wi-Fi SSID' "$state/transcript"; then
+  printf '%s\n' 'installer prompted for Wi-Fi without an adapter' >&2
+  exit 1
+fi
+
+# A selected Wi-Fi profile must reach persistent NetworkManager state before
+# installation, without being copied into the source snapshot or secret argv.
+for wifi_scenario in success retry; do
+  wifi_state="$root/state-wifi-$wifi_scenario"
+  run_installer "$wifi_state" "$metadata" "TEST_WIFI=$wifi_scenario"
+  wifi_profile="$root/mnt/persist/etc/NetworkManager/system-connections/dotfiles-wifi.nmconnection"
+  cmp "$wifi_state/network profiles/selected.nmconnection" "$root/run/wifi.nmconnection"
+  cmp "$root/run/wifi.nmconnection" "$wifi_profile"
+  test "$(stat -c %a "$root/run/wifi.nmconnection")" = 600
+  test "$(stat -c %a "$wifi_profile")" = 600
+  test "$(stat -c %a "$(dirname "$wifi_profile")")" = 700
+  test "$(find "$(dirname "$wifi_profile")" -type f | wc -l)" -eq 1
+  grep -Fx 'autoconnect=true' "$wifi_profile"
+  if grep -F 'interface-name=' "$wifi_profile"; then
+    printf '%s\n' 'Wi-Fi profile is still bound to the installer interface' >&2
+    exit 1
+  fi
+  test "$(cat "$wifi_state/wifi-ssid")" = 'Cafe: $[corner] "guest" \ room'
+  test "$(cat "$wifi_state/wifi-password")" = 'visible $[test] "password"\123!'
+  grep -F 'visible $[test] "password"\123!' "$wifi_state/transcript"
+  if grep -RF 'visible $[test] "password"\123!' "$wifi_state/store-snapshot" "$root/run/source" "$root/mnt/persist/custom/alice-dotfiles" "$wifi_state/nmcli-args"; then
+    printf '%s\n' 'Wi-Fi password escaped into source files or command arguments' >&2
+    exit 1
+  fi
+  grep -Fx -- "$wifi_profile" "$wifi_state/chown-calls"
+  if [ "$wifi_scenario" = retry ]; then
+    test "$(cat "$wifi_state/wifi-attempts")" -eq 2
+    test "$(wc -l < "$wifi_state/wifi-deleted")" -eq 1
+    test "$(sort -u "$wifi_state/wifi-attempt-names" | wc -l)" -eq 2
+  else
+    test "$(cat "$wifi_state/wifi-attempts")" -eq 1
+  fi
+done
+
+# Both skipping immediately and declining after a failed connection leave no
+# profile to transfer, including any state left by an earlier installer run.
+for wifi_scenario in skip fail-skip; do
+  wifi_state="$root/state-wifi-$wifi_scenario"
+  run_installer "$wifi_state" "$metadata" "TEST_WIFI=$wifi_scenario"
+  test ! -e "$root/run/wifi.nmconnection"
+  test ! -e "$root/mnt/persist/etc/NetworkManager/system-connections/dotfiles-wifi.nmconnection"
+  if [ "$wifi_scenario" = fail-skip ]; then
+    test "$(cat "$wifi_state/wifi-attempts")" -eq 1
+    test "$(wc -l < "$wifi_state/wifi-deleted")" -eq 1
+    test ! -e "$wifi_state/network profiles/selected.nmconnection"
+  else
+    test ! -e "$wifi_state/wifi-attempts"
+  fi
+done
+
+# Wi-Fi cannot proceed to disk modification without a profile file or a target
+# configured to load the transferred NetworkManager connection.
+disabled_nm_metadata="$root/disabled-network-manager.json"
+sed 's/"networkManagerEnabled": true/"networkManagerEnabled": false/' "$metadata" > "$disabled_nm_metadata"
+for wifi_scenario in disabled-network-manager missing-profile; do
+  rm -rf "$root/dev"
+  mkdir -p "$root/dev"
+  wifi_state="$root/state-wifi-$wifi_scenario"
+  wifi_metadata="$metadata"
+  wifi_mode=missing-profile
+  if [ "$wifi_scenario" = disabled-network-manager ]; then
+    wifi_metadata="$disabled_nm_metadata"
+    wifi_mode=success
+  fi
+  if run_installer "$wifi_state" "$wifi_metadata" "TEST_WIFI=$wifi_mode"; then
+    printf '%s unexpectedly succeeded\n' "$wifi_scenario" >&2
+    exit 1
+  fi
+  assert_pre_destructive "$wifi_state"
+done
+
+# NetworkManager is only required on the target when Wi-Fi was selected.
+run_installer "$root/state-no-wifi-disabled-network-manager" "$disabled_nm_metadata"
 
 # A failed attempt may leave runtime state. The next invocation must recreate
 # it from the immutable source.
@@ -269,6 +393,7 @@ for scenario in \
   metadata-wheel \
   metadata-password \
   metadata-mutable \
+  metadata-network-manager \
   metadata-boot \
   metadata-preservation \
   malformed \

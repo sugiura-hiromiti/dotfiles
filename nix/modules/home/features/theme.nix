@@ -63,9 +63,9 @@ in
 
       gtk.icon.accent = lib.mkDefault cfg.gtkIconAccent;
       yazi.accent = lib.mkDefault cfg.yaziAccent;
-      # qutebrowser = {
-      #   plainLook = true;
-      # };
+      qutebrowser = {
+        plainLook = true;
+      };
     };
   };
 }

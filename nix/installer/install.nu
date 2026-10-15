@@ -82,7 +82,7 @@ def configure-wifi [] {
 			# nmcli owns password input; show typed characters as requested.
 			# Keep its interactive output on the terminal even when our caller
 			# captures the post-facter source path from stdout.
-			^$NMCLI --ask --show-secrets --wait 30 device wifi connect $ssid name $connection_name out> /dev/tty
+			^$NMCLI --ask --show-secrets --wait 120 device wifi connect $ssid name $connection_name out> /dev/tty
 		} catch {
 			do { ^$NMCLI connection delete id $connection_name } | complete | ignore
 			print "Wi-Fi connection failed. Enter the SSID to retry, or leave it empty to skip."

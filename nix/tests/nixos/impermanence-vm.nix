@@ -148,6 +148,7 @@ pkgs.testers.runNixOSTest {
         installer.succeed("mountpoint -q /mnt/nix")
         installer.succeed("mountpoint -q /mnt/persist")
         installer.succeed("mountpoint -q /mnt/boot")
+        installer.succeed("mountpoint -q /mnt/swap")
 
         installer.succeed(
             "${pkgs.nixos-install-tools}/bin/nixos-install "
@@ -166,7 +167,6 @@ pkgs.testers.runNixOSTest {
         )
 
         installer.succeed("umount -R /mnt")
-        installer.succeed("mountpoint -q /mnt/swap")
         installer.succeed("sync")
         installer.shutdown()
 

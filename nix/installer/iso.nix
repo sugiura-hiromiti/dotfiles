@@ -42,14 +42,18 @@ nixpkgs.lib.nixosSystem {
         systemd.services = {
           "getty@tty1".enable = false;
           "getty@tty2".wantedBy = [ "multi-user.target" ];
+          NetworkManager-wait-online.enable = false;
           dotfiles-installer = {
             description = "Install dotfiles for ${host}";
             wantedBy = [ "multi-user.target" ];
-            wants = [ "network-online.target" ];
-            after = [ "network-online.target" ];
+            wants = [ "NetworkManager.service" ];
+            after = [ "NetworkManager.service" ];
             conflicts = [ "getty@tty1.service" ];
             serviceConfig = {
               Type = "oneshot";
+              # Settle initial device discovery and wired autoconnection before
+              # prompting. A timeout still permits an offline installation.
+              ExecStartPre = "-${lib.getExe' pkgs.networkmanager "nm-online"} --wait-for-startup --quiet --timeout 30";
               ExecStart = toString installer;
               UMask = "0077";
               StandardInput = "tty-force";

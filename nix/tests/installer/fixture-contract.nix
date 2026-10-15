@@ -36,6 +36,7 @@ let
         hashedPasswordFile = "/persist/etc/dotfiles/password-operator.hash";
       };
       sudoEnabled = true;
+      networkManagerEnabled = false;
       mutableUsers = false;
       boot = {
         systemdBoot = true;

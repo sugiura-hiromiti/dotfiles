@@ -43,6 +43,92 @@ let
     printf '%s\n' "$password" > "$TEST_STATE/password-input"
     printf '%s\n' '$y$fixture-password-hash'
   '';
+  fakeNmcli = pkgs.writeShellScriptBin "nmcli" ''
+    set -eu
+    state=''${TEST_STATE:?}
+    profile="$state/network profiles/selected.nmconnection"
+    uuid=11111111-2222-4333-8444-555555555555
+    printf '%s\n' "$@" >> "$state/nmcli-args"
+    case "$*" in
+      '--get-values TYPE device status')
+        printf '%s\n' ethernet
+        if [ "''${TEST_WIFI:-none}" != none ]; then
+          printf '%s\n' wifi
+        fi
+        ;;
+      'radio wifi on')
+        : > "$state/wifi-radio-enabled"
+        ;;
+      '--ask --show-secrets --wait 30 device wifi connect '* )
+        test -f "$state/wifi-radio-enabled"
+        test "$#" -eq 10
+        test "$9" = name
+        test -n "''${10}"
+        printf '%s\n' "$8" > "$state/wifi-ssid"
+        printf '%s\n' "''${10}" > "$state/wifi-connection-name"
+        printf '%s\n' "''${10}" >> "$state/wifi-attempt-names"
+        count=0
+        if test -f "$state/wifi-attempts"; then
+          count=$(cat "$state/wifi-attempts")
+        fi
+        count=$((count + 1))
+        printf '%s\n' "$count" > "$state/wifi-attempts"
+        printf 'Wi-Fi password: '
+        stty echo < /dev/tty
+        IFS= read -r password < /dev/tty
+        printf '%s\n' "$password" > "$state/wifi-password"
+        mkdir -p "$(dirname "$profile")"
+        cat > "$profile" <<EOF
+    [connection]
+    id=''${10}
+    uuid=$uuid
+    type=wifi
+    interface-name=wlan9
+    autoconnect=false
+    [wifi]
+    ssid=$8
+    [wifi-security]
+    key-mgmt=wpa-psk
+    psk=$password
+    EOF
+        printf '%s\n' unrelated-profile-secret > "$state/network profiles/unrelated.nmconnection"
+        if [ "''${TEST_WIFI:-none}" = fail-skip ] || {
+          [ "''${TEST_WIFI:-none}" = retry ] && [ "$count" -eq 1 ];
+        }; then
+          printf '%s\n' 'Connection activation failed' >&2
+          exit 10
+        fi
+        ;;
+      'connection delete id '*)
+        test "$4" = "$(cat "$state/wifi-connection-name")"
+        printf '%s\n' "$4" >> "$state/wifi-deleted"
+        rm -f "$profile"
+        ;;
+      '--get-values connection.uuid connection show id '*)
+        test "$6" = "$(cat "$state/wifi-connection-name")"
+        printf '%s\n' "$uuid"
+        ;;
+      'connection modify uuid '*)
+        test "$#" -eq 8
+        test "$4" = "$uuid"
+        test "$5" = connection.interface-name
+        test -z "$6"
+        test "$7" = connection.autoconnect
+        test "$8" = yes
+        sed -i '/^interface-name=/d; s/^autoconnect=false$/autoconnect=true/' "$profile"
+        ;;
+      '--terse --escape no --fields UUID,FILENAME connection show')
+        printf '%s\n' "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee:$state/network profiles/unrelated.nmconnection"
+        if [ "''${TEST_WIFI:-none}" != missing-profile ]; then
+          printf '%s\n' "$uuid:$profile"
+        fi
+        ;;
+      *)
+        printf 'unexpected nmcli arguments: %s\n' "$*" >&2
+        exit 64
+        ;;
+    esac
+  '';
   fakeLsblk = pkgs.writeShellScriptBin "lsblk" ''
     set -eu
     test "$*" = '--json --output PATH,TYPE,RM,HOTPLUG'
@@ -103,6 +189,11 @@ let
     for mount in ${testRoot}/mnt ${testRoot}/mnt/nix ${testRoot}/mnt/persist; do
       test "$(stat -c %a "$mount")" = 755
     done
+    if [ "''${TEST_WIFI:-none}" = success ] || [ "''${TEST_WIFI:-none}" = retry ]; then
+      profile=${testRoot}/mnt/persist/etc/NetworkManager/system-connections/dotfiles-wifi.nmconnection
+      test -f "$profile"
+      test "$(stat -c %a "$profile")" = 600
+    fi
     printf '%s\n' "$@" > "$state/install-args"
     frozen_lock_count=0
     for argument in "$@"; do
@@ -133,6 +224,7 @@ let
         nixStore = lib.getExe fakeNixStore;
         facter = lib.getExe fakeFacter;
         mkpasswd = lib.getExe fakeMkpasswd;
+        nmcli = lib.getExe fakeNmcli;
         cp = lib.getExe fakeCp;
         ln = lib.getExe fakeLn;
         mv = lib.getExe fakeMv;

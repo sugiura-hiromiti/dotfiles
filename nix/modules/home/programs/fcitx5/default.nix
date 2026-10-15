@@ -6,8 +6,6 @@
 let
   cfg = config.dotfiles.programs.fcitx5;
   files = [
-    "config"
-    "profile"
     "conf/classicui.conf"
     "conf/clipboard.conf"
     "conf/imselector.conf"

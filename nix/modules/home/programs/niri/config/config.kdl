@@ -20,8 +20,8 @@ input {
             // layout "us,ru"
             // options "grp:win_space_to
 			}
-        repeat-delay 5000
-        repeat-rate 250
+        repeat-delay 300
+        repeat-rate 150
 
         // Enable numlock on startup, omitting this setting disables it.
         // numlock
@@ -323,7 +323,7 @@ layout {
 // See the binds section below for more spawn examples.
 
 // This line starts waybar, a commonly used bar for Wayland compositors.
-spawn-at-startup "qutebrowser"
+spawn-at-startup "firefox"
 spawn-at-startup "noctalia"
 @terminalStartup@
 

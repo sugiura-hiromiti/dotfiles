@@ -81,8 +81,14 @@ Host-only selection (=--host HOST=) requires that host's =defaultDeployment=.
 The build machine's installed identity never selects the installer destination.
 
 Use the reported store output's =iso/= image. Write or attach that ISO to the
-target machine, boot it, and enter the administrator password. When installation
-powers the machine off, remove the installer media and boot the installed system.
+target machine and boot it. If a Wi-Fi adapter is detected, enter the SSID and
+Wi-Fi password; the Wi-Fi password is visible while typing. A failed connection
+can be retried. Leave the SSID empty to skip Wi-Fi setup and use an existing
+connection, such as Ethernet. Then enter and confirm the administrator password.
+The selected Wi-Fi connection is saved with root-only permissions and carried
+into the installed system for automatic reconnection, including after reboots
+that reset the root filesystem. When installation powers the machine off,
+remove the installer media and boot the installed system.
 
 ** First switch
 

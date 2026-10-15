@@ -107,6 +107,7 @@ in
           };
           sudoEnabled = config.security.sudo.enable;
           mutableUsers = config.users.mutableUsers;
+          networkManagerEnabled = config.networking.networkmanager.enable;
           boot = {
             systemdBoot = config.boot.loader.systemd-boot.enable;
             canTouchEfiVariables = config.boot.loader.efi.canTouchEfiVariables;

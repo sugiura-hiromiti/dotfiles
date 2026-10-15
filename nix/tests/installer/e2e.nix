@@ -125,9 +125,9 @@ pkgs.testers.runNixOSTest {
         installer.start()
         installer.wait_for_console_text("connecting to host...", timeout=timedelta(minutes=15))
         installer.wait_for_unit("getty@tty2.service")
-        installer.wait_until_tty_matches("1", "[Pp]assword")
+        installer.wait_until_tty_matches("1", "Administrator password:")
         installer.send_chars("installer-test-password\n")
-        installer.wait_until_tty_matches("1", "[Cc]onfirm|[Rr]epeat|[Aa]gain")
+        installer.wait_until_tty_matches("1", "Confirm administrator password:")
         installer.send_chars("installer-test-password\n")
         next_report = 0.0
 

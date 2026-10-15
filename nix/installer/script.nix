@@ -19,6 +19,7 @@ let
     nixStore = lib.getExe' pkgs.nix "nix-store";
     facter = lib.getExe pkgs.nixos-facter;
     mkpasswd = lib.getExe pkgs.mkpasswd;
+    nmcli = lib.getExe' pkgs.networkmanager "nmcli";
     rm = lib.getExe' pkgs.coreutils "rm";
     mkdir = lib.getExe' pkgs.coreutils "mkdir";
     cp = lib.getExe' pkgs.coreutils "cp";
@@ -58,6 +59,7 @@ pkgs.writeTextFile {
     const RUNTIME_ROOT = ${builtins.toJSON runtimePaths.runtimeRoot}
     const WORK_SOURCE = ${builtins.toJSON (runtimePaths.runtimeRoot + "/source")}
     const PASSWORD_HASH = ${builtins.toJSON (runtimePaths.runtimeRoot + "/password.hash")}
+    const WIFI_PROFILE = ${builtins.toJSON (runtimePaths.runtimeRoot + "/wifi.nmconnection")}
     const POST_SOURCE_ROOT = ${builtins.toJSON (runtimePaths.runtimeRoot + "/post-facter-source")}
     const TARGET_ALIAS = ${builtins.toJSON runtimePaths.targetAlias}
     const MOUNT_ROOT = ${builtins.toJSON runtimePaths.mountRoot}
@@ -66,6 +68,7 @@ pkgs.writeTextFile {
     const NIX_STORE = ${builtins.toJSON tools.nixStore}
     const FACTER = ${builtins.toJSON tools.facter}
     const MKPASSWD = ${builtins.toJSON tools.mkpasswd}
+    const NMCLI = ${builtins.toJSON tools.nmcli}
     const RM = ${builtins.toJSON tools.rm}
     const MKDIR = ${builtins.toJSON tools.mkdir}
     const CP = ${builtins.toJSON tools.cp}

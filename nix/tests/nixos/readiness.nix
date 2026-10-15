@@ -85,10 +85,19 @@ assert fails (invalidRegistry ../fixtures/invalid-hosts/no-deployments).hosts.ba
 assert fails (invalidRegistry ../fixtures/invalid-hosts/bad-default).hosts.bad;
 assert production.hosts.aarch64-linux-a.defaultDeploymentName == "parallels";
 assert production.hosts.aarch64-linux-a.deployments.parallels.facterReady;
-assert !production.hosts.aarch64-linux-a.deployments.qemu.facterReady;
+assert production.hosts.aarch64-linux-a.deployments.qemu.facterReady;
 assert lib.elem "aarch64-linux-a--deployment-qemu--theme-dark--session-gui" (
   names productionTargets.declaredNixosTargetEntries
 );
 assert
-  !(lib.any (entry: entry.config.deploymentName == "qemu") productionTargets.readyNixosTargetEntries);
+  names (
+    lib.filter (entry: entry.config.deploymentName == "qemu") (
+      forHost "aarch64-linux-a" productionTargets.readyNixosTargetEntries
+    )
+  ) == [
+    "aarch64-linux-a--deployment-qemu--theme-dark--session-gui"
+    "aarch64-linux-a--deployment-qemu--theme-dark--session-tty"
+    "aarch64-linux-a--deployment-qemu--theme-light--session-gui"
+    "aarch64-linux-a--deployment-qemu--theme-light--session-tty"
+  ];
 pkgs.runCommandLocal "facter-readiness-test" { } ''touch "$out"''

@@ -22,6 +22,10 @@ jobs:
         nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-parallels--theme-dark--session-tty.config.system.build.toplevel.drvPath
         nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-parallels--theme-light--session-gui.config.system.build.toplevel.drvPath
         nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-parallels--theme-light--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-dark--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-dark--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-light--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-light--session-tty.config.system.build.toplevel.drvPath
     strategy:
       fail-fast: false
       matrix:

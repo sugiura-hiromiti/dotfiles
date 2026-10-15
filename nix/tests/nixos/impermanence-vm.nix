@@ -29,6 +29,11 @@ let
       })
 
       {
+        disko.devices.disk.main.content.partitions.system.content.subvolumes."@swap".swap.swapfile.size =
+          lib.mkForce "256M";
+      }
+
+      {
         services.openssh.enable = true;
         system.activationScripts.impermanenceActivationProbe = ''
           mkdir -p /var/lib/nixos
@@ -112,8 +117,6 @@ pkgs.testers.runNixOSTest {
       };
     };
     installer = {
-      disko.devices.disk.main.content.partitions.system.content.subvolumes."@swap".swap.swapfile.size =
-        lib.mkForce "256M";
       virtualisation = {
         diskImage = "./target.qcow2";
         diskSize = 4096;
@@ -163,6 +166,7 @@ pkgs.testers.runNixOSTest {
         )
 
         installer.succeed("umount -R /mnt")
+        installer.succeed("mountpoint -q /mnt/swap")
         installer.succeed("sync")
         installer.shutdown()
 
@@ -176,6 +180,8 @@ pkgs.testers.runNixOSTest {
         target.succeed("grep -qx reconstructed " "/home/a/.config/impermanence-reconstruction-probe")
 
         target.succeed("mountpoint -q /var/lib/nixos")
+        target.succeed('test "$(findmnt -n -o FSROOT /swap)" = /@swap')
+        target.succeed("swapon --show=NAME --noheadings | grep -Fx /swap/swapfile")
         activation_count = int(target.succeed("cat /var/lib/nixos/impermanence-activation-count").strip())
         assert activation_count >= 1
         assert int(target.succeed("cat /persist/var/lib/nixos/impermanence-activation-count").strip()) == activation_count

@@ -29,6 +29,15 @@ in
               ${layout.subvolumes.root}.mountpoint = "/";
               ${layout.subvolumes.nix}.mountpoint = "/nix";
               ${layout.subvolumes.persist}.mountpoint = "/persist";
+              ${layout.subvolumes.swap} = {
+                mountpoint = "/swap";
+                swap = {
+                  swapfile = {
+                    size = "32G";
+                    priority = 0;
+                  };
+                };
+              };
             };
           };
         };

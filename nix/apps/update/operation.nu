@@ -1,6 +1,8 @@
 def fail-evaluation [target: record, result: record] {
 	if not ($result.stderr | is-empty) { print -e $result.stderr }
-	error make {msg: $"candidate evaluation failed for ($target.name): exit code ($result.exit_code)"}
+	error make {
+		msg: $"candidate evaluation failed for ($target.name): exit code ($result.exit_code)"
+	}
 }
 def validate-candidate [flake_ref: string, targets: list<record>] {
 

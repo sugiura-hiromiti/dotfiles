@@ -5,5 +5,6 @@
     root = "@root";
     nix = "@nix";
     persist = "@persist";
+    swap = "@swap";
   };
 }

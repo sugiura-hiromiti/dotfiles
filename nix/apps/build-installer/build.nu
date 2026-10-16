@@ -67,9 +67,34 @@ def main [--target: string, --host: string, --deployment: string] {
 			exit $copy_result.exit_code
 		}
 	}
+	let packages_result = (
+		^$NIX eval --json --no-update-lock-file --no-write-lock-file
+			$"path:($stage)#packages"
+			--apply 'packages: builtins.mapAttrs (_: builtins.attrNames) packages'
+		| complete
+	)
+	if $packages_result.exit_code != 0 {
+		print-command-error $packages_result
+		^$RM --recursive --force -- $stage
+		exit $packages_result.exit_code
+	}
+	let systems = $packages_result.stdout
+	| from json
+	| transpose system packages
+	| where {|entry| $package in $entry.packages }
+	| get system
+	if ($systems | is-empty) {
+		^$RM --recursive --force -- $stage
+		error make $"not a declared installer package: ($package)"
+	}
+	if ($systems | length) != 1 {
+		^$RM --recursive --force -- $stage
+		error make $"installer package is declared for multiple systems: ($package)"
+	}
+	let installable = $"path:($stage)#packages.($systems | first).($package)"
 	let identity_result = (
 		^$NIX eval --json --no-update-lock-file --no-write-lock-file
-			$"path:($stage)#($package).installerIdentity"
+			$"($installable).installerIdentity"
 		| complete
 	)
 	if $identity_result.exit_code != 0 {
@@ -97,7 +122,7 @@ def main [--target: string, --host: string, --deployment: string] {
 		error make $selection_error
 	}
 	let build_result = (
-		^$NIX build $"path:($stage)#($package)"
+		^$NIX build $installable
 			--no-link
 			--print-out-paths
 			--no-update-lock-file

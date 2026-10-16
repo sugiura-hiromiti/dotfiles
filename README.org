@@ -62,13 +62,25 @@ direnv allow
 
 ** Install NixOS
 
-Edit and version the dotfiles for the intended host and deployment, then build its installer
-on a machine with the same system architecture:
+Edit and version the dotfiles for the intended host and deployment, then build its installer.
+The app selects the declared host's system; Nix needs a builder that can execute that system:
 
 #+begin_src sh
 nix run .#build-installer -- --host aarch64-linux-a --deployment qemu
 nix run .#build-installer -- --host aarch64-linux-a --deployment parallels
+nix run .#build-installer -- --host x86_64-linux-a --deployment native
 #+end_src
+
+On Apple Silicon macOS, the configured Linux builder supports =aarch64-linux= natively
+and =x86_64-linux= through QEMU emulation. Before the first x86_64 build, apply the
+nix-darwin configuration for the Mac's target so the updated builder starts and both
+systems are registered:
+
+#+begin_src sh
+sudo darwin-rebuild switch --flake path:.#<darwin-target> --no-update-lock-file
+#+end_src
+
+Emulated builds can be slower.
 
 Each NixOS deployment owns its hardware report at
 =nix/profiles/hosts/<host>/deployments/<deployment>/facter.json=.

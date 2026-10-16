@@ -1,7 +1,7 @@
 set -eu
 
 test_root=$(mktemp -d)
-trap 'rm -rf "$test_root"' EXIT
+trap 'chmod -R u+w "$test_root"; rm -rf "$test_root"' EXIT
 export HOME="$test_root/home"
 export XDG_CONFIG_HOME="$test_root/config"
 mkdir -p "$HOME" "$XDG_CONFIG_HOME"
@@ -21,7 +21,42 @@ printf '%s\n' baseline > "$repository/tracked.txt"
 printf '%s\n' '#!/bin/sh' 'printf executable\n' > "$repository/bin/tool"
 chmod 0755 "$repository/bin/tool"
 ln -s tracked.txt "$repository/tracked-link"
-printf '%s\n' '{ outputs = _: {}; }' > "$repository/flake.nix"
+cat > "$repository/flake.nix" <<'EOF'
+{
+  outputs = _: {
+    packages = {
+      aarch64-darwin = { };
+      aarch64-linux.installer-selection-arm-host.installerIdentity = {
+        host = "arm-host";
+        deployment = "native";
+        target = "arm-host--deployment-native--theme-dark--session-tty";
+      };
+      x86_64-linux = {
+        installer-test-host--deployment-qemu--theme-dark--session-tty.installerIdentity = {
+          host = "test-host";
+          deployment = "qemu";
+          target = "test-host--deployment-qemu--theme-dark--session-tty";
+        };
+        installer-selection-test-host.installerIdentity = {
+          host = "test-host";
+          deployment = "parallels";
+          target = "test-host--deployment-parallels--theme-dark--session-tty";
+        };
+        installer-selection-test-host--deployment-qemu.installerIdentity = {
+          host = "test-host";
+          deployment = "qemu";
+          target = "test-host--deployment-qemu--theme-dark--session-tty";
+        };
+        installer-selection-host--deployment-qemu--theme-dark--session-tty.installerIdentity = {
+          host = "selection-host";
+          deployment = "qemu";
+          target = "selection-host--deployment-qemu--theme-dark--session-tty";
+        };
+      };
+    };
+  };
+}
+EOF
 
 git -C "$repository" init -q
 git -C "$repository" add .
@@ -50,6 +85,7 @@ run_build() {
 first_output=$(run_build --host test-host)
 test "$first_output" = /nix/store/fake-installer-1
 test "$(cat "$state/package-1")" = installer-selection-test-host
+test "$(cat "$state/attribute-1")" = packages.x86_64-linux.installer-selection-test-host
 test "$(cat "$state/stage-1/tracked.txt")" = 'modified working-copy bytes'
 test -L "$state/stage-1/tracked-link"
 test "$(readlink "$state/stage-1/tracked-link")" = tracked.txt
@@ -71,10 +107,12 @@ test "$first_identity" = "$second_identity"
 deployment_output=$(run_build --host test-host --deployment qemu)
 test "$deployment_output" = /nix/store/fake-installer-3
 test "$(cat "$state/package-3")" = installer-selection-test-host--deployment-qemu
+test "$(cat "$state/attribute-3")" = packages.x86_64-linux.installer-selection-test-host--deployment-qemu
 
 target_output=$(run_build --target test-host--deployment-qemu--theme-dark--session-tty)
 test "$target_output" = /nix/store/fake-installer-4
 test "$(cat "$state/package-4")" = installer-test-host--deployment-qemu--theme-dark--session-tty
+test "$(cat "$state/attribute-4")" = packages.x86_64-linux.installer-test-host--deployment-qemu--theme-dark--session-tty
 
 for target in selection-test-host selection-test-host--deployment-qemu; do
   if run_build --target "$target" > "$test_root/alias-target.log" 2>&1; then
@@ -109,11 +147,11 @@ if run_build --target undeclared-target > "$test_root/unknown-target.log" 2>&1; 
   printf '%s\n' 'undeclared target unexpectedly succeeded' >&2
   exit 1
 fi
-grep -F 'does not provide attribute' "$test_root/unknown-target.log"
+grep -F 'not a declared installer package' "$test_root/unknown-target.log"
 test "$(cat "$state/count")" = 4
-test "$(cat "$state/eval-package-7")" = installer-undeclared-target
-test ! -e "$(cat "$state/eval-stage-path-7")"
-test "$(cat "$state/eval-count")" = 7
+catalog_reference=$(cat "$state/catalog-reference")
+test ! -e "${catalog_reference#path:}"
+test "$(cat "$state/eval-count")" = 6
 
 if run_build --host test-host--deployment-qemu > "$test_root/alias-host.log" 2>&1; then
   printf '%s\n' 'deployment alias accepted as an undeclared host' >&2
@@ -121,13 +159,13 @@ if run_build --host test-host--deployment-qemu > "$test_root/alias-host.log" 2>&
 fi
 grep -F 'not a declared installer selection' "$test_root/alias-host.log"
 test "$(cat "$state/count")" = 4
-test ! -e "$(cat "$state/eval-stage-path-8")"
+test ! -e "$(cat "$state/eval-stage-path-7")"
 
 # A real targetHost may begin with selection-; only canonical identity matters.
 selection_host_output=$(run_build --target selection-host--deployment-qemu--theme-dark--session-tty)
 test "$selection_host_output" = /nix/store/fake-installer-5
 test "$(cat "$state/package-5")" = installer-selection-host--deployment-qemu--theme-dark--session-tty
-test "$(cat "$state/eval-count")" = 9
+test "$(cat "$state/eval-count")" = 8
 
 if run_build --host host --deployment qemu--theme-dark--session-tty > "$test_root/alias-deployment.log" 2>&1; then
   printf '%s\n' 'exact target accepted as an undeclared host/deployment selection' >&2
@@ -135,7 +173,42 @@ if run_build --host host --deployment qemu--theme-dark--session-tty > "$test_roo
 fi
 grep -F 'not a declared installer selection' "$test_root/alias-deployment.log"
 test "$(cat "$state/count")" = 5
-test ! -e "$(cat "$state/eval-stage-path-10")"
+test ! -e "$(cat "$state/eval-stage-path-9")"
+
+# The same app must select each host's system, never hardcode x86_64 or use
+# the build machine's installed identity.
+arm_output=$(run_build --host arm-host)
+test "$arm_output" = /nix/store/fake-installer-6
+test "$(cat "$state/attribute-6")" = packages.aarch64-linux.installer-selection-arm-host
+
+# An ambiguous registry must fail without choosing an arbitrary builder.
+cat > "$repository/flake.nix" <<'EOF'
+{
+  outputs = _: {
+    packages.aarch64-linux.installer-selection-duplicate = { };
+    packages.x86_64-linux.installer-selection-duplicate = { };
+  };
+}
+EOF
+if run_build --host duplicate > "$test_root/ambiguous.log" 2>&1; then
+  printf '%s\n' 'ambiguous installer system unexpectedly succeeded' >&2
+  exit 1
+fi
+grep -F 'installer package is declared for multiple systems' "$test_root/ambiguous.log"
+test "$(cat "$state/count")" = 6
+catalog_reference=$(cat "$state/catalog-reference")
+test ! -e "${catalog_reference#path:}"
+
+# Evaluation failures must retain the Nix diagnostic and remove staged source.
+printf '%s\n' '{ outputs = _: throw "fixture evaluation failed"; }' > "$repository/flake.nix"
+if run_build --host test-host > "$test_root/evaluation.log" 2>&1; then
+  printf '%s\n' 'invalid flake unexpectedly succeeded' >&2
+  exit 1
+fi
+grep -F 'fixture evaluation failed' "$test_root/evaluation.log"
+test "$(cat "$state/count")" = 6
+catalog_reference=$(cat "$state/catalog-reference")
+test ! -e "${catalog_reference#path:}"
 
 unsafe_state="$test_root/unsafe-state"
 if (

@@ -40,12 +40,17 @@ in
       enable = lib.mkDefault true;
       linux-builder = {
         enable = true;
+        systems = lib.unique [
+          config.nix.linux-builder.package.nixosConfig.nixpkgs.hostPlatform.system
+          "x86_64-linux"
+        ];
         supportedFeatures = [
           "kvm"
           "benchmark"
           "big-parallel"
           "nixos-test"
         ];
+        config.boot.binfmt.emulatedSystems = [ "x86_64-linux" ];
         config.virtualisation = {
           darwin-builder = {
             memorySize = 8 * 1024;

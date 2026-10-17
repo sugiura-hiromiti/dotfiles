@@ -92,14 +92,15 @@ const catppuccin: { dark: Palette, light: Palette } = {
 type Theme = "dark" | "light";
 
 const theme: Theme = glide.prefs.get("dotfiles.glide.theme") === "light" ? "light" : "dark";
+const palette = catppuccin[theme];
 
 void browser.theme.update({
 	colors: {
-		frame: catppuccin.base,
-		toolbar: catppuccin.base,
-		toolbar_text: catppuccin.text,
-		toolbar_field: catppuccin.surface0,
-		toolbar_field_text: catppuccin.text,
+		frame: palette.base,
+		toolbar: palette.base,
+		toolbar_text: palette.text,
+		toolbar_field: palette.surface0,
+		toolbar_field_text: palette.text,
 	},
 });
 
@@ -109,33 +110,33 @@ glide.styles.add(
 	`
   :root {
     /* Link hints */
-    --glide-hint-background: ${catppuccin.blue};
-    --glide-hint-color: ${catppuccin.surface0};
-    --glide-hint-border: 1px solid ${catppuccin.text};
+    --glide-hint-background: ${palette.blue};
+    --glide-hint-color: ${palette.surface0};
+    --glide-hint-border: 1px solid ${palette.text};
 
     /* CommandLine */
-    --glide-cmdl-bg: ${catppuccin.base};
-    --glide-cmdl-fg: ${catppuccin.text};
+    --glide-cmdl-bg: ${palette.base};
+    --glide-cmdl-fg: ${palette.text};
 
     /* Completions */
-    --glide-cmplt-bg: ${catppuccin.base};
-    --glide-cmplt-fg: ${catppuccin.text};
-    --glide-of-bg: ${catppuccin.surface1};
-    --glide-of-fg: ${catppuccin.text};
-    --glide-header-first-bg: ${catppuccin.mantle};
+    --glide-cmplt-bg: ${palette.base};
+    --glide-cmplt-fg: ${palette.text};
+    --glide-of-bg: ${palette.surface1};
+    --glide-of-fg: ${palette.text};
+    --glide-header-first-bg: ${palette.mantle};
 
     /* Modes */
-    --glide-mode-normal: ${catppuccin.blue};
-    --glide-mode-insert: ${catppuccin.green};
-    --glide-mode-visual: ${catppuccin.mauve};
-    --glide-mode-hint: ${catppuccin.peach};
-    --glide-mode-command: ${catppuccin.red};
+    --glide-mode-normal: ${palette.blue};
+    --glide-mode-insert: ${palette.green};
+    --glide-mode-visual: ${palette.mauve};
+    --glide-mode-hint: ${palette.peach};
+    --glide-mode-command: ${palette.red};
   }
 
   /* Typed hint characters */
   div.glide-internal-hint-marker
     > .glide-matching-character {
-    color: ${catppuccin.peach};
+    color: ${palette.peach};
   }
 
   div.glide-internal-hint-marker span {

@@ -4,6 +4,7 @@ with pkgs;
   rm-improved
   plemoljp-nf
   tokei
+  tombi
   sd
   sqlite
   jq

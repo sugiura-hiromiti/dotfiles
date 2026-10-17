@@ -14,8 +14,8 @@ in
     programs = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [
-        "firefox"
-        # "qutebrowser"
+        # "firefox"
+        "glide"
       ];
       description = "Repository program modules enabled with the media feature.";
     };

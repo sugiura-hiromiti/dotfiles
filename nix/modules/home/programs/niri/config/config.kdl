@@ -110,6 +110,14 @@ output "Virtual-1" {
     backdrop-color "#1f1e33"
 }
 
+output "Shenzhen KTC Technology Group M27P6 0000000000000" {
+	scale 1
+}
+
+output "Chimei Innolux Corporation 0x1249 Unknown" {
+	scale 1
+}
+
 // output "Virtual-2" {
 //     // Uncomment this line to disable this output.
 //     // off

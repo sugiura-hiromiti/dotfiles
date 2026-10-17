@@ -34,6 +34,17 @@
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
 
   inputs = {
+    glide = {
+      url = "github:glide-browser/glide.nix";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+        hoem-aanger = {
+          follows = "hoe-aager";
+        };
+      };
+    };
     disko = {
       url = "github:nix-community/disko";
       inputs = {

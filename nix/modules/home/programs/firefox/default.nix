@@ -6,6 +6,7 @@
 }:
 let
   cfg = config.dotfiles.programs.firefox;
+  shared = import ../firefox-common.nix { inherit pkgs; };
   firefoxAddons = pkgs.nur.repos.rycee.firefox-addons;
 in
 {
@@ -25,12 +26,8 @@ in
 
       packages = lib.mkOption {
         type = lib.types.listOf lib.types.package;
-        default = [
+        default = shared.extensions ++ [
           firefoxAddons.firefox-color
-          firefoxAddons.bitwarden
-          firefoxAddons.darkreader
-          firefoxAddons.ff2mpv
-          firefoxAddons.org-capture
           firefoxAddons.vimium-c
         ];
         defaultText = lib.literalExpression ''
@@ -62,29 +59,12 @@ in
   config = lib.mkIf cfg.enable {
     programs.firefox = {
       enable = true;
-      policies = {
-        AutofillAddressEnabled = true;
-        AutofillCreditCardEnabled = true;
-        DisableAppUpdate = true;
-        DisableFeedbackCommand = false;
-        DisableFirefoxStudies = false;
-        DisablePocket = true;
-        DisableTelemetry = false;
-        DontCheckDefaultBrowser = true;
-        NoDefaultBookmarks = true;
-        OfferToSaveLogins = true;
-        EnableTrackingProtection = {
-          Value = true;
-          Locked = true;
-          Cryptomining = true;
-          Fingerprinting = true;
-        };
-      };
+      policies = shared.policies;
       profiles.dflt = {
         isDefault = true;
         extensions.force = cfg.addons.force;
         extensions.packages = cfg.addons.packages;
-        settings = {
+        settings = shared.settings // {
           "browser.startup.page" = 3;
           "browser.startup.homepage" = "https://www.google.com";
           "browser.toolbars.bookmarks.visibility" = "never";

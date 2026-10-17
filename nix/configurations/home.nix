@@ -1,5 +1,6 @@
 {
   nixpkgs,
+  glide,
   nur,
   home-manager,
   catppuccin,
@@ -37,6 +38,7 @@ let
       catppuccin.homeModules.catppuccin
       nix-index-database.homeModules.default
       mcp-servers-nix.homeManagerModules.default
+      glide.homeModules.default
     ];
   build =
     config:

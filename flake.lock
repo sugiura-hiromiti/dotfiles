@@ -241,18 +241,60 @@
         "type": "github"
       }
     },
+    "glide": {
+      "inputs": {
+        "home-manager": "home-manager",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788886164,
+        "narHash": "sha256-F1wxjMtHxA8YL3TiaVb5wujuCiog/tGYguxTGOf7oLQ=",
+        "owner": "glide-browser",
+        "repo": "glide.nix",
+        "rev": "90b69855767dfa25c81dcd437eac7206a8d13284",
+        "type": "github"
+      },
+      "original": {
+        "owner": "glide-browser",
+        "repo": "glide.nix",
+        "type": "github"
+      }
+    },
     "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "glide",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788651960,
+        "narHash": "sha256-v9wJd32eZ2bvhBzVOd7TIjLQd011P7nwOhjKtWlci5I=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "2c0350c759688177331b8f5242311fae8877bdb3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "home-manager_2": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1792085665,
-        "narHash": "sha256-X9iN67cdW9KqLuvbyyr9rdF4Zssk1uFHh1UC/GZH08s=",
+        "lastModified": 1792098797,
+        "narHash": "sha256-u4DIIZgznEGzByxXrxWCXK19VcMtTBmi/M9gZ7Jk9bM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "54ad640b81c5e9a32db1a29e7561fda628601117",
+        "rev": "640725978b99076e18e069f6e7d2959124584f8f",
         "type": "github"
       },
       "original": {
@@ -302,11 +344,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791930060,
-        "narHash": "sha256-c4os2Fd8PkN0CSE6AHM0vsITZgqJM1fAUivE5mQAV6A=",
+        "lastModified": 1792146727,
+        "narHash": "sha256-WMw+liSrSoEkWKYOYjgLi2/vMdow216UkkgaLPdsDks=",
         "owner": "natsukium",
         "repo": "mcp-servers-nix",
-        "rev": "31848978eefbca17f1658a55066b1d2aaa43cafc",
+        "rev": "1cba7df106cb8ddf92f73c09ea725283bd470675",
         "type": "github"
       },
       "original": {
@@ -325,11 +367,11 @@
         "nixpkgs-regression": "nixpkgs-regression"
       },
       "locked": {
-        "lastModified": 1791909832,
-        "narHash": "sha256-jUzXXzi1x8Ub4kdBCMcrz1LoCuElBq4mFjOw59rFPCE=",
+        "lastModified": 1792183037,
+        "narHash": "sha256-lDbgJgxPeZVJsmPSpIcS5Tt/swOLE+YRIQk9SX92ZGs=",
         "owner": "NixOS",
         "repo": "nix",
-        "rev": "a9f38ea0ee89f550616f342386f45e896f4abd18",
+        "rev": "76490c4068e387c0f1c31350065b4c63900f4493",
         "type": "github"
       },
       "original": {
@@ -344,11 +386,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1791766881,
-        "narHash": "sha256-vdpQTVSViZfMXGfLr9gxx3VWTrwe5TbYkaf5AKHIVUs=",
+        "lastModified": 1792032429,
+        "narHash": "sha256-coCVbs6C4AWKVC216/W7+3b7xLjsS3M9gPPYQEaPbik=",
         "owner": "JEFF7712",
         "repo": "nix-agent",
-        "rev": "eaa114364b14c4f9c7c5436cd50218ebb8da8b85",
+        "rev": "dc12e28b1917d677bf5bf9f6ea607001b0591e1c",
         "type": "github"
       },
       "original": {
@@ -511,11 +553,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792092417,
-        "narHash": "sha256-PgMUxrL+v88BJnTbritoAFXrWew/LwaC6iozW8vRx/4=",
+        "lastModified": 1792228138,
+        "narHash": "sha256-zHy6Uq6v0fsbuszckQjp8XM6DlUUXFR7OMoncF0hGnE=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "63c7b3ab052ab27eb0cbec54f9ead1f3eea199a4",
+        "rev": "a03baca4ee0bfeb5ab88e4b36bc5c23440f235e8",
         "type": "github"
       },
       "original": {
@@ -545,7 +587,8 @@
         "catppuccin": "catppuccin",
         "disko": "disko",
         "flake-parts": "flake-parts",
-        "home-manager": "home-manager",
+        "glide": "glide",
+        "home-manager": "home-manager_2",
         "i-have-adhd": "i-have-adhd",
         "interview-me": "interview-me",
         "mcp-servers-nix": "mcp-servers-nix",

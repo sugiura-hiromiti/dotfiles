@@ -10,6 +10,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    programs.nh.enable = true;
+    programs = {
+      nh = {
+        enable = true;
+        clean = {
+          enable = true;
+        };
+      };
+    };
   };
 }

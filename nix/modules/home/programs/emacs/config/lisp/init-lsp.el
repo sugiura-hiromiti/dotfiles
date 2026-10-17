@@ -108,7 +108,7 @@
 				 ,my/rust-analyzer-initialization-options)))
 	(add-to-list 'eglot-server-programs
 		'((toml-ts-mode :language-id "toml")
-			 . ("taplo" "lsp" "stdio"))))
+			 . ("tombi" "lsp"))))
 
 (defun my/eglot-enable-inlay-hints ()
 	"Eglot管理下のbufferでinlay hintsを有効化する."

@@ -23,6 +23,7 @@ in
     home = {
       file = {
         "dotfiles/nix/modules/home/programs/glide/config/tsconfig.json".text = builtins.toJSON {
+          include = [ "glide.ts" ];
           compilerOptions = {
             target = "ESNext";
             module = "ESNext";
@@ -38,7 +39,6 @@ in
             noEmit = true;
             skipLibCheck = true;
             erasableSyntaxOnly = true;
-            inclide = [ "glide.ts" ];
           };
         };
       };

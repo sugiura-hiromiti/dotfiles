@@ -26,6 +26,7 @@ let
   };
   home = import ../configurations/home.nix {
     inherit (inputs)
+      glide
       nixpkgs
       nur
       home-manager

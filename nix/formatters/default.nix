@@ -87,6 +87,11 @@ in
 
   settings = {
     formatter = {
+      tombi = {
+        command = lib.getExe pkgs.tombi;
+        options = [ "format" ];
+        includes = [ "*.toml" ];
+      };
       nufmt = {
         command = lib.getExe pkgs.nufmt;
         options = [

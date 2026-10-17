@@ -9,6 +9,9 @@
         deadnix
         nixd
         statix
+        nodejs
+        typescript
+        typescript-language-server
       ];
       nvimMaintenancePackages = with pkgs; [
         lua-language-server

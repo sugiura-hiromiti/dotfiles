@@ -98,6 +98,8 @@
 
 (defun my/eglot-configure-server-programs ()
 	"Eglot用のlanguage server設定を登録する."
+	(add-to-list 'eglot-server-programs '((typescript-ts-mode :language-id "typescript")
+														 . ("typescript-language-server" "--stdio")))
 	(add-to-list 'eglot-server-programs '(nix-ts-mode . ("nixd")))
 	(add-to-list
 		'eglot-server-programs
@@ -105,10 +107,7 @@
 			 .
 			 ("rust-analyzer"
 				 :initializationOptions
-				 ,my/rust-analyzer-initialization-options)))
-	(add-to-list 'eglot-server-programs
-		'((toml-ts-mode :language-id "toml")
-			 . ("taplo" "lsp" "stdio"))))
+				 ,my/rust-analyzer-initialization-options))))
 
 (defun my/eglot-enable-inlay-hints ()
 	"Eglot管理下のbufferでinlay hintsを有効化する."
@@ -132,7 +131,8 @@
 		(lua-ts-mode . eglot-ensure)
 		(haskell-ts-mode . eglot-ensure)
 		(nix-ts-mode . eglot-ensure)
-		(toml-ts-mode . eglot-ensure))
+		(toml-ts-mode . eglot-ensure)
+		(typescript-ts-mode . eglot-ensure))
 	:config
 	(my/eglot-configure-server-programs)
 	(setq-default eglot-workspace-configuration my/eglot-workspace-configuration))

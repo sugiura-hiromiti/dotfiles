@@ -28,6 +28,7 @@ in
         "*.md"
         "*.yaml"
         "*.yml"
+        "*.ts"
       ];
       settings = formatters.dprint.settings;
     };
@@ -43,6 +44,6 @@ in
     };
 
     # dprint rewrites TOML schema directives such as #:schema; taplo preserves them.
-    taplo.enable = true;
+    # taplo.enable = true;
   };
 }

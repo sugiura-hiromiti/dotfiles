@@ -59,7 +59,7 @@ in
   config = lib.mkIf cfg.enable {
     programs.firefox = {
       enable = true;
-      policies = shared.policies;
+      inherit (shared) policies;
       profiles.dflt = {
         isDefault = true;
         extensions.force = cfg.addons.force;

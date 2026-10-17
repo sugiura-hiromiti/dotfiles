@@ -47,7 +47,7 @@ in
       glide-browser = {
         enable = true;
 
-        policies = shared.policies;
+        inherit (shared) policies;
 
         profiles = {
           dflt = {

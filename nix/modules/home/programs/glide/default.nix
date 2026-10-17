@@ -57,6 +57,7 @@ in
 
             settings = shared.settings // {
               "extensions.autoDisableScopes" = 0;
+              "dotfiles.glide.theme" = if config.catppuccin.flavor == "latte" then "light" else "dark";
             };
 
             extensions = {

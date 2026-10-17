@@ -46,6 +46,5 @@ in
       enable = true;
       settings = formatters.stylua.settings;
     };
-
   };
 }

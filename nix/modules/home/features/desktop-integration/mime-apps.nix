@@ -36,11 +36,11 @@ in
                   "x-scheme-handler/http" = "org.qutebrowser.qutebrowser.desktop";
                   "x-scheme-handler/https" = "org.qutebrowser.qutebrowser.desktop";
                 }
-                // lib.optionalAttrs config.programs.glide.enable {
-                  "text/html" = "org.glide.desktop";
-                  "application/xhtml+xml" = "org.glide.desktop";
-                  "x-scheme-handler/http" = "org.glide.desktop";
-                  "x-scheme-handler/https" = "org.glide.desktop";
+                // lib.optionalAttrs config.dotfiles.programs.glide.enable {
+                  "text/html" = "glide.desktop";
+                  "application/xhtml+xml" = "glide.desktop";
+                  "x-scheme-handler/http" = "glide.desktop";
+                  "x-scheme-handler/https" = "glide.desktop";
                 };
               description = "Default applications registered with xdg.mimeApps.";
             };

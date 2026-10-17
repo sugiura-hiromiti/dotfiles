@@ -40,8 +40,8 @@
         nixpkgs = {
           follows = "nixpkgs";
         };
-        hoem-aanger = {
-          follows = "hoe-aager";
+        home-manager = {
+          follows = "home-manager";
         };
       };
     };

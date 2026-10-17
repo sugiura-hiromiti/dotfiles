@@ -70,3 +70,6 @@ tramp
 emacs/url/
 emacs/bookmarks
 .direnv/
+/nix/modules/home/programs/glide/config/glide.d.ts
+/nix/modules/home/programs/glide/config/glide/
+/nix/modules/home/programs/glide/config/tsconfig.json

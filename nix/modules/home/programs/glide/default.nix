@@ -6,37 +6,76 @@
 }:
 let
   cfg = config.dotfiles.programs.glide;
-  shared = import ../browser-common.nix { inherit pkgs; };
+  shared = import ../firefox-common.nix { inherit pkgs; };
 in
 {
-  options.dotfiles.programs.glide.enable = lib.mkEnableOption "Glide Browser";
-
-  config = lib.mkIf cfg.enable {
-    programs.glide-browser = {
-      enable = true;
-
-      policies = shared.policies;
-
-      profiles.dflt = {
-        isDefault = true;
-
-        settings = shared.settings // {
-          "extensions.autoDisableScopes" = 0;
-        };
-
-        extensions = {
-          force = true;
-          packages = shared.extensions;
+  options = {
+    dotfiles = {
+      programs = {
+        glide = {
+          enable = lib.mkEnableOption "Glide Browser";
         };
       };
+    };
+  };
 
-      nativeMessagingHosts = [
-        pkgs.ff2mpv-rust
-      ];
+  config = lib.mkIf cfg.enable {
+    home = {
+      file = {
+        "dotfiles/nix/modules/home/programs/glide/config/tsconfig.json".text = builtins.toJSON {
+          compilerOptions = {
+            target = "ESNext";
+            module = "ESNext";
+            moduleDetection = "force";
+            lib = [
+              "DOM"
+              "DOM.Iterable"
+              "DOM.AsyncIterable"
+              "ESNext"
+            ];
+            types = [ "./glide.d.ts" ];
+            strict = true;
+            noEmit = true;
+            skipLibCheck = true;
+            erasableSyntaxOnly = true;
+            inclide = [ "glide.ts" ];
+          };
+        };
+      };
+    };
+    programs = {
+      glide-browser = {
+        enable = true;
+
+        policies = shared.policies;
+
+        profiles = {
+          dflt = {
+            isDefault = true;
+
+            settings = shared.settings // {
+              "extensions.autoDisableScopes" = 0;
+            };
+
+            extensions = {
+              force = true;
+              packages = shared.extensions;
+            };
+          };
+        };
+
+        nativeMessagingHosts = [
+          pkgs.ff2mpv-rust
+        ];
+      };
     };
 
-    xdg.configFile."glide/glide.ts".source = ./config/glide.ts;
-
-    xdg.configFile."glide/tsconfig.json".source = ./config/tsconfig.json;
+    xdg = {
+      configFile = {
+        "glide" = {
+          source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/dotfiles/nix/modules/home/programs/glide/config";
+        };
+      };
+    };
   };
 }

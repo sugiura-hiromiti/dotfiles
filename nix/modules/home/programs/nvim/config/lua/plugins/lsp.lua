@@ -195,7 +195,7 @@ return {
 				'clangd',
 				'nil_ls',
 				'cssls',
-				'taplo',
+				'tombi',
 				'sourcekit',
 				'marksman',
 				'markdown_oxide',

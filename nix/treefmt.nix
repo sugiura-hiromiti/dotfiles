@@ -10,12 +10,17 @@ in
   projectRootFile = ".git/config";
 
   # Generated completions are kept as-is; formatter output is not stable.
-  settings = formatters.settings // {
+  settings = lib.recursiveUpdate formatters.settings {
     global = {
       excludes = [
         # actions.nix is the sole owner
         ".github/workflows/**"
       ];
+    };
+    formatter.tombi = {
+      command = lib.getExe pkgs.tombi;
+      options = [ "format" ];
+      includes = [ "*.toml" ];
     };
   };
 
@@ -41,8 +46,5 @@ in
       enable = true;
       settings = formatters.stylua.settings;
     };
-
-    # dprint rewrites TOML schema directives such as #:schema; taplo preserves them.
-    taplo.enable = true;
   };
 }

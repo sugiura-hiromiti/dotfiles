@@ -146,6 +146,19 @@ glide.styles.add(
 	{ id: "catppuccin-glide", overwrite: true },
 );
 
+glide.styles.add(
+	`
+  #nav-bar #back-button,
+  #nav-bar #forward-button,
+  #nav-bar #home-button,
+  #nav-bar #stop-reload-button,
+  #nav-bar #fxa-toolbar-menu-button {
+    display: none !important;
+  }
+  `,
+	{ id: "minimal-toolbar", overwrite: true },
+);
+
 glide.keymaps.set("normal", "tt", "commandline_show tab ")
 glide.keymaps.set("normal", "tn", "tab_new")
 glide.keymaps.set("normal", "tx", "tab_close")

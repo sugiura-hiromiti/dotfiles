@@ -21,6 +21,8 @@ in
   settings = {
     "browser.startup.page" = 3;
     "browser.startup.homepage" = "https://www.google.com";
+    "browser.uidensity" = 1;
+    "browser.translations.enable" = false;
 
     "widget.use-xdg-desktop-portal.file-picker" = 1;
     "widget.use-xdg-desktop-portal.mime-handler" = 1;
@@ -35,5 +37,6 @@ in
     addons.darkreader
     addons.ff2mpv
     addons.org-capture
+    addons.ublock-origin
   ];
 }

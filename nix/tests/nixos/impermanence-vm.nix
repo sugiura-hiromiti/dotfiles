@@ -24,6 +24,7 @@ let
       ({ modulesPath, ... }: {
         imports = [
           (modulesPath + "/profiles/minimal.nix")
+          (modulesPath + "/profiles/qemu-guest.nix")
           (modulesPath + "/testing/test-instrumentation.nix")
         ];
       })

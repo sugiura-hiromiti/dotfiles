@@ -59,7 +59,7 @@ let
       'radio wifi on')
         : > "$state/wifi-radio-enabled"
         ;;
-      '--ask --show-secrets --wait 30 device wifi connect '* )
+      '--ask --show-secrets --wait 120 device wifi connect '* )
         test -f "$state/wifi-radio-enabled"
         test "$#" -eq 10
         test "$9" = name

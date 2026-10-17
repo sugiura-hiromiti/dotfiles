@@ -49,6 +49,8 @@ in
 
         inherit (shared) policies;
 
+        configPath = "dotfiles/nix/modules/home/programs/glide/config/glide";
+
         profiles = {
           dflt = {
             isDefault = true;

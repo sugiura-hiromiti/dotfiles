@@ -2,11 +2,18 @@
 pkgs.testers.runNixOSTest {
   name = "dotfiles.deployment-identity-vm";
   requiredFeatures.kvm = false;
-  defaults = { modulesPath, ... }: {
+  defaults = { lib, modulesPath, ... }: {
     imports = [ (modulesPath + "/profiles/minimal.nix") ];
     nix.enable = true;
     system.switch.enable = true;
     system.tools.nixos-rebuild.enable = true;
+    boot = {
+      loader = {
+        grub = {
+          device = lib.mkOverride 5 "nodev";
+        };
+      };
+    };
   };
   nodes = {
     generationA = { nodes, ... }: {

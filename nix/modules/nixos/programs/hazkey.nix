@@ -25,8 +25,14 @@ in
         fcitx5 = {
           settings = {
             inputMethod = {
-              "Groups/0/Items/2" = {
+              "Groups/0" = {
+                DefaultIM = "hazkey";
+              };
+              "Groups/0/Items/1" = {
                 Name = "hazkey";
+              };
+              "Groups/0/Items/2" = {
+                Name = "skk";
               };
             };
           };

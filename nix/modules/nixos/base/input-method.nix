@@ -121,13 +121,13 @@ in
             "Groups/0" = {
               Name = "Default";
               "Default Layout" = "us";
-              DefaultIM = "skk";
+              DefaultIM = lib.mkDefault "skk";
             };
             "Groups/0/Items/0" = {
               Name = "keyboard-us";
             };
             "Groups/0/Items/1" = {
-              Name = "skk";
+              Name = lib.mkDefault "skk";
             };
           };
           globalOptions = {

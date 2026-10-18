@@ -66,7 +66,9 @@ let
       ../nixos/configuration.nix
       (import ./system-identity.nix { targetConfig = config; })
     ]
-    ++ lib.optional (config.system == "x86_64-linux") nix-hazkey.nixosModules.hazkey
+    ++ lib.optional (config.system == "x86_64-linux") (
+      import ../modules/nixos/programs/hazkey.nix { inherit nix-hazkey; }
+    )
     ++ profileModules "nixos" config
     ++ config.deployment.modules
     ++ [

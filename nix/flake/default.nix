@@ -42,6 +42,7 @@ let
   nixos = import ../configurations/nixos.nix {
     inherit lib home;
     inherit (inputs)
+      fcitx-virtualkeyboard-adapter
       nixpkgs
       preservation
       disko

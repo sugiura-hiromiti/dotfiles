@@ -20,6 +20,9 @@
       };
     };
     features = {
+      osk = {
+        enable = true;
+      };
       autoRotation = {
         enable = true;
       };

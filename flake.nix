@@ -34,6 +34,14 @@
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
 
   inputs = {
+    fcitx-virtualkeyboard-adapter = {
+      url = "github:horriblename/fcitx-virtualkeyboard-adapter";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+      };
+    };
     nix-hazkey = {
       url = "github:aster-void/nix-hazkey";
       inputs = {

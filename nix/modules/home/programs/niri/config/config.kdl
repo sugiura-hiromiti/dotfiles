@@ -327,6 +327,15 @@ layout {
     }
 }
 
+switch-events {
+	tablet-mode-on {
+		spawn "systemctl" "--user" "start" "tablet-osk.service";
+	}
+	tablet-mode-off {
+		spawn "systemctl" "--user" "stop" "tablet-osk.service";
+	}
+}
+
 // Add lines like this to spawn processes at startup.
 // Note that running niri as a session supports xdg-desktop-autostart,
 // which may be more convenient to use.

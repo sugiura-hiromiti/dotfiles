@@ -5,5 +5,6 @@
     ./features/session-gui.nix
     ./features/impermanence
     ./features/auto-rotation.nix
+    ./features/osk.nix
   ];
 }

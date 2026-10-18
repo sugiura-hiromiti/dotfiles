@@ -62,6 +62,26 @@
         "type": "github"
       }
     },
+    "fcitx-virtualkeyboard-adapter": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1782165782,
+        "narHash": "sha256-vY+vzCIpwEOIQeSVh0BdjOxSXZ5uvLkcUrAmi3Vsqgs=",
+        "owner": "horriblename",
+        "repo": "fcitx-virtualkeyboard-adapter",
+        "rev": "ddc4d5313c5e6be79ca2e90d14c59f4d4c6d912d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "horriblename",
+        "repo": "fcitx-virtualkeyboard-adapter",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -557,11 +577,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792340633,
-        "narHash": "sha256-T8eta/AAQ3rUEWR+If7U2PyhEKM6ysbbESApGMjfYkI=",
+        "lastModified": 1792349245,
+        "narHash": "sha256-83vpnDeoZRygzm0wGYwHK6nvvIzK+jlUaujj24CKnpQ=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "96c6476610c0d5ebcb68b73517936ff258f395c1",
+        "rev": "a4bec1ddf3bd2ccf6077f09626687756a564fe9d",
         "type": "github"
       },
       "original": {
@@ -590,6 +610,7 @@
         "actions-nix": "actions-nix",
         "catppuccin": "catppuccin",
         "disko": "disko",
+        "fcitx-virtualkeyboard-adapter": "fcitx-virtualkeyboard-adapter",
         "flake-parts": "flake-parts",
         "glide": "glide",
         "home-manager": "home-manager",

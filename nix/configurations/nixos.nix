@@ -82,7 +82,9 @@ in
     config:
     nixpkgs.lib.nixosSystem {
       inherit (config) system;
-      specialArgs = systemSpecialArgs config;
+      specialArgs = systemSpecialArgs config // {
+        virtualKeyboardAdapter = fcitx-virtualkeyboard-adapter.packages.${config.system}.default;
+      };
       modules = modulesFor config;
     };
 }

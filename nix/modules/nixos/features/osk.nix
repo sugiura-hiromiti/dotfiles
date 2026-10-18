@@ -24,7 +24,7 @@ in
           addons = [ virtualKeyboardAdapter ];
           settings = {
             addons = {
-              virtualKeyboardadapter = {
+              virtualkeyboardadapter = {
                 globalSection = {
                   ActivateCmd = ''"true"'';
                   DeactivateCmd = ''"true"'';

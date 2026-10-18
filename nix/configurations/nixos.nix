@@ -2,6 +2,7 @@
   lib,
   nixpkgs,
   nix-hazkey,
+  fcitx-virtualkeyboard-adapter,
   preservation,
   disko,
   catppuccin,

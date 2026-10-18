@@ -39,6 +39,7 @@ let
     pkgs.runCommandLocal "niri-config"
       {
         inherit
+          absoluteInputConfig
           terminalKeybind
           terminalStartup
           floatingTerminalWindowRule
@@ -53,7 +54,16 @@ let
           --replace-fail "@terminalStartup@" "$terminalStartup" \
           --replace-fail "@floatingTerminalWindowRule@" "$floatingTerminalWindowRule" \
           --replace-fail "@terminalKeybind@" "$terminalKeybind"
+          --replace-fail "@absoluteInputConfig@" "$absoluteInputConfig"
       '';
+  absoluteInputConfig = lib.optionalString (cfg.absoluteInputOutput != null) ''
+    touch {
+      map-to-output ${kdlString cfg.absoluteInputOutput}
+    }
+    tablet {
+      map-to-output ${kdlString cfg.absoluteInputOutput}
+    }
+  '';
 in
 {
   options.dotfiles.programs.niri = {
@@ -61,6 +71,12 @@ in
       type = lib.types.bool;
       default = false;
       description = "Whether to install the repository-managed niri configuration.";
+    };
+
+    absoluteInputOutput = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Output for touchscreen and tablet input.";
     };
 
     # TODO: このへん色々なくせそう

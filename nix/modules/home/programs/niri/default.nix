@@ -53,7 +53,7 @@ let
           --replace-fail "~/Downloads/media/screenshots" "${paths.screenshotDirectory}" \
           --replace-fail "@terminalStartup@" "$terminalStartup" \
           --replace-fail "@floatingTerminalWindowRule@" "$floatingTerminalWindowRule" \
-          --replace-fail "@terminalKeybind@" "$terminalKeybind"
+          --replace-fail "@terminalKeybind@" "$terminalKeybind" \
           --replace-fail "@absoluteInputConfig@" "$absoluteInputConfig"
       '';
   absoluteInputConfig = lib.optionalString (cfg.absoluteInputOutput != null) ''

@@ -1,3 +1,4 @@
+// みため
 glide.o.native_tabs = 'autohide';
 
 type Palette = Record<
@@ -159,9 +160,14 @@ glide.styles.add(
 	{ id: 'minimal-toolbar', overwrite: true, },
 );
 
+// 操作感
+glide.prefs.set("general.smoothScroll.lines", false);
+
+// keybind
+glide.g.mapleader = '<Space>';
+
 glide.keymaps.set('normal', 'tt', 'commandline_show tab ',);
 glide.keymaps.set('normal', 'tn', 'tab_new',);
-glide.keymaps.set('normal', 'tx', 'tab_close',);
 
 glide.keymaps.set('normal', 'H', 'back',);
 glide.keymaps.set('normal', 'L', 'forward',);
@@ -202,3 +208,41 @@ glide.keymaps.set('normal', 'gb', async () => {
 		),
 	},);
 }, { description: 'Search bookmarks', },);
+
+glide.keymaps.set('normal', '<leader>w', async ({ tab_id }) => {
+	const tab = await browser.tabs.get(tab_id);
+	const windows = await browser.windows.getAll({
+		populate: true, windowTypes: ['normal'],
+	});
+
+	const options: glide.CommandLineCustomOption[] = [
+		{
+			label: 'New window', description: 'Move tab to a new window', async execute() {
+				await browser.windows.create({
+					tabId: tab_id, focused: true,
+				})
+			}
+		}
+	];
+
+	for (const win of windows) {
+		if (win.id === undefined || win.id === tab.windowId || win.incognito !== tab.incognito) { continue; }
+
+		const id = win.id;
+		const active = win.tabs?.find((tab) => tab.active);
+		options.push({
+			label: active?.title || `Window ${id}`,
+			description: `Window ${id}: ${win.tabs?.length ?? 0} tabs`,
+			async execute() {
+				await browser.tabs.move(tab_id, {
+					windowId: id, index: -1,
+				})
+			}
+		})
+	}
+
+	await glide.commandline.show({
+		title: 'Move tab to window',
+		options,
+	});
+}, { description: 'Move tab to another window' });

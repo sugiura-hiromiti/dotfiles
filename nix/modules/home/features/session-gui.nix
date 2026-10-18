@@ -25,9 +25,7 @@ in
 
     fcitx5.packages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
-      default = lib.optionals (pkgs.stdenv.hostPlatform.isLinux && pkgs.stdenv.hostPlatform.isx86_64) [
-        pkgs.nur.repos.aster-void.fcitx5-hazkey
-      ];
+      default = [ ];
       description = "Additional Fcitx 5 packages installed for graphical sessions.";
     };
 

@@ -34,6 +34,17 @@
   description = "nixxxxxxxxxxxxxxxxxxxxxxxx";
 
   inputs = {
+    nix-hazkey = {
+      url = "github:aster-void/nix-hazkey";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+        home-manager = {
+          follows = "home-manager";
+        };
+      };
+    };
     glide = {
       url = "github:glide-browser/glide.nix";
       inputs = {

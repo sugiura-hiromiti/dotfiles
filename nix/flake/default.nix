@@ -47,6 +47,7 @@ let
       disko
       catppuccin
       nix-agent
+      nix-hazkey
       home-manager
       ;
     inherit (common) profileModules systemSpecialArgs;

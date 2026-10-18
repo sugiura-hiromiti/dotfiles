@@ -1,6 +1,7 @@
 {
   lib,
   nixpkgs,
+  nix-hazkey,
   preservation,
   disko,
   catppuccin,
@@ -65,6 +66,7 @@ let
       ../nixos/configuration.nix
       (import ./system-identity.nix { targetConfig = config; })
     ]
+    ++ lib.optional (config.system == "x86_64-linux") nix-hazkey.nixosModules.hazkey
     ++ profileModules "nixos" config
     ++ config.deployment.modules
     ++ [

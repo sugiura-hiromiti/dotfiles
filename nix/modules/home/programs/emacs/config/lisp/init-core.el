@@ -1,5 +1,13 @@
 ;;; -*- lexical-binding: t; -*-
 
+(require 'init-paths)
+
+;; Flymake may execute project code; trust only the development directories.
+(setopt trusted-content
+	(list "~/dotfiles/"
+		(abbreviate-file-name
+			(file-name-as-directory my/dotfiles-workspace-root))))
+
 (setopt
 	package-install-upgrade-built-in t
 	initial-scratch-message nil

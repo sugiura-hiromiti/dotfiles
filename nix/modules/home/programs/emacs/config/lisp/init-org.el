@@ -93,14 +93,24 @@
 	:config
 	(require 'org-ql-search)
 	:custom
-	(org-ql--ask-unsafe-query nil)
+	(org-ql-ask-unsafe-query nil)
 	(org-ql-views
 		(list
 			(cons "link"
 				(list
 					:buffers-files #'org-agenda-files
 					:query '(tags "link")
-					:title "link")))))
+					:title "link"))
+			(cons "todo"
+				(list
+					:buffers-files #'org-agenda-files
+					:query '(todo)
+					:title "todo"))
+			(cons "bookmarks"
+				(list
+					:buffers-files #'org-agenda-files
+					:query '(tags "bookmark")
+					:title "bookmarks")))))
 
 (use-package org-feed
 	:ensure nil

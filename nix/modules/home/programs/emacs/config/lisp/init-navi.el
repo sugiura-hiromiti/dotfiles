@@ -101,7 +101,7 @@
 			"org"
 			(("c" org-capture "capture")
 				("s" org-store-link "store link")
-				("v" org-ql-views "ql view")))))
+				("v" org-ql-view "ql view")))))
 
 (defun my/eldoc-box-help-at-point ()
 	"Show eldoc document and focus its child frame."

@@ -7,6 +7,7 @@
 ;;; Code:
 
 (declare-function flymake-mode "flymake")
+(declare-function eglot-managed-p "eglot")
 (declare-function hl-todo-flymake "hl-todo")
 (defvar flymake-diagnostic-functions)
 
@@ -14,6 +15,11 @@
 	"現在のbufferでhl-todoのFlymake diagnosticsを有効化する。."
 	(add-hook 'flymake-diagnostic-functions #'hl-todo-flymake nil t)
 	(flymake-mode 1))
+
+(defun my/eglot-hl-todo-flymake-setup ()
+	"Eglotがbackendを置き換えた後にhl-todoのdiagnosticsを戻す."
+	(when (and (eglot-managed-p) (bound-and-true-p hl-todo-mode))
+		(my/hl-todo-flymake-setup)))
 
 (use-package ghostel
 	:commands (ghostel
@@ -37,11 +43,11 @@
 (use-package envrc
 	:hook (after-init . envrc-global-mode))
 
-;; TODO: 現在壊れてる(特にhl-todo-flymake)ので修正する
 (use-package hl-todo
 	:hook (prog-mode . hl-todo-mode)
 	:init
-	(add-hook 'prog-mode-hook #'my/hl-todo-flymake-setup 90))
+	(add-hook 'prog-mode-hook #'my/hl-todo-flymake-setup 90)
+	(add-hook 'eglot-managed-mode-hook #'my/eglot-hl-todo-flymake-setup))
 
 (provide 'init-misc)
 

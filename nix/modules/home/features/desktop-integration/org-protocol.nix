@@ -41,7 +41,7 @@ in
       desktopEntries.org-protocol = {
         name = "org-protocol";
         comment = "handle org-protocol:// urls with emacsclient";
-        exec = "${cfg.orgProtocol.emacsPackage}/bin/emacsclient -n -- %u";
+        exec = "${cfg.orgProtocol.emacsPackage}/bin/emacsclient -n -r -- %u";
         terminal = false;
         type = "Application";
         categories = [ "Utility" ];

@@ -96,7 +96,7 @@
 	:config
 	(require 'org-ql-search)
 	:custom
-	(org-ql-ask-unsafe-query nil)
+	(org-ql-ask-unsafe-queries nil)
 	(org-ql-views
 		(list
 			(cons "link"

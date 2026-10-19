@@ -257,7 +257,7 @@ glide.keymaps.set('normal', '<leader>w', async ({ tab_id, },) => {
 
 glide.keymaps.set(
 	'normal', '<leader>c', async () => {
-		await glide.keys.send('<C-A-o>', {
+		await glide.keys.send('<C-S-l>', {
 			skip_mappings: true,
 		});
 	},

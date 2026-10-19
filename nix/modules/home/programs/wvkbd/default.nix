@@ -13,6 +13,13 @@ in
       programs = {
         wvkbd = {
           enable = lib.mkEnableOption "wvkbd on-screen keyboard";
+          toggleCommand = lib.mkOption {
+            type = lib.types.str;
+            readOnly = true;
+            default =
+              "${pkgs.systemd}/bin/systemctl --user kill " + "--kill-whom-main --signal-SIGRTMIN wvkbd.service";
+            description = "Command to toggle wvkbd visibility.";
+          };
         };
       };
     };

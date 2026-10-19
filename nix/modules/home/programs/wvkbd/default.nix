@@ -17,7 +17,7 @@ in
             type = lib.types.str;
             readOnly = true;
             default =
-              "${pkgs.systemd}/bin/systemctl --user kill " + "--kill-whom-main --signal-SIGRTMIN wvkbd.service";
+              "${pkgs.systemd}/bin/systemctl --user kill " + "--kill-whom=main --signal=SIGRTMIN wvkbd.service";
             description = "Command to toggle wvkbd visibility.";
           };
         };

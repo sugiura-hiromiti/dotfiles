@@ -232,7 +232,7 @@ glide.keymaps.set('normal', '<leader>w', async ({ tab_id, },) => {
 	for (const win of windows) {
 		if (
 			win.id === undefined || win.id === tab.windowId || win
-					.incognito !== tab.incognito
+				.incognito !== tab.incognito
 		) { continue; }
 
 		const id = win.id;
@@ -254,3 +254,11 @@ glide.keymaps.set('normal', '<leader>w', async ({ tab_id, },) => {
 		options,
 	},);
 }, { description: 'Move tab to another window', },);
+
+glide.keymaps.set(
+	'normal', '<leader>c', async () => {
+		await glide.keys.send('<C-A-o>', {
+			skip_mappings: true,
+		});
+	},
+	{ description: 'Org Capture' });

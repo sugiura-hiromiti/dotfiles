@@ -38,6 +38,9 @@
 			 "* TODO %?\n:PROPERTIES:\n:CREATED: %U\n:END:\n")
 		 ("p" "via protocol" entry
 			 (file ,(expand-file-name "inbox.org" org-directory))
+			 "* %:description :link:\n%:link\n\n%i\n")
+		 ("L" "via protocol" entry
+			 (file ,(expand-file-name "inbox.org" org-directory))
 			 "* %:description :link:\n%:link\n\n%i\n")))
 
 (setq org-protocol-default-template-key "p")

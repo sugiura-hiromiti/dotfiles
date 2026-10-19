@@ -158,10 +158,13 @@
 
 ;; NOTE: eldocの表示をmd-ts-modeに流したいが現状内部関数をhackする必要がある為、eglot-markdown-renderersの導入を待つ
 
-(use-package apheleia :config (apheleia-global-mode +1))
+(use-package apheleia
+	:config
+	(apheleia-global-mode +1)
+	(setf (alist-get 'typescript-ts-mode apheleia-mode-alist) 'dprint))
 
 ;; (use-package eldoc-box :after eglot)
 
 (provide 'init-lsp)
 
-;; init-lsp.el ends here
+;;; init-lsp.el ends here

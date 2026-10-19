@@ -81,11 +81,11 @@ let
           "launcher"
           "taskbar"
           "media"
-        ];
+        ]
+        ++ optionals config.dotfiles.features.osk.enable [ "osk" ];
         center = [
         ];
         end = [
-          "osk"
           "keyboard_layout"
           # "caffeine"
           "battery"

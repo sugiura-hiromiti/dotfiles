@@ -85,13 +85,14 @@ let
         center = [
         ];
         end = [
+          "osk"
           "keyboard_layout"
-          "caffeine"
+          # "caffeine"
           "battery"
           "network"
           "bluetooth"
           "volume"
-          "nightlight"
+          # "nightlight"
         ]
         ++ optionals cfg.ddc.enable [
           "brightness"
@@ -104,6 +105,14 @@ let
     };
 
     widget = {
+      osk = {
+        type = "custom_button";
+        glyph = "keyboard";
+        tooltip = "Toggle on-screen keyboard";
+        actions = {
+          left = "exec osk-toggle";
+        };
+      };
       clock = {
         format = "{:%-m/%-d %a %H:%M}";
       };

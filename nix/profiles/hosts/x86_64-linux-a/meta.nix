@@ -40,7 +40,7 @@ in
   roles = [ ];
   variants = [
     "ai-tools"
-    # "dtm"
+    "dtm"
     "media"
     "noctalia-shell"
     "terminal"

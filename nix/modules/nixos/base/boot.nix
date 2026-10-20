@@ -73,7 +73,7 @@ in
             efi.canTouchEfiVariables = lib.mkDefault false;
           };
 
-          kernelPackages = lib.mkDefault pkgs.linuxPackages;
+          kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
           tmp = {
             cleanOnBoot = lib.mkDefault true;
           };

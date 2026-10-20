@@ -30,6 +30,7 @@ let
       nixpkgs
       nur
       home-manager
+      reaper-flake
       catppuccin
       nix-index-database
       mcp-servers-nix

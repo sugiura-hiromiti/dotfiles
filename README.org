@@ -212,6 +212,29 @@ nix flake show
 
 5. Switch using =u= or the direct commands above.
 
+** REAPER
+
+The =dtm= variant enables the dedicated [[file:nix/modules/home/programs/reaper/default.nix][REAPER module]], backed by
+[[https://github.com/9Prestidigitator/reaper-flake][reaper-flake]]. Add declarative preferences, extensions, themes, and other
+settings to the module's =programs.reaper= block. For example, to disable the
+startup splash screen, add:
+
+#+begin_src nix
+preferences.general.startupSettings.showSplashScreenOnStartup = false;
+#+end_src
+
+Home Manager profiles can also customize =programs.reaper= directly. Set
+=dotfiles.programs.reaper.enable = true;= to use REAPER without the =dtm=
+variant, or =false= to opt out while keeping the other DTM tools.
+
+The resource directory defaults to =~/.config/reaper-flake=. Close REAPER
+before applying Home Manager changes; its activation refuses to run while
+REAPER is open.
+
+On hosts with an ephemeral home directory, persist =~/.config/reaper-flake=
+(including =.nix-managed=) to retain GUI settings and managed-state tracking
+across reboots. This directory is not in the current persistence whitelist.
+
 ** Maintenance
 
 Run checks:

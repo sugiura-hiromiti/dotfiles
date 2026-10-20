@@ -14,7 +14,6 @@ in
     packages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = with pkgs; [
-        reaper
         dexed
       ];
       description = "DTM packages installed on every supported platform.";
@@ -57,6 +56,8 @@ in
             message = "dotfiles.features.dtm.geonkick is Linux-only.";
           }
         ];
+
+        dotfiles.programs.reaper.enable = lib.mkDefault true;
 
         home.packages = cfg.packages ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux cfg.linuxPackages;
       }

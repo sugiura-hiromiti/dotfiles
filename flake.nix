@@ -97,6 +97,17 @@
         };
       };
     };
+    reaper-flake = {
+      url = "github:9Prestidigitator/reaper-flake";
+      inputs = {
+        nixpkgs = {
+          follows = "nixpkgs";
+        };
+        flake-parts = {
+          follows = "flake-parts";
+        };
+      };
+    };
     catppuccin = {
       url = "github:catppuccin/nix";
     };

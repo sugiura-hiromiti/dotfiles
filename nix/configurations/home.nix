@@ -3,6 +3,7 @@
   glide,
   nur,
   home-manager,
+  reaper-flake,
   catppuccin,
   nix-index-database,
   mcp-servers-nix,
@@ -39,6 +40,7 @@ let
       nix-index-database.homeModules.default
       mcp-servers-nix.homeManagerModules.default
       glide.homeModules.default
+      reaper-flake.homeModules.reaper
     ];
   build =
     config:

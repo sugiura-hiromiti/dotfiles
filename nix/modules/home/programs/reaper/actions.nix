@@ -42,23 +42,8 @@ let
       actionName = "Zoom in vertically";
     };
   };
-  shortcutSetToList =
-    sections:
-    lib.concatLists (
-      lib.mapAttrsToList (
-        sectionName: shortcuts:
-        lib.mapAttrsToList (
-          shortcut: value:
-          reaperActions.shortcut (
-            value
-            // {
-              inherit shortcut;
-              section = reaperActions.sections.${sectionName};
-            }
-          )
-        ) shortcuts
-      ) sections
-    );
+  helper = import ./helper { inherit lib reaperActions; };
+  inherit (helper) shortcutSetToList;
 in
 {
   config = lib.mkIf config.dotfiles.programs.reaper.enable {

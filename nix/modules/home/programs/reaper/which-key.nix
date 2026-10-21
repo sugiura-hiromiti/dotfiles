@@ -1,7 +1,29 @@
-{ config, lib, ... }: {
+{
+  reaperActions,
+  config,
+  lib,
+  ...
+}:
+{
   config = lib.mkIf config.dotfiles.programs.reaper.enable {
     programs = {
       reaper = {
+        actions = {
+          keyBindings = [ ];
+          scripts = [
+            {
+              path = "which-key/leader.lua";
+              source = ./which-key/leader.lua;
+              section = reaperActions.sections.main;
+              commandId = "RS_which_key_main";
+            }
+            {
+              path = "which-key/leader.lua";
+              section = reaperActions.sections.mdiEditor;
+              commandId = "RS_which_key_midi";
+            }
+          ];
+        };
         extensions = {
           reapack = {
             repositories = [

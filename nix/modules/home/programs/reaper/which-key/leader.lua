@@ -14,12 +14,7 @@ local menus = {
 			},
 		},
 	},
-	midiEditor = {
-		i = {
-			label = 'insert note',
-			command = 40051,
-		},
-	},
+	midiEditor = {},
 }
 
 local _, _, section = reaper.get_action_context()
@@ -76,7 +71,7 @@ local function draw()
 	gfx.set(1, 1, 1, 1)
 
 	local keys = {}
-	for key in pairs(keys) do
+	for key in pairs(current) do
 		keys[#keys + 1] = key
 	end
 	table.sort(keys)

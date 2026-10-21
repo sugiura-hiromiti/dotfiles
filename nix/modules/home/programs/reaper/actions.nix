@@ -52,6 +52,18 @@ in
         actions = {
           keyBindings = shortcutSetToList {
             midiEditor = {
+              Backspace = {
+                command = 40002;
+                actionName = "delete selected notes";
+              };
+              C = {
+                command = 1068;
+                actionName = "toggle repeat";
+              };
+              I = {
+                command = 40051;
+                actionName = "insert note";
+              };
               H = {
                 command = 40414;
                 actionName = "Select previous note";
@@ -108,6 +120,26 @@ in
             // zoomBindings
             // scrollBindings;
             main = {
+              M = {
+                command = 6;
+                actionName = "toggle mute for selected tracks";
+              };
+              Backspace = {
+                command = 40006;
+                actionName = "remove selected items";
+              };
+              C = {
+                command = 1068;
+                actionName = "toggle repeat";
+              };
+              N = {
+                command = 40001;
+                actionName = "insert new track";
+              };
+              D = {
+                command = 41295;
+                actionName = "duplicate items";
+              };
               S = {
                 command = 40757;
                 actionName = "split items at edit cursor";

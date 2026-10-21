@@ -179,7 +179,7 @@ glide.styles.add(
 
 /* Hover */
 [anonid = "glide-commandline-completions"]
-	.gcl-option: not(.focused):hover {
+	.gcl-option:not(.focused):hover {
 	background: ${palette.surface0} !important;
 }
 
@@ -295,14 +295,14 @@ glide.styles.add(
 	box-shadow: none!important;
 }
 
-findbar.findbar-textbox {
+findbar .findbar-textbox {
 	background: ${palette.surface0} !important;
 	color: ${palette.text} !important;
 	border: none!important;
 	box-shadow: none!important;
 }
 
-findbar.findbar-textbox[status = "notfound"] {
+findbar .findbar-textbox[status = "notfound"] {
 	background: ${palette.red} !important;
 	color: ${palette.base} !important;
 }

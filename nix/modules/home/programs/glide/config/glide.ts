@@ -94,68 +94,43 @@ type Theme = 'dark' | 'light';
 
 const theme: Theme = glide.prefs.get('dotfiles.glide.theme',) === 'light' ? 'light' : 'dark';
 const palette = catppuccin[theme];
-
 void browser.theme.update({
 	colors: {
 		// Tabs
-		frame: palette.mantle,
-		frame_inactive: palette.crust,
-		tab_selected: palette.surface0,
+		frame: palette.mauve,
+		frame_inactive: palette.surface1,
+		tab_selected: palette.base,
 		tab_text: palette.text,
-		tab_background_text: palette.subtext1,
-		tab_line: palette.lavender,
-		tab_loading: palette.sapphire,
+		tab_background_text: palette.base,
+		tab_loading: palette.yellow,
 
 		// Toolbar
-		toolbar: palette.base,
-		toolbar_text: palette.text,
-		toolbar_top_separator: palette.surface1,
-		toolbar_bottom_separator: palette.surface1,
-		toolbar_vertical_separator: palette.surface2,
+		toolbar: palette.blue,
+		toolbar_text: palette.base,
+		icons: palette.base,
+		icons_attention: palette.peach,
 
 		// Address bar
-		toolbar_field: palette.surface0,
+		toolbar_field: palette.base,
 		toolbar_field_text: palette.text,
-		toolbar_field_border: palette.overlay0,
-
-		// Focused address bar
-		toolbar_field_focus: palette.crust,
-		toolbar_field_text_focus: palette.text,
-		toolbar_field_border_focus: palette.blue,
-
-		// Text selection
+		toolbar_field_focus: palette.mauve,
+		toolbar_field_text_focus: palette.base,
 		toolbar_field_highlight: palette.blue,
-		toolbar_field_highlight_text:
-			theme === 'light' ? '#ffffff' : palette.crust,
+		toolbar_field_highlight_text: palette.base,
 
-		// Buttons and icons
-		icons: palette.subtext1,
-		icons_attention: palette.peach,
-		button_background_hover: palette.surface0,
-		button_background_active: palette.surface1,
+		// Interaction
+		button_background_hover: palette.mauve,
+		button_background_active: palette.surface0,
 
-		// Popups and suggestions
-		popup: palette.mantle,
+		// Popups
+		popup: palette.base,
 		popup_text: palette.text,
-		popup_border: palette.surface2,
-		popup_highlight: palette.surface0,
-		popup_highlight_text: palette.text,
-
-		// Sidebar
-		sidebar: palette.base,
-		sidebar_text: palette.text,
-		sidebar_border: palette.surface1,
-		sidebar_highlight: palette.surface0,
-		sidebar_highlight_text: palette.text,
-
-		// New tab page
-		ntp_background: palette.base,
-		ntp_card_background: palette.surface0,
-		ntp_text: palette.text,
+		popup_highlight: palette.mauve,
+		popup_highlight_text: palette.base,
 	},
 });
 
-glide.o.hint_size = '14px';
+glide.o.hint_size = '13px';
 
 glide.styles.add(
 	`

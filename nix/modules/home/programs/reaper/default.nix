@@ -3,6 +3,7 @@
   config,
   lib,
   reaperFlake,
+  reaperAppearance,
   ...
 }:
 let
@@ -40,6 +41,11 @@ in
           };
         };
         preferences = {
+          appearance = {
+            zoomScrollOffset = {
+              horizontalZoomCenter = reaperAppearance.zoomScrollOffset.zoomCenter.horizontal.editCursor;
+            };
+          };
           editingBehavior = {
             midiEditor = {
               oneMidiEditorPer = "project";

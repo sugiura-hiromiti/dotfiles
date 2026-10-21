@@ -11,6 +11,7 @@ let
 in
 {
   imports = [
+    ./lua-lsp.nix
     ./actions.nix
     ./which-key.nix
   ];

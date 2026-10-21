@@ -12,9 +12,10 @@
         nodejs
         typescript
         typescript-language-server
+        lua-language-server
+        vscode-langservers-extracted
       ];
       nvimMaintenancePackages = with pkgs; [
-        lua-language-server
         luajitPackages.luarocks
         tree-sitter
       ];

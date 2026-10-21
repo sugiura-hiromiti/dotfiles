@@ -323,6 +323,152 @@ glide.styles.add(
 	{ id: 'minimal-toolbar', overwrite: true, },
 );
 
+glide.styles.add(
+	`
+  #glide-toolbar-mode-button {
+    background: var(--glide-current-mode-color) !important;
+    color: ${palette.base} !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #glide-toolbar-mode-button::after {
+    display: none !important;
+  }
+  `,
+	{ id: 'mode-indicator', overwrite: true },
+);
+
+glide.styles.add(
+	`
+  /* Glide notifications only */
+  notification-message[value^="glide-"] {
+    --info-bar-background-color: ${palette.base};
+    --info-bar-text-color: ${palette.text};
+    --info-bar-box-shadow: none;
+    --message-bar-border-width: 0px;
+    --message-bar-icon-background-color: transparent;
+  }
+
+  /* Information */
+  notification-message[value^="glide-"][type="info"] {
+    --info-bar-text-color: ${palette.mauve};
+    --message-bar-icon-color: ${palette.blue};
+    --icon-color-information: ${palette.blue};
+  }
+
+  /* Warning */
+  notification-message[value^="glide-"][type="warning"] {
+    --info-bar-text-color: ${palette.text};
+    --message-bar-icon-color: ${palette.yellow};
+    --icon-color-warning: ${palette.yellow};
+  }
+
+  /* Error */
+  notification-message[value^="glide-"][type="critical"] {
+    --info-bar-text-color: ${palette.red};
+    --message-bar-icon-color: ${palette.red};
+    --icon-color-critical: ${palette.red};
+  }
+
+  /* Action buttons */
+  notification-message[value^="glide-"] .notification-button {
+    background: ${palette.surface0} !important;
+    color: ${palette.teal} !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  notification-message[value^="glide-"] .notification-button:hover {
+    background: ${palette.surface1} !important;
+    color: ${palette.green} !important;
+  }
+  `,
+	{ id: 'glide-notifications', overwrite: true },
+);
+
+glide.styles.add(
+	`
+  #urlbar {
+    --urlbarview-background-color-selected: ${palette.surface0};
+    --urlbarview-background-color-hover: ${palette.surface0};
+    --urlbarview-text-color-selected: ${palette.text};
+    --urlbarview-text-color-hover: ${palette.text};
+  }
+
+  /* Popup background */
+  #urlbar .urlbarView-background {
+    background-color: ${palette.base} !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #urlbar .urlbarView-results {
+    border-top: none !important;
+  }
+
+  /* Default titles */
+  #urlbar .urlbarView-row .urlbarView-title {
+    color: ${palette.pink} !important;
+  }
+
+  /* Search suggestions */
+  #urlbar .urlbarView-row:is(
+    [type="search"],
+    [type="rich-search"]
+  ) .urlbarView-title {
+    color: ${palette.blue} !important;
+  }
+
+  /* Bookmarks */
+  #urlbar .urlbarView-row[type="bookmark"]
+    .urlbarView-title {
+    color: ${palette.green} !important;
+  }
+
+  /* History */
+  #urlbar .urlbarView-row:is(
+    [type="history"],
+    [type="adaptive-history"],
+    [type="semantic-history"]
+  ) .urlbarView-title {
+    color: ${palette.lavender} !important;
+  }
+
+  /* Open tabs */
+  #urlbar .urlbarView-row:is(
+    [type="switchtab"],
+    [type="remotetab"]
+  ) .urlbarView-title {
+    color: ${palette.peach} !important;
+  }
+
+  /* URLs */
+  #urlbar .urlbarView-url {
+    color: ${palette.teal} !important;
+  }
+
+  /* Actions */
+  #urlbar .urlbarView-action {
+    color: ${palette.yellow} !important;
+  }
+
+  /* Tags */
+  #urlbar .urlbarView-tag {
+    color: ${palette.mauve} !important;
+    background: transparent !important;
+    border: none !important;
+  }
+
+  /* Selected title */
+  #urlbar .urlbarView-row[selected]
+    .urlbarView-title {
+    color: ${palette.blue} !important;
+  }
+  `,
+	{ id: 'colorful-urlbar', overwrite: true },
+);
+
 // 操作感
 glide.prefs.set('general.smoothScroll.lines', false,);
 

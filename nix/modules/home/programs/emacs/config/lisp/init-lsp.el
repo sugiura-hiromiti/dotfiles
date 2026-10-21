@@ -132,7 +132,8 @@
 		(haskell-ts-mode . eglot-ensure)
 		(nix-ts-mode . eglot-ensure)
 		(toml-ts-mode . eglot-ensure)
-		(typescript-ts-mode . eglot-ensure))
+		(typescript-ts-mode . eglot-ensure)
+		(json-ts-mode . eglot-ensure))
 	:config
 	(my/eglot-configure-server-programs)
 	(setq-default eglot-workspace-configuration my/eglot-workspace-configuration))
@@ -161,7 +162,8 @@
 (use-package apheleia
 	:config
 	(apheleia-global-mode +1)
-	(setf (alist-get 'typescript-ts-mode apheleia-mode-alist) 'dprint))
+	(setf (alist-get 'typescript-ts-mode apheleia-mode-alist) 'dprint)
+	(alist-get 'json-ts-mode apheleia-mode-alist) 'dprint)
 
 ;; (use-package eldoc-box :after eglot)
 

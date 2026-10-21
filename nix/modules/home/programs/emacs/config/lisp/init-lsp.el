@@ -143,7 +143,7 @@
 
 (defun my/eglot-format-on-save ()
 	"Eglot管理下では保存前に整形する."
-	(when (eglot-managed-p)
+	(when (and (not (derived-mode-p 'json-ts-mode)) (eglot-managed-p))
 		(condition-case nil
 			(eglot-format-buffer)
 			(error
@@ -162,8 +162,8 @@
 (use-package apheleia
 	:config
 	(apheleia-global-mode +1)
-	(setf (alist-get 'typescript-ts-mode apheleia-mode-alist) 'dprint)
-	(alist-get 'json-ts-mode apheleia-mode-alist) 'dprint)
+	(setf (alist-get 'typescript-ts-mode apheleia-mode-alist) 'dprint
+		(alist-get 'json-ts-mode apheleia-mode-alist) 'dprint))
 
 ;; (use-package eldoc-box :after eglot)
 

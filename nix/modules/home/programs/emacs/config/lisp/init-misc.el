@@ -49,6 +49,10 @@
 	(add-hook 'prog-mode-hook #'my/hl-todo-flymake-setup 90)
 	(add-hook 'eglot-managed-mode-hook #'my/eglot-hl-todo-flymake-setup))
 
+(with-eval-after-load 'project
+	(add-to-list 'project-vc-extra-root-markers
+		".luarc.json"))
+
 (provide 'init-misc)
 
 ;;; init-misc.el ends here

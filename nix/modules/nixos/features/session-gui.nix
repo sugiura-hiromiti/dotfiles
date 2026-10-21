@@ -1,4 +1,5 @@
 {
+  accounts,
   config,
   lib,
   pkgs,
@@ -18,6 +19,14 @@ in
     enable = lib.mkEnableOption "graphical session system integration";
 
     greeter = {
+      backend = lib.mkOption {
+        type = lib.types.enum [
+          "tuigreet"
+          "noctalia"
+        ];
+        default = "noctalia";
+        description = "greeter implementation";
+      };
       package = lib.mkOption {
         type = lib.types.package;
         default = pkgs.tuigreet;
@@ -69,6 +78,9 @@ in
         ];
 
         services = {
+          accounts-daemon = {
+            enable = true;
+          };
           greetd = {
             enable = true;
             useTextGreeter = true;
@@ -89,10 +101,44 @@ in
           };
         };
 
+      }
+
+      (lib.mkIf (cfg.greeter.backend == "tuigreet") {
         environment.systemPackages = [
           cfg.greeter.package
         ];
-      }
+        services = {
+          greetd = {
+            enable = true;
+            useTextGreeter = true;
+            settings = {
+              default_session = {
+                command = greeterCommand;
+                user = cfg.greeter.user;
+              };
+            };
+          };
+        };
+      })
+
+      (lib.mkIf (cfg.greeter.backend == "noctalia") {
+        services = {
+          displayManager = {
+            noctalia-greeter = {
+              passwordlessSyncUsers = [ accounts.primary ];
+              enable = true;
+              settings = {
+                session = {
+                  default = "niri";
+                  keyboard = {
+                    layout = "us";
+                  };
+                };
+              };
+            };
+          };
+        };
+      })
 
       (lib.mkIf cfg.noGuiSpecialisation.enable {
         specialisation."no-gui".configuration = {

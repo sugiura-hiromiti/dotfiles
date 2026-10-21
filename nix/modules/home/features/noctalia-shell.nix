@@ -17,6 +17,10 @@ let
   cfg = config.dotfiles.features.noctaliaShell;
   settings = {
     shell = {
+      greeter_sync = {
+        auto_sync = true;
+      };
+      avatar_path = "${config.dotfiles.paths.mediaDirectory}/avatar.png";
       launcher = {
         show_app_actions = true;
         providers = {
@@ -71,11 +75,11 @@ let
         margin_ends = 0;
         widget_spacing = 10;
         thickness = 27;
+        scale = 1.2;
 
         auto_hide = false;
         smart_auto_hide = true;
         reserve_space = false;
-        # TODO: check properly conditional enabling like brightness
         start = [
           "privacy"
           "launcher"

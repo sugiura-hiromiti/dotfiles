@@ -133,7 +133,8 @@
 		(nix-ts-mode . eglot-ensure)
 		(toml-ts-mode . eglot-ensure)
 		(typescript-ts-mode . eglot-ensure)
-		(json-ts-mode . eglot-ensure))
+		(json-ts-mode . eglot-ensure)
+		(nu-ts-mode . eglot-ensure))
 	:config
 	(my/eglot-configure-server-programs)
 	(setq-default eglot-workspace-configuration my/eglot-workspace-configuration))

@@ -522,6 +522,19 @@ glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 				},);
 			},
 		},);
+		options.push({
+			label: `Merge into ${active?.title || `window ${id}`}`,
+			description: `merge current window into window ${id}`,
+			async execute() {
+				const sourceTabs = await browser.tabs.query({ windowId: tab.windowId });
+				const unpinned = sourceTabs.filter((t) => !t.pinned).map((t) => t.id).filter((id): id is number => id !== undefined);
+				if (unpinned.length > 0) {
+					await browser.tabs.move(unpinned, {
+						windowId: id, index: -1
+					});
+				}
+			}
+		});
 	}
 
 	await glide.commandline.show({

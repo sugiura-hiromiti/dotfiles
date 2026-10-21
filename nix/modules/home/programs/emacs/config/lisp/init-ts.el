@@ -56,6 +56,10 @@
 	:config
 	(setq kdl-ts-mode-indent-offset 3))
 
+(use-package nu-ts-mode
+	:mode "\\.nu\\'"
+	:interpreter "nu")
+
 (use-package treesit-auto
 	:demand t
 	:custom

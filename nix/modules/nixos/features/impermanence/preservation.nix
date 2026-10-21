@@ -65,7 +65,10 @@ in
               how = "symlink";
               configureParent = true;
             }) config.services.openssh.hostKeys
-          );
+          )
+          ++ lib.optionals config.services.displayManager.noctalia-greeter.enable [
+            "/var/lib/noctalia-greeter"
+          ];
         };
       };
     };

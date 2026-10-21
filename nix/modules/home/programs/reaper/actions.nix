@@ -175,7 +175,7 @@ in
                 command = 40285;
                 actionName = "Next track";
               };
-              "/" = {
+              F = {
                 command = 40069;
                 actionName = "jump to time/marker/region";
               };

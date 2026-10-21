@@ -1,5 +1,5 @@
 // みため
-glide.o.native_tabs = 'autohide';
+// glide.o.native_tabs = 'autohide';
 
 type Palette = Record<
 	| 'rosewater'
@@ -105,7 +105,7 @@ void browser.theme.update({
 	},
 },);
 
-glide.o.hint_size = '12px';
+glide.o.hint_size = '14px';
 
 glide.styles.add(
 	`
@@ -166,13 +166,13 @@ glide.prefs.set('general.smoothScroll.lines', false,);
 // keybind
 glide.g.mapleader = '<Space>';
 
-glide.keymaps.set('normal', 'tt', 'commandline_show tab ',);
-glide.keymaps.set('normal', 'tn', 'tab_new',);
+glide.keymaps.set('normal', '<leader>t', 'commandline_show tab ',);
+glide.keymaps.set('normal', '<leader>n', 'tab_new',);
 
 glide.keymaps.set('normal', 'H', 'back',);
 glide.keymaps.set('normal', 'L', 'forward',);
 
-glide.keymaps.set('normal', 'gb', async () => {
+glide.keymaps.set('normal', '<leader>b', async () => {
 	const tree = await browser.bookmarks.getTree();
 	const bookmarks: { title: string; url: string; }[] = [];
 

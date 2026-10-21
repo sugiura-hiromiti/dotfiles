@@ -39,6 +39,20 @@ in
           };
         };
         preferences = {
+          editingBehavior = {
+            midiEditor = {
+              oneMidiEditorPer = "project";
+              behaviorForOpenItemsInBuiltInMidiEditor = "openAllMidiInTheProject";
+              makeAllMidiItemsEditableByDefaultIfTheyAreVisibleInTheEditor = false;
+              whenUsingOneMidiEditorPerProject = {
+                activeMidiItemFollowsSelectionChangesInArrangeView = {
+                  enable = true;
+                  type = "mediaItem";
+                };
+                selectionIsLinkedToEditability = true;
+              };
+            };
+          };
           project = {
             backups = {
               autoSave = {

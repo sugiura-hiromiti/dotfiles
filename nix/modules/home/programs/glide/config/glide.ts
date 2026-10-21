@@ -94,39 +94,40 @@ type Theme = 'dark' | 'light';
 
 const theme: Theme = glide.prefs.get('dotfiles.glide.theme',) === 'light' ? 'light' : 'dark';
 const palette = catppuccin[theme];
+
 void browser.theme.update({
 	colors: {
 		// Tabs
-		frame: palette.mauve,
-		frame_inactive: palette.surface1,
+		frame: palette.mantle,
+		frame_inactive: palette.crust,
 		tab_selected: palette.base,
-		tab_text: palette.text,
-		tab_background_text: palette.base,
+		tab_text: palette.mauve,
+		tab_background_text: palette.blue,
 		tab_loading: palette.yellow,
 
 		// Toolbar
-		toolbar: palette.blue,
-		toolbar_text: palette.base,
-		icons: palette.base,
+		toolbar: palette.mantle,
+		toolbar_text: palette.mauve,
+		icons: palette.blue,
 		icons_attention: palette.peach,
 
 		// Address bar
 		toolbar_field: palette.base,
-		toolbar_field_text: palette.text,
-		toolbar_field_focus: palette.mauve,
-		toolbar_field_text_focus: palette.base,
-		toolbar_field_highlight: palette.blue,
-		toolbar_field_highlight_text: palette.base,
+		toolbar_field_text: palette.mauve,
+		toolbar_field_focus: palette.base,
+		toolbar_field_text_focus: palette.mauve,
+		toolbar_field_highlight: palette.surface0,
+		toolbar_field_highlight_text: palette.text,
 
 		// Interaction
-		button_background_hover: palette.mauve,
-		button_background_active: palette.surface0,
+		button_background_hover: palette.surface0,
+		button_background_active: palette.surface1,
 
 		// Popups
 		popup: palette.base,
 		popup_text: palette.text,
-		popup_highlight: palette.mauve,
-		popup_highlight_text: palette.base,
+		popup_highlight: palette.surface0,
+		popup_highlight_text: palette.mauve,
 	},
 });
 
@@ -141,153 +142,184 @@ glide.styles.add(
     --glide-hint-border: 1px solid ${palette.text};
 
     /* CommandLine */
-    --glide-cmdl-bg: ${palette.mauve};
-    --glide-cmdl-fg: ${palette.base};
+    --glide-cmdl-bg: ${palette.base};
+    --glide-cmdl-fg: ${palette.mauve};
 
     /* Completions */
     --glide-cmplt-bg: ${palette.base};
     --glide-cmplt-fg: ${palette.text};
 
     /* Focused option */
-    --glide-of-bg: ${palette.blue};
-    --glide-of-fg: ${palette.base};
+    --glide-of-bg: ${palette.surface0};
+    --glide-of-fg: ${palette.blue};
 
     /* Section header */
-    --glide-header-first-bg: ${palette.surface0};
+    --glide-header-first-bg: ${palette.base};
 
-    /* Flat design */
-    --glide-cmplt-border-top: none;
-    --glide-header-border-bottom: none;
+/* Flat design */
+--glide - cmplt - border - top: none;
+--glide - header - border - bottom: none;
 
-    /* Modes */
-    --glide-mode-normal: ${palette.blue};
-    --glide-mode-insert: ${palette.green};
-    --glide-mode-visual: ${palette.mauve};
-    --glide-mode-hint: ${palette.peach};
-    --glide-mode-command: ${palette.red};
+/* Modes */
+--glide - mode - normal: ${palette.blue};
+--glide - mode - insert: ${palette.green};
+--glide - mode - visual: ${palette.mauve};
+--glide - mode - hint: ${palette.peach};
+--glide - mode - command: ${palette.red};
   }
 
   /* Remove shadows and separators */
-  .glide-commandline-container {
-    box-shadow: none !important;
-  }
+  .glide - commandline - container {
+	box - shadow: none!important;
+}
 
-  [anonid="glide-commandline-holder"] {
-    border-top: none !important;
-  }
+[anonid = "glide-commandline-holder"] {
+	border - top: none!important;
+}
 
-  /* Hover */
-  [anonid="glide-commandline-completions"]
-  .gcl-option:not(.focused):hover {
-    background: ${palette.surface0} !important;
-  }
+/* Hover */
+[anonid = "glide-commandline-completions"]
+	.gcl - option: not(.focused):hover {
+	background: ${palette.surface0} !important;
+}
 
-  /* URLs */
-  [anonid="glide-commandline-completions"]
-  .gcl-option:not(.focused) .url {
-    color: ${palette.mauve} !important;
-  }
+/* Typed hint characters */
+div.glide - internal - hint - marker
+	> .glide - matching - character {
+	color: ${palette.peach};
+}
 
-  /* Typed hint characters */
-  div.glide-internal-hint-marker
-    > .glide-matching-character {
-    color: ${palette.peach};
-  }
-
-  div.glide-internal-hint-marker span {
-    text-shadow: none;
-  }
-  `,
+div.glide - internal - hint - marker span {
+	text - shadow: none;
+}
+`,
 	{ id: 'catppuccin-glide', overwrite: true, },
 );
 
 glide.styles.add(
 	`
-  /* CommandLine details */
-  .ExcmdCompletionOption:not(.focused) td.excmd,
-  .CustomCompletionOption:not(.focused) td.label {
-    color: ${palette.pink};
-  }
+/* CommandLine */
+[anonid="glide-commandline-completions"] .section-header {
+  color: ${palette.sapphire};
+}
 
-  .TabCompletionOption:not(.focused) td.url {
-    color: ${palette.teal};
-  }
+.ExcmdCompletionOption:not(.focused) td.excmd {
+  color: ${palette.pink};
+}
 
-  .ExcmdCompletionOption:not(.focused) td.keymap {
-    color: ${palette.yellow};
-  }
+.ExcmdCompletionOption:not(.focused) td.documentation {
+  color: ${palette.lavender};
+}
 
-  .FindCompletionOption .match {
-    background: ${palette.peach};
-    color: ${palette.base};
-  }
+.ExcmdCompletionOption:not(.focused) td.keymap {
+  color: ${palette.yellow};
+}
 
-  /* Which-key */
-  #which-key {
-    background: ${palette.base} !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
+.TabCompletionOption:not(.focused) td.label {
+  color: ${palette.green};
+}
 
-  #which-key > div:first-child {
-    background: ${palette.blue} !important;
-    border-bottom: none !important;
-  }
+.TabCompletionOption:not(.focused) td.url {
+  color: ${palette.teal} !important;
+}
 
-  #which-key > div:first-child span {
-    color: ${palette.base} !important;
-  }
+.TabCompletionOption:not(.focused) td.status {
+  color: ${palette.peach};
+}
 
-  #which-key tbody td:first-child {
-    background: ${palette.lavender};
-    color: ${palette.base} !important;
-  }
+.CustomCompletionOption:not(.focused) td.label {
+  color: ${palette.rosewater};
+}
 
-  #which-key tbody td:last-child {
-    color: ${palette.text} !important;
-  }
+.CustomCompletionOption:not(.focused) td.description {
+  color: ${palette.sky};
+}
 
+/* Which-key */
+#which-key {
+  background: ${palette.base} !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#which-key > div:first-child {
+  background: ${palette.base} !important;
+  border-bottom: none !important;
+}
+
+#which-key > div:first-child span {
+  color: ${palette.sapphire} !important;
+}
+
+#which-key tbody td:first-child {
+  background: transparent !important;
+  color: ${palette.mauve} !important;
+}
+
+#which-key tbody tr:nth-child(6n + 2) td:first-child {
+  color: ${palette.blue} !important;
+}
+
+#which-key tbody tr:nth-child(6n + 3) td:first-child {
+  color: ${palette.green} !important;
+}
+
+#which-key tbody tr:nth-child(6n + 4) td:first-child {
+  color: ${palette.peach} !important;
+}
+
+#which-key tbody tr:nth-child(6n + 5) td:first-child {
+  color: ${palette.pink} !important;
+}
+
+#which-key tbody tr:nth-child(6n + 6) td:first-child {
+  color: ${palette.yellow} !important;
+}
+
+#which-key tbody td:last-child {
+  color: ${palette.text} !important;
+}
   /* Hint colors */
   :root {
-    --glide-hint-background: ${palette.green};
-    --glide-hint-color: ${palette.base};
-    --glide-hint-border: none;
-    --glide-search-highlight-color: ${palette.yellow};
-  }
+	--glide - hint - background: ${palette.green};
+	--glide - hint - color: ${palette.base};
+	--glide - hint - border: none;
+	--glide - search - highlight - color: ${palette.yellow};
+}
 
   /* Findbar */
   findbar {
-    background: ${palette.base} !important;
-    color: ${palette.text} !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
+	background: ${palette.base} !important;
+	color: ${palette.text} !important;
+	border: none!important;
+	box - shadow: none!important;
+}
 
-  findbar .findbar-textbox {
-    background: ${palette.surface0} !important;
-    color: ${palette.text} !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
+findbar.findbar - textbox {
+	background: ${palette.surface0} !important;
+	color: ${palette.text} !important;
+	border: none!important;
+	box - shadow: none!important;
+}
 
-  findbar .findbar-textbox[status="notfound"] {
-    background: ${palette.red} !important;
-    color: ${palette.base} !important;
-  }
-  `,
+findbar.findbar - textbox[status = "notfound"] {
+	background: ${palette.red} !important;
+	color: ${palette.base} !important;
+}
+`,
 	{ id: 'colorful-browser-ui', overwrite: true },
 );
 
 glide.styles.add(
 	`
-  #nav-bar #back-button,
-  #nav-bar #forward-button,
-  #nav-bar #home-button,
-  #nav-bar #stop-reload-button,
-  #nav-bar #fxa-toolbar-menu-button {
-    display: none !important;
-  }
-  `,
+#nav - bar #back - button,
+	#nav - bar #forward - button,
+		#nav - bar #home - button,
+			#nav - bar #stop - reload - button,
+				#nav - bar #fxa - toolbar - menu - button {
+	display: none!important;
+}
+`,
 	{ id: 'minimal-toolbar', overwrite: true, },
 );
 
@@ -335,7 +367,7 @@ glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 		const id = win.id;
 		const active = win.tabs?.find((tab,) => tab.active);
 		options.push({
-			label: active?.title || `Window ${id}`,
+			label: active?.title || `Window ${id} `,
 			description: `Window ${id}: ${win.tabs?.length ?? 0} tabs`,
 			async execute() {
 				await browser.tabs.move(tab_id, {

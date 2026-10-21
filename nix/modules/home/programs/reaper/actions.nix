@@ -67,6 +67,22 @@ in
         actions = {
           keyBindings = shortcutSetToList {
             midiEditor = {
+              H = {
+                command = 40414;
+                actionName = "Select previous note";
+              };
+              L = {
+                command = 40413;
+                actionName = "Select next note";
+              };
+              J = {
+                command = 41765;
+                actionName = "Select next note with lower pitch";
+              };
+              K = {
+                command = 41764;
+                actionName = "Select next note with higher pitch";
+              };
               S = {
                 command = 40046;
                 actionName = "Split notes at edit cursor";

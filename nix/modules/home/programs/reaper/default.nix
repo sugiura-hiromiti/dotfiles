@@ -10,7 +10,10 @@ let
   cfg = config.dotfiles.programs.reaper;
 in
 {
-  imports = [ ./actions.nix ];
+  imports = [
+    ./actions.nix
+    ./which-key.nix
+  ];
   options = {
     dotfiles = {
       programs = {

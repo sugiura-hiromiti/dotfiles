@@ -157,40 +157,40 @@ glide.styles.add(
     --glide-header-first-bg: ${palette.base};
 
 /* Flat design */
---glide - cmplt - border - top: none;
---glide - header - border - bottom: none;
+--glide-cmplt-border-top: none;
+--glide-header-border-bottom: none;
 
 /* Modes */
---glide - mode - normal: ${palette.blue};
---glide - mode - insert: ${palette.green};
---glide - mode - visual: ${palette.mauve};
---glide - mode - hint: ${palette.peach};
---glide - mode - command: ${palette.red};
+--glide-mode-normal: ${palette.blue};
+--glide-mode-insert: ${palette.green};
+--glide-mode-visual: ${palette.mauve};
+--glide-mode-hint: ${palette.peach};
+--glide-mode-command: ${palette.red};
   }
 
   /* Remove shadows and separators */
-  .glide - commandline - container {
-	box - shadow: none!important;
+  .glide-commandline-container {
+	box-shadow: none!important;
 }
 
 [anonid = "glide-commandline-holder"] {
-	border - top: none!important;
+	border-top: none!important;
 }
 
 /* Hover */
 [anonid = "glide-commandline-completions"]
-	.gcl - option: not(.focused):hover {
+	.gcl-option: not(.focused):hover {
 	background: ${palette.surface0} !important;
 }
 
 /* Typed hint characters */
-div.glide - internal - hint - marker
-	> .glide - matching - character {
+div.glide-internal-hint-marker
+	> .glide-matching-character {
 	color: ${palette.peach};
 }
 
-div.glide - internal - hint - marker span {
-	text - shadow: none;
+div.glide-internal-hint-marker span {
+	text-shadow: none;
 }
 `,
 	{ id: 'catppuccin-glide', overwrite: true, },
@@ -281,10 +281,10 @@ glide.styles.add(
 }
   /* Hint colors */
   :root {
-	--glide - hint - background: ${palette.green};
-	--glide - hint - color: ${palette.base};
-	--glide - hint - border: none;
-	--glide - search - highlight - color: ${palette.yellow};
+	--glide-hint-background: ${palette.green};
+	--glide-hint-color: ${palette.base};
+	--glide-hint-border: none;
+	--glide-search-highlight-color: ${palette.yellow};
 }
 
   /* Findbar */
@@ -292,17 +292,17 @@ glide.styles.add(
 	background: ${palette.base} !important;
 	color: ${palette.text} !important;
 	border: none!important;
-	box - shadow: none!important;
+	box-shadow: none!important;
 }
 
-findbar.findbar - textbox {
+findbar.findbar-textbox {
 	background: ${palette.surface0} !important;
 	color: ${palette.text} !important;
 	border: none!important;
-	box - shadow: none!important;
+	box-shadow: none!important;
 }
 
-findbar.findbar - textbox[status = "notfound"] {
+findbar.findbar-textbox[status = "notfound"] {
 	background: ${palette.red} !important;
 	color: ${palette.base} !important;
 }
@@ -312,11 +312,11 @@ findbar.findbar - textbox[status = "notfound"] {
 
 glide.styles.add(
 	`
-#nav - bar #back - button,
-	#nav - bar #forward - button,
-		#nav - bar #home - button,
-			#nav - bar #stop - reload - button,
-				#nav - bar #fxa - toolbar - menu - button {
+#nav-bar #back-button,
+	#nav-bar #forward-button,
+		#nav-bar #home-button,
+			#nav-bar #stop-reload-button,
+				#nav-bar #fxa-toolbar-menu-button {
 	display: none!important;
 }
 `,

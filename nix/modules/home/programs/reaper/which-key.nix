@@ -4,12 +4,29 @@
   lib,
   ...
 }:
+let
+  helper = import ./helper { inherit lib reaperActions; };
+  inherit (helper) shortcutSetToList;
+in
 {
   config = lib.mkIf config.dotfiles.programs.reaper.enable {
     programs = {
       reaper = {
         actions = {
-          keyBindings = [ ];
+          keyBindings = shortcutSetToList {
+            main = {
+              "/" = {
+                command = "RS_which_key_main";
+                actionName = "open command palette";
+              };
+            };
+            midiEditor = {
+              "/" = {
+                command = "RS_which_key_midi";
+                actionName = "open midi command palette";
+              };
+            };
+          };
           scripts = [
             {
               path = "which-key/leader.lua";
@@ -19,7 +36,7 @@
             }
             {
               path = "which-key/leader.lua";
-              section = reaperActions.sections.mdiEditor;
+              section = reaperActions.sections.midiEditor;
               commandId = "RS_which_key_midi";
             }
           ];

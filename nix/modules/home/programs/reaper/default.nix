@@ -9,6 +9,7 @@ let
   cfg = config.dotfiles.programs.reaper;
 in
 {
+  imports = [ ./actions.nix ];
   options = {
     dotfiles = {
       programs = {

@@ -27,6 +27,7 @@ let
     config:
     commonSpecialArgs config
     // {
+      reaperFlake = reaper-flake;
       iHaveAdhdSkill = i-have-adhd.outPath;
       interviewMeSkill = interview-me.outPath;
       urdSkill = urd.outPath;

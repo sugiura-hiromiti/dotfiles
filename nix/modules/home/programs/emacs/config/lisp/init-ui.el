@@ -14,10 +14,10 @@
 	indent-tabs-mode t
 	tab-width 3)
 (setq whitespace-style '(face tabs tab-mark)
-	 whitespace-display-mappings
-	 '((tab-mark ?\t [?\│ ?\t] [?\t ?\t]))
-	 ;; flymake-show-diagnostics-at-end-of-line t
-	 )
+	whitespace-display-mappings
+	'((tab-mark ?\t [?\│ ?\t] [?\t ?\t]))
+	;; flymake-show-diagnostics-at-end-of-line t
+	)
 (global-whitespace-mode 1)
 
 (global-display-line-numbers-mode 1)
@@ -154,7 +154,12 @@
 	(flyover-show-virtual-line t)
 	(flyover-use-theme-colors t)
 	(flyover-wrap-messages t)
-	(flyover-display-mode 'always))
+	(flyover-display-mode 'always)
+	(flyover-show-at-eol t))
+
+(use-package eldoc-box
+	:hook
+	(eldoc-mode . eldoc-box-hover-mode))
 
 (provide 'init-ui)
 ;;; init-ui.el ends here

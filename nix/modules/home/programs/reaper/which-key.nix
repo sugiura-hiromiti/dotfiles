@@ -7,6 +7,7 @@
 let
   helper = import ./helper { inherit lib reaperActions; };
   inherit (helper) shortcutSetToList;
+
 in
 {
   config = lib.mkIf config.dotfiles.programs.reaper.enable {

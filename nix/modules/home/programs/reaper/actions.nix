@@ -5,10 +5,23 @@
   ...
 }:
 let
-  shortcutSetToList =
+  shortcutSetToList = { main, global }: mainShortcutSetToList main globalShortcutSetToList global;
+  mainShortcutSetToList =
     shortcutSet:
     lib.mapAttrsToList (
       name: value: (reaperActions.shortcut (value // { shortcut = name; }))
+    ) shortcutSet;
+  mapShortcut =
+    section: shortcutSet:
+    lib.mapAttrsToList (
+      name: value:
+      (reaperActions.shortcut (
+        value
+        // {
+          shortcut = name;
+          sections = section;
+        }
+      ))
     ) shortcutSet;
 in
 {
@@ -16,14 +29,14 @@ in
     programs = {
       reaper = {
         actions = {
-          keyBindings = shortcutSetToList {
-            L = {
+          keyBindings = mainShortcutSetToList {
+            H = {
               command = 40416;
               actionName = "Select previous item";
             };
-            H = {
+            L = {
               command = 40417;
-              actionname = "Select next item";
+              actionName = "Select next item";
             };
             K = {
               command = 40286;
@@ -32,6 +45,14 @@ in
             J = {
               command = 40285;
               actionName = "Next track";
+            };
+            "/" = {
+              command = 40069;
+              actionName = "jump to time/marker/region";
+            };
+            "Ctrl+J" = {
+              command = 0;
+              actionName = "Unbind default jump shortcut";
             };
           };
         };

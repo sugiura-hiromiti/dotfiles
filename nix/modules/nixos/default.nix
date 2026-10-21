@@ -6,5 +6,6 @@
     ./features/impermanence
     ./features/auto-rotation.nix
     ./features/osk.nix
+    ./programs/prismlauncher
   ];
 }

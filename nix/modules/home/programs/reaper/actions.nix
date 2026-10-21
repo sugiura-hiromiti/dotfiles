@@ -120,6 +120,10 @@ in
             // zoomBindings
             // scrollBindings;
             main = {
+              "Shift+M" = {
+                command = 7;
+                actionName = "Toggle solo for selected tracks";
+              };
               M = {
                 command = 6;
                 actionName = "toggle mute for selected tracks";

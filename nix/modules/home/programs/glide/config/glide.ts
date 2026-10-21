@@ -537,12 +537,8 @@ glide.keymaps.set('normal', '.f', () => {
 }, { description: 'hint browser ui' });
 
 // コマンド系
-glide.keymaps.set('normal', '/o', () => {
-	const input = document.getElementById('urlbar-input');
-	if (input instanceof HTMLInputElement) {
-		input.focus();
-		input.select();
-	}
+glide.keymaps.set('normal', '/o', async () => {
+	await glide.keys.send('<C-l>', { skip_mappings: true });
 }, { description: 'open url in current tab' });
 glide.keymaps.set('normal', '/b', async () => {
 	const tree = await browser.bookmarks.getTree();

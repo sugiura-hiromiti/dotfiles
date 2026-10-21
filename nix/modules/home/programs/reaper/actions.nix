@@ -6,7 +6,24 @@
 }:
 
 let
-
+  scrollBindings = {
+    "Ctrl+H" = {
+      command = 40140;
+      actionName = "Scroll left";
+    };
+    "Ctrl+J" = {
+      command = 40139;
+      actionName = "Scroll down";
+    };
+    "Ctrl+K" = {
+      command = 40138;
+      actionName = "Scroll up";
+    };
+    "Ctrl+L" = {
+      command = 40141;
+      actionName = "Scroll right";
+    };
+  };
   zoomBindings = {
     minus = {
       command = 1011;
@@ -50,6 +67,26 @@ in
         actions = {
           keyBindings = shortcutSetToList {
             midiEditor = {
+              S = {
+                command = 40046;
+                actionName = "Split notes at edit cursor";
+              };
+              "Shift+H" = {
+                command = 40183;
+                actionName = "Move notes left one grid unit";
+              };
+              "Shift+L" = {
+                command = 40184;
+                actionName = "Move notes right one grid unit";
+              };
+              "Shift+J" = {
+                command = 40178;
+                actionName = "Move notes down one semitone";
+              };
+              "Shift+K" = {
+                command = 40177;
+                actionName = "Move notes up one semitone";
+              };
               Left = {
                 command = 40047;
                 actionName = "Move cursor left by grid";
@@ -67,8 +104,29 @@ in
                 actionName = "Double grid size";
               };
             }
-            // zoomBindings;
+            // zoomBindings
+            // scrollBindings;
             main = {
+              S = {
+                command = 40757;
+                actionName = "split items at edit cursor";
+              };
+              "Shift+H" = {
+                command = 40793;
+                actionName = "Move items left by grid";
+              };
+              "Shift+L" = {
+                command = 40794;
+                actionName = "Move items right by grid";
+              };
+              "Shift+J" = {
+                command = 40118;
+                actionName = "Move items down one track";
+              };
+              "Shift+K" = {
+                command = 40117;
+                actionName = "Move items up one track";
+              };
               Left = {
                 command = 40646;
                 actionName = "move cursor left to grid";
@@ -105,12 +163,9 @@ in
                 command = 40069;
                 actionName = "jump to time/marker/region";
               };
-              "Ctrl+J" = {
-                command = 0;
-                actionName = "Unbind default jump shortcut";
-              };
             }
-            // zoomBindings;
+            // zoomBindings
+            // scrollBindings;
           };
         };
       };

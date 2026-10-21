@@ -141,15 +141,23 @@ glide.styles.add(
     --glide-hint-border: 1px solid ${palette.text};
 
     /* CommandLine */
-    --glide-cmdl-bg: ${palette.base};
-    --glide-cmdl-fg: ${palette.text};
+    --glide-cmdl-bg: ${palette.mauve};
+    --glide-cmdl-fg: ${palette.base};
 
     /* Completions */
     --glide-cmplt-bg: ${palette.base};
     --glide-cmplt-fg: ${palette.text};
-    --glide-of-bg: ${palette.surface1};
-    --glide-of-fg: ${palette.text};
-    --glide-header-first-bg: ${palette.mantle};
+
+    /* Focused option */
+    --glide-of-bg: ${palette.blue};
+    --glide-of-fg: ${palette.base};
+
+    /* Section header */
+    --glide-header-first-bg: ${palette.surface0};
+
+    /* Flat design */
+    --glide-cmplt-border-top: none;
+    --glide-header-border-bottom: none;
 
     /* Modes */
     --glide-mode-normal: ${palette.blue};
@@ -157,6 +165,27 @@ glide.styles.add(
     --glide-mode-visual: ${palette.mauve};
     --glide-mode-hint: ${palette.peach};
     --glide-mode-command: ${palette.red};
+  }
+
+  /* Remove shadows and separators */
+  .glide-commandline-container {
+    box-shadow: none !important;
+  }
+
+  [anonid="glide-commandline-holder"] {
+    border-top: none !important;
+  }
+
+  /* Hover */
+  [anonid="glide-commandline-completions"]
+  .gcl-option:not(.focused):hover {
+    background: ${palette.surface0} !important;
+  }
+
+  /* URLs */
+  [anonid="glide-commandline-completions"]
+  .gcl-option:not(.focused) .url {
+    color: ${palette.mauve} !important;
   }
 
   /* Typed hint characters */
@@ -170,6 +199,83 @@ glide.styles.add(
   }
   `,
 	{ id: 'catppuccin-glide', overwrite: true, },
+);
+
+glide.styles.add(
+	`
+  /* CommandLine details */
+  .ExcmdCompletionOption:not(.focused) td.excmd,
+  .CustomCompletionOption:not(.focused) td.label {
+    color: ${palette.pink};
+  }
+
+  .TabCompletionOption:not(.focused) td.url {
+    color: ${palette.teal};
+  }
+
+  .ExcmdCompletionOption:not(.focused) td.keymap {
+    color: ${palette.yellow};
+  }
+
+  .FindCompletionOption .match {
+    background: ${palette.peach};
+    color: ${palette.base};
+  }
+
+  /* Which-key */
+  #which-key {
+    background: ${palette.base} !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #which-key > div:first-child {
+    background: ${palette.blue} !important;
+    border-bottom: none !important;
+  }
+
+  #which-key > div:first-child span {
+    color: ${palette.base} !important;
+  }
+
+  #which-key tbody td:first-child {
+    background: ${palette.lavender};
+    color: ${palette.base} !important;
+  }
+
+  #which-key tbody td:last-child {
+    color: ${palette.text} !important;
+  }
+
+  /* Hint colors */
+  :root {
+    --glide-hint-background: ${palette.green};
+    --glide-hint-color: ${palette.base};
+    --glide-hint-border: none;
+    --glide-search-highlight-color: ${palette.yellow};
+  }
+
+  /* Findbar */
+  findbar {
+    background: ${palette.base} !important;
+    color: ${palette.text} !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  findbar .findbar-textbox {
+    background: ${palette.surface0} !important;
+    color: ${palette.text} !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  findbar .findbar-textbox[status="notfound"] {
+    background: ${palette.red} !important;
+    color: ${palette.base} !important;
+  }
+  `,
+	{ id: 'colorful-browser-ui', overwrite: true },
 );
 
 glide.styles.add(

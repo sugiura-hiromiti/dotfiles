@@ -130,9 +130,9 @@ in
               settings = {
                 session = {
                   default = "niri";
-                  keyboard = {
-                    layout = "us";
-                  };
+                };
+                keyboard = {
+                  layout = "us";
                 };
               };
             };
@@ -142,10 +142,29 @@ in
 
       (lib.mkIf cfg.noGuiSpecialisation.enable {
         specialisation."no-gui".configuration = {
-          system.nixos.tags = [ "no-gui" ];
-          systemd.defaultUnit = lib.mkForce "multi-user.target";
-          services.greetd.enable = lib.mkForce false;
-          programs.xwayland.enable = lib.mkForce false;
+          system = {
+            nixos = {
+              tags = [ "no-gui" ];
+            };
+          };
+          systemd = {
+            defaultUnit = lib.mkForce "multi-user.target";
+          };
+          services = {
+            displayManager = {
+              noctalia-greeter = {
+                enable = lib.mkForce false;
+              };
+            };
+            greetd = {
+              enable = lib.mkForce false;
+            };
+          };
+          programs = {
+            xwayland = {
+              enable = lib.mkForce false;
+            };
+          };
         };
       })
     ]

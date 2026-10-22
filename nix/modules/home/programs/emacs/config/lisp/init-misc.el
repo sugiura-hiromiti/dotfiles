@@ -1,6 +1,5 @@
 ;;; init-misc.el --- init-misc -*- lexical-binding: t; -*-
 
-
 ;;; Commentary:
 ;;
 
@@ -10,6 +9,10 @@
 (declare-function eglot-managed-p "eglot")
 (declare-function hl-todo-flymake "hl-todo")
 (defvar flymake-diagnostic-functions)
+
+(add-to-list
+	'safe-local-variable-values
+	'(package-lint--sane-prefixes . "^omi/"))
 
 (defun my/hl-todo-flymake-setup ()
 	"現在のbufferでhl-todoのFlymake diagnosticsを有効化する。."

@@ -75,6 +75,14 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    users.users = lib.mapAttrs mkUser cfg.accounts;
+    users = {
+      users = lib.mapAttrs mkUser cfg.accounts;
+    };
+    environment = {
+      shells = [
+        cfg.shell
+        "${cfg.shell}${cfg.shell.shellPath}"
+      ];
+    };
   };
 }

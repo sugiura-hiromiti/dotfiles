@@ -18,7 +18,7 @@ in
 
     stateVersion = lib.mkOption {
       type = lib.types.str;
-      default = "26.05";
+      default = "26.11";
       description = "NixOS state version for baseline hosts.";
     };
   };

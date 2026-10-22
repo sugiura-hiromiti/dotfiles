@@ -20,7 +20,7 @@ in
 
   home = {
     username = accountName;
-    stateVersion = "26.05";
+    stateVersion = "26.11";
     sessionVariables = {
       XDG_CONFIG_HOME = "${config.home.homeDirectory}/.config";
       XDG_DATA_HOME = "${config.home.homeDirectory}/.local/share";

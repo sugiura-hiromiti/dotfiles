@@ -20,7 +20,6 @@ in
     boot.initrd = {
       supportedFilesystems = [ "btrfs" ];
       systemd = {
-        enable = true;
         additionalUpstreamUnits = [ "systemd-udev-settle.service" ];
         services.impermanence-reset = {
           # Initrd cleanup stops udev-settle before switching root. Requiring

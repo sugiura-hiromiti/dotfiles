@@ -57,6 +57,7 @@ in
     programs = {
       nushell = {
         enable = lib.mkDefault true;
+        loadSessionVariables = true;
         plugins = with pkgs.nushellPlugins; [
           # dbus
           # skim

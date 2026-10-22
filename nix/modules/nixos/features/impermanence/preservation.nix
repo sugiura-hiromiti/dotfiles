@@ -49,7 +49,16 @@ in
           ++ lib.optionals config.networking.networkmanager.enable [
             "/etc/NetworkManager/system-connections"
           ]
-          ++ lib.optionals config.services.power-profiles-daemon.enable [ "/var/lib/power-profiles-daemon" ];
+          ++ lib.optionals config.services.power-profiles-daemon.enable [ "/var/lib/power-profiles-daemon" ]
+          ++ lib.optionals config.services.displayManager.noctalia-greeter.enable [
+            {
+              directory = "/var/lib/noctalia-greeter";
+              # Appearance sync rejects a root-owned state directory.
+              user = config.services.greetd.settings.default_session.user;
+              group = config.users.users.${config.services.greetd.settings.default_session.user}.group;
+              mode = "0750";
+            }
+          ];
           files = [
             {
               file = "/etc/machine-id";
@@ -65,10 +74,7 @@ in
               how = "symlink";
               configureParent = true;
             }) config.services.openssh.hostKeys
-          )
-          ++ lib.optionals config.services.displayManager.noctalia-greeter.enable [
-            "/var/lib/noctalia-greeter"
-          ];
+          );
         };
       };
     };

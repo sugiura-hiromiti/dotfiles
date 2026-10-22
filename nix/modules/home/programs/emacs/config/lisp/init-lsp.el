@@ -1,6 +1,5 @@
 ;;; init-lsp.el --- lsp -*- lexical-binding: t; -*-
 
-
 ;;; Commentary:
 ;;
 
@@ -107,7 +106,10 @@
 			 .
 			 ("rust-analyzer"
 				 :initializationOptions
-				 ,my/rust-analyzer-initialization-options))))
+				 ,my/rust-analyzer-initialization-options)))
+	(add-to-list 'eglot-server-programs
+		'(haskell-ts-mode
+			 . ("haskell-language-server-wrapper" "--lsp"))))
 
 (defun my/eglot-enable-inlay-hints ()
 	"Eglot管理下のbufferでinlay hintsを有効化する."

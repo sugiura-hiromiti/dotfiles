@@ -1,6 +1,5 @@
 ;;; init-ts.el --- treesitter config -*- lexical-binding: t; -*-
 
-
 ;;; Commentary:
 ;;
 
@@ -59,6 +58,9 @@
 (use-package nu-ts-mode
 	:mode "\\.nu\\'"
 	:interpreter "nu")
+
+(use-package haskell-ts-mode
+	:mode "\\.hs\\'")
 
 (use-package treesit-auto
 	:demand t

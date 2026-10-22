@@ -81,16 +81,6 @@ in
           accounts-daemon = {
             enable = true;
           };
-          greetd = {
-            enable = true;
-            useTextGreeter = true;
-            settings = {
-              default_session = {
-                command = greeterCommand;
-                user = cfg.greeter.user;
-              };
-            };
-          };
         };
 
         programs = {

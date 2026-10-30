@@ -1,8 +1,6 @@
 {
-  pkgs,
   config,
   lib,
-  reaperFlake,
   reaperAppearance,
   ...
 }:
@@ -14,6 +12,7 @@ in
     ./lua-lsp.nix
     ./actions.nix
     ./which-key.nix
+    ./smooth6.nix
   ];
   options = {
     dotfiles = {
@@ -29,10 +28,6 @@ in
     programs = {
       reaper = {
         enable = true;
-        theme = {
-          packages = [ reaperFlake.packages.${pkgs.system}.smooth6-theme ];
-          active = "Smooth_6.ReaperThemeZip";
-        };
         extensions = {
           sws = {
             enable = true;

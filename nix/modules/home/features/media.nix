@@ -16,6 +16,7 @@ in
       default = [
         # "firefox"
         "glide"
+        "krita"
       ];
       description = "Repository program modules enabled with the media feature.";
     };

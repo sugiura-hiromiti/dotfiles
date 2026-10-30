@@ -7,6 +7,7 @@
       "homerow"
       "docker-desktop"
       "BarutSRB/tap/omniwm"
+      "krita"
     ];
     taps = [
       "BarutSRB/tap"

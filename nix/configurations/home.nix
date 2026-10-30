@@ -31,6 +31,7 @@ let
       iHaveAdhdSkill = i-have-adhd.outPath;
       interviewMeSkill = interview-me.outPath;
       urdSkill = urd.outPath;
+      mcpServerPackages = mcp-servers-nix.packages.${config.system};
     };
   modulesFor =
     config:

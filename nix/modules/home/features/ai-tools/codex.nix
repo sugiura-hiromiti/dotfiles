@@ -54,7 +54,7 @@ let
   );
 
   defaultCodexSettings = {
-    model = "gpt-6-astra";
+    model = "gpt-6.1-Sol";
     model_reasoning_effort = "ultra";
     hide_agent_reasoning = true;
     network_access = true;

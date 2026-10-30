@@ -2,11 +2,25 @@
   lib,
   pkgs,
   config,
+  mcpServerPackages,
   systemTargetKind,
   ...
 }:
 let
   cfg = config.dotfiles.features.aiTools;
+  # Serena requires MCP SDK 1.28.1 and still imports mcp.server.fastmcp.
+  serenaMcp = pkgs.python3Packages.mcp_1.overridePythonAttrs (old: {
+    version = "1.28.1";
+    src = old.src.override {
+      tag = "v1.28.1";
+      hash = "sha256-8nifuun7ShtniimsFr9gYPpjwZEM/5E51GDmZRxQGEc=";
+    };
+  });
+  serena = mcpServerPackages.serena.override {
+    python3Packages = pkgs.python3Packages // {
+      mcp = serenaMcp;
+    };
+  };
   nixAgentMcpServers = lib.optionalAttrs (systemTargetKind == "nixos") {
     nix-agent = {
       command = "nix-agent";
@@ -32,6 +46,7 @@ in
         };
         serena = {
           enable = true;
+          package = serena;
         };
         github = {
           enable = true;

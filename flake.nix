@@ -170,7 +170,8 @@
       };
     };
     nix-agent = {
-      url = "github:JEFF7712/nix-agent";
+      # Later revisions remove the CI workflow still required by the package tests.
+      url = "github:JEFF7712/nix-agent/4302bd65a87b9831f0d0dbc01e773ff61cc2995a";
     };
   };
 

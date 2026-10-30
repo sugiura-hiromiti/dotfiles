@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  systemTargetKind,
   ...
 }:
 let
@@ -44,7 +45,10 @@ in
       sessionVariables = {
         CLAP_PATH = lib.mkDefault "~/.nix-profile/lib/clap";
         LIBSQLITE = lib.mkDefault cfg.sqliteLibrary;
-        SHELL = lib.mkDefault "${pkgs.nushell}/bin/nu";
+        # Keep long-lived sessions valid against /etc/shells after NixOS upgrades.
+        SHELL = lib.mkDefault (
+          if systemTargetKind == "nixos" then "/run/current-system/sw/bin/nu" else "${pkgs.nushell}/bin/nu"
+        );
       };
       file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
         "nushell_appsupport_config" = {

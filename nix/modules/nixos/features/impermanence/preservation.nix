@@ -44,6 +44,7 @@ in
             }
             "/var/lib/nixos"
           ]
+          ++ lib.optionals config.services.accounts-daemon.enable [ "/var/lib/AccountsService" ]
           ++ lib.optionals config.services.tailscale.enable [ "/var/lib/tailscale" ]
           ++ lib.optionals config.hardware.bluetooth.enable [ "/var/lib/bluetooth" ]
           ++ lib.optionals config.networking.networkmanager.enable [

@@ -15,6 +15,29 @@ let
     types
     ;
   cfg = config.dotfiles.features.noctaliaShell;
+  avatarPath = config.programs.noctalia.settings.shell.avatar_path;
+  syncAvatar = pkgs.writeShellApplication {
+    name = "noctalia-sync-avatar";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.imagemagick
+      pkgs.jq
+      pkgs.systemd
+    ];
+    text = ''
+      # AccountsService copies this image into its own greeter-readable storage.
+      # Resize first: SetIconFile rejects images larger than 1 MiB.
+      magick ${lib.escapeShellArg avatarPath} \
+        -auto-orient -thumbnail '512x512^' -gravity center -extent 512x512 \
+        -strip -depth 8 "$RUNTIME_DIRECTORY/avatar.png"
+      user_path=$(busctl --system --json=short call \
+        org.freedesktop.Accounts /org/freedesktop/Accounts \
+        org.freedesktop.Accounts FindUserById x "$(id -u)" | jq -er '.data[0]')
+      busctl --system --allow-interactive-authorization=no call \
+        org.freedesktop.Accounts "$user_path" \
+        org.freedesktop.Accounts.User SetIconFile s "$RUNTIME_DIRECTORY/avatar.png"
+    '';
+  };
   settings = {
     shell = {
       greeter_sync = {
@@ -212,6 +235,34 @@ in
     }
     // optionalAttrs (cfg.package != null) {
       inherit (cfg) package;
+    };
+
+    # Noctalia only updates AccountsService when an avatar is picked in its UI;
+    # loading shell.avatar_path from a declarative config does not register it.
+    systemd.user = {
+      services.noctalia-avatar-sync = {
+        Unit = {
+          Description = "Register the Noctalia avatar with AccountsService";
+          ConditionPathExists = avatarPath;
+          After = [ "graphical-session-pre.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          RuntimeDirectory = "noctalia-avatar-sync";
+          RuntimeDirectoryMode = "0700";
+          ExecStart = lib.getExe syncAvatar;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+      paths.noctalia-avatar-sync = {
+        Unit = {
+          Description = "Watch for Noctalia avatar changes";
+          PartOf = [ "graphical-session.target" ];
+        };
+        Path.PathChanged = avatarPath;
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
     };
   };
 }

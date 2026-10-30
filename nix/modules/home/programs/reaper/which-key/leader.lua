@@ -17,15 +17,19 @@ local menus = {
 	midiEditor = {},
 }
 
-local _, _, section = reaper.get_action_context()
+local _, _, section, command_id = reaper.get_action_context()
 
--- 今のセクションを調べる
+local command_name = reaper.ReverseNamedCommandLookup(command_id):gsub('^_', '')
+local entry_points = { RS_which_key_insert = menus.main.insert, RS_which_key_midi = menus.midiEditor }
+
+local current = entry_points[command_name]
+if not current then return end
+
 local midi = section == 32060
 local editor = midi and reaper.MIDIEditor_GetActive() or nil
 
 if midi and not editor then return end
 
-local current = midi and menus.midiEditor or menus.main
 local stack = {}
 
 local function execute(command)

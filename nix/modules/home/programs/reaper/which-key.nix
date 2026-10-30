@@ -16,9 +16,9 @@ in
         actions = {
           keyBindings = shortcutSetToList {
             main = {
-              "/" = {
+              "i" = {
                 command = "RS_which_key_main";
-                actionName = "open command palette";
+                actionName = "open insert palette";
               };
             };
             midiEditor = {

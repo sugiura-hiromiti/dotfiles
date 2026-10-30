@@ -13,6 +13,7 @@ in
     ./actions.nix
     ./which-key.nix
     ./smooth6.nix
+    # ./reaclassical.nix
   ];
   options = {
     dotfiles = {

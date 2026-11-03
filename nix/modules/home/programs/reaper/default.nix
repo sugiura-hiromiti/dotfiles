@@ -28,6 +28,15 @@ in
   config = lib.mkIf cfg.enable {
     programs = {
       reaper = {
+        layout = {
+          docks = {
+            bottom = {
+              id = 3;
+              position = "bottom";
+              size = 1000;
+            };
+          };
+        };
         ini = {
           sections = {
             midiedit = {
@@ -62,6 +71,8 @@ in
               behaviorForOpenItemsInBuiltInMidiEditor = "openAllMidiInTheProject";
               makeAllMidiItemsEditableByDefaultIfTheyAreVisibleInTheEditor = false;
               whenUsingOneMidiEditorPerProject = {
+                selectionIsLinkedToVisibility = true;
+                closeEditorWhenTheActiveItemIsDeletedInTheArrangeView = false;
                 activeMidiItemFollowsSelectionChangesInArrangeView = {
                   enable = true;
                   type = "mediaItem";

@@ -138,6 +138,18 @@ in
             // zoomBindings
             // scrollBindings;
             main = {
+              X = {
+                command = 40078;
+                actionName = "toggle mixer visible";
+              };
+              "Ctrl+Tab" = {
+                command = 41624;
+                actionName = "docker: activate next tab";
+              };
+              "Ctrl+Shift+Tab" = {
+                command = 41625;
+                actionName = "docker: activate previous tab";
+              };
               "Shift+M" = {
                 command = 7;
                 actionName = "Toggle solo for selected tracks";

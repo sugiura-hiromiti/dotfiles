@@ -20,7 +20,7 @@ local menus = {
 local _, _, section, command_id = reaper.get_action_context()
 
 local command_name = reaper.ReverseNamedCommandLookup(command_id):gsub('^_', '')
-local entry_points = { RS_which_key_insert = menus.main.insert, RS_which_key_midi = menus.midiEditor }
+local entry_points = { RS_which_key_main_insert = menus.main.i.children, RS_which_key_midi = menus.midiEditor }
 
 local current = entry_points[command_name]
 if not current then return end

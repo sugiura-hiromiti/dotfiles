@@ -17,7 +17,7 @@ in
           keyBindings = shortcutSetToList {
             main = {
               "i" = {
-                command = "RS_which_key_main";
+                command = "RS_which_key_main_insert";
                 actionName = "open insert palette";
               };
             };

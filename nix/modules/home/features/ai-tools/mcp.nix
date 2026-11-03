@@ -45,7 +45,7 @@ in
           enable = true;
         };
         serena = {
-          enable = true;
+          enable = false;
           package = serena;
         };
         github = {

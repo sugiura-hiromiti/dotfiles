@@ -55,7 +55,7 @@ in
       claude-code = {
         enable = true;
         enableMcpIntegration = true;
-        mcpServers = {
+        mcpServers = lib.optionalAttrs (config.programs.mcp.servers ? serena) {
           serena = claudeSerenaMcp;
         };
         inherit (cfg) package;

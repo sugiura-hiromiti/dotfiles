@@ -50,8 +50,26 @@ in
     programs = {
       reaper = {
         actions = {
+          scripts = [
+            {
+              path = "custom/toggle-midi-editor-main.lua";
+              source = ./toggle-midi-editor.lua;
+              section = reaperActions.sections.main;
+              commandId = "RS_toggle_midi_editor_main";
+            }
+            {
+              path = "custom/toggle-midi-editor-midi.lua";
+              source = ./toggle-midi-editor.lua;
+              section = reaperActions.sections.midiEditor;
+              commandId = "RS_toggle_midi_editor_midi";
+            }
+          ];
           keyBindings = shortcutSetToList {
             midiEditor = {
+              E = {
+                command = "RS_toggle_midi_editor_midi";
+                actionName = "toggle show midi editor windows";
+              };
               Backspace = {
                 command = 40002;
                 actionName = "delete selected notes";
@@ -143,6 +161,10 @@ in
               D = {
                 command = 41295;
                 actionName = "duplicate items";
+              };
+              E = {
+                command = "RS_toggle_midi_editor_main";
+                actionName = "toggle show midi editor windows";
               };
               S = {
                 command = 40757;

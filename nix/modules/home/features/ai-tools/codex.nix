@@ -83,7 +83,7 @@ let
         trust_level = "trusted";
       };
     };
-    mcp_servers = {
+    mcp_servers = lib.optionalAttrs (config.programs.mcp.servers ? serena) {
       serena = codexSerenaMcp;
     };
   };

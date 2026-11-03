@@ -28,6 +28,16 @@ in
   config = lib.mkIf cfg.enable {
     programs = {
       reaper = {
+        ini = {
+          sections = {
+            midiedit = {
+              window_w = 1100;
+              window_h = 1100;
+              window_x = 100;
+              window_y = 100;
+            };
+          };
+        };
         enable = true;
         extensions = {
           sws = {

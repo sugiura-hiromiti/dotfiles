@@ -33,7 +33,7 @@ in
               path = "which-key/leader.lua";
               source = ./which-key/leader.lua;
               section = reaperActions.sections.main;
-              commandId = "RS_which_key_main";
+              commandId = "RS_which_key_main_insert";
             }
             {
               path = "which-key/leader.lua";

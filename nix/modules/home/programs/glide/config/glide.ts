@@ -129,9 +129,11 @@ void browser.theme.update({
 		popup_highlight: palette.surface0,
 		popup_highlight_text: palette.mauve,
 	},
-});
+},);
 
 glide.o.hint_size = '13px';
+glide.prefs.set('browser.nova.enabled', true,);
+glide.prefs.set('browser.uidensity', 1,);
 
 glide.styles.add(
 	`
@@ -307,7 +309,7 @@ findbar .findbar-textbox[status = "notfound"] {
 	color: ${palette.base} !important;
 }
 `,
-	{ id: 'colorful-browser-ui', overwrite: true },
+	{ id: 'colorful-browser-ui', overwrite: true, },
 );
 
 glide.styles.add(
@@ -336,7 +338,7 @@ glide.styles.add(
     display: none !important;
   }
   `,
-	{ id: 'mode-indicator', overwrite: true },
+	{ id: 'mode-indicator', overwrite: true, },
 );
 
 glide.styles.add(
@@ -384,7 +386,7 @@ glide.styles.add(
     color: ${palette.green} !important;
   }
   `,
-	{ id: 'glide-notifications', overwrite: true },
+	{ id: 'glide-notifications', overwrite: true, },
 );
 
 glide.styles.add(
@@ -466,27 +468,27 @@ glide.styles.add(
     color: ${palette.blue} !important;
   }
   `,
-	{ id: 'colorful-urlbar', overwrite: true },
+	{ id: 'colorful-urlbar', overwrite: true, },
 );
 
 // 操作感
 glide.prefs.set('general.smoothScroll.lines', false,);
-glide.autocmds.create("UrlEnter", /.*/, async () => {
-	await glide.excmds.execute("mode_change normal");
-});
+glide.autocmds.create('UrlEnter', /.*/, async () => {
+	await glide.excmds.execute('mode_change normal',);
+},);
 
 // keybind
 // glide.g.mapleader = '';
 
-glide.keymaps.del('normal', '.');
+glide.keymaps.del('normal', '.',);
 
 glide.keymaps.set('normal', 'H', 'back',);
 glide.keymaps.set('normal', 'L', 'forward',);
-glide.keymaps.set('normal', 'q', 'tab_prev', { description: 'tab prev' });
-glide.keymaps.set('normal', 'w', 'tab_next', { description: 'tab next' });
+glide.keymaps.set('normal', 'q', 'tab_prev', { description: 'tab prev', },);
+glide.keymaps.set('normal', 'w', 'tab_next', { description: 'tab next', },);
 
 // 表示操作
-glide.keymaps.set('normal', '.t', 'tab_new', { description: 'tab new' });
+glide.keymaps.set('normal', '.t', 'tab_new', { description: 'tab new', },);
 glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 	const tab = await browser.tabs.get(tab_id,);
 	const windows = await browser.windows.getAll({
@@ -529,15 +531,18 @@ glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 			label: `Merge into ${active?.title || `window ${id}`}`,
 			description: `merge current window into window ${id}`,
 			async execute() {
-				const sourceTabs = await browser.tabs.query({ windowId: tab.windowId });
-				const unpinned = sourceTabs.filter((t) => !t.pinned).map((t) => t.id).filter((id): id is number => id !== undefined);
+				const sourceTabs = await browser.tabs.query({ windowId: tab.windowId, },);
+				const unpinned = sourceTabs.filter((t,) => !t.pinned).map((t,) => t.id).filter((
+					id,
+				): id is number => id !== undefined);
 				if (unpinned.length > 0) {
 					await browser.tabs.move(unpinned, {
-						windowId: id, index: -1
-					});
+						windowId: id,
+						index: -1,
+					},);
 				}
-			}
-		});
+			},
+		},);
 	}
 
 	await glide.commandline.show({
@@ -545,17 +550,17 @@ glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 		options,
 	},);
 }, { description: 'Move tab to another window', },);
-glide.keymaps.set('normal', '.d', 'tab_duplicate', { description: 'tab duplicate' });
-glide.keymaps.set('normal', '.c', 'tab_close', { description: 'tab close' });
-glide.keymaps.set('normal', '.r', 'reload', { description: 'tab reload' });
+glide.keymaps.set('normal', '.d', 'tab_duplicate', { description: 'tab duplicate', },);
+glide.keymaps.set('normal', '.c', 'tab_close', { description: 'tab close', },);
+glide.keymaps.set('normal', '.r', 'reload', { description: 'tab reload', },);
 glide.keymaps.set('normal', '.f', () => {
-	glide.hints.show({ location: 'browser-ui' });
-}, { description: 'hint browser ui' });
+	glide.hints.show({ location: 'browser-ui', },);
+}, { description: 'hint browser ui', },);
 
 // コマンド系
 glide.keymaps.set('normal', '/o', async () => {
-	await glide.keys.send('<C-l>', { skip_mappings: true });
-}, { description: 'open url in current tab' });
+	await glide.keys.send('<C-l>', { skip_mappings: true, },);
+}, { description: 'open url in current tab', },);
 glide.keymaps.set('normal', '/b', async () => {
 	const tree = await browser.bookmarks.getTree();
 	const bookmarks: { title: string; url: string; }[] = [];

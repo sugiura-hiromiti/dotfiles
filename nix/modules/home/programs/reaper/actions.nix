@@ -50,6 +50,18 @@ in
     programs = {
       reaper = {
         actions = {
+          customActions = [
+            {
+              name = "Insert MIDI note and deselect previous";
+              commandId = "insert_midi_note";
+              section = reaperActions.sections.midiEditor;
+              consolidateUndoPoints = true;
+              actions = [
+                40214
+                40051
+              ];
+            }
+          ];
           scripts = [
             {
               path = "custom/toggle-midi-editor-main.lua";
@@ -66,6 +78,22 @@ in
           ];
           keyBindings = shortcutSetToList {
             midiEditor = {
+              "Shift+Down" = {
+                command = 40774;
+                actionName = "Edit: Set note length to half";
+              };
+              "Shift+Up" = {
+                command = 40773;
+                actionName = "Edit: Set note length to double";
+              };
+              "Shift+Right" = {
+                command = 40446;
+                actionName = "Edit: Lengthen notes one grid unit";
+              };
+              "Shift+Left" = {
+                command = 40447;
+                actionName = "Edit: Shorten notes one grid unit";
+              };
               E = {
                 command = "RS_toggle_midi_editor_midi";
                 actionName = "toggle show midi editor windows";
@@ -79,7 +107,7 @@ in
                 actionName = "toggle repeat";
               };
               I = {
-                command = 40051;
+                command = "insert_midi_note";
                 actionName = "insert note";
               };
               H = {
@@ -230,9 +258,13 @@ in
                 command = 40285;
                 actionName = "Next track";
               };
-              F = {
+              "/" = {
                 command = 40069;
-                actionName = "jump to time/marker/region";
+                actionName = "Jump to time/marker/region";
+              };
+              F = {
+                command = "S&M_TOGLFXCHAIN";
+                actionName = "Toggle FX chain for selected tracks";
               };
             }
             // zoomBindings

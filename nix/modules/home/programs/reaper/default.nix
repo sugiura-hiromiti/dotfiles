@@ -60,6 +60,14 @@ in
           };
         };
         preferences = {
+          plugIns = {
+            autoDockNewFxChainWindows = true;
+            onlyAllowOneFxChainWindowAtATime = {
+              enable = true;
+              openTrackFxWindowOnTrackSelectionChange = true;
+              onlyIfAnyFxWindowIsOpen = true;
+            };
+          };
           appearance = {
             zoomScrollOffset = {
               horizontalZoomCenter = reaperAppearance.zoomScrollOffset.zoomCenter.horizontal.editCursor;

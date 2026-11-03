@@ -5,10 +5,10 @@
       _final: prev: {
         v4l2loopback = prev.v4l2loopback.overrideAttrs (old: {
           postInstall = (old.postInstall or "") + ''
-              find "$out/lib/modules" \
-                -mindepth 2 -maxdepth 2 \
-                -type f -name 'modules.*' -delete
-              '';
+            find "$out/lib/modules" \
+              -mindepth 2 -maxdepth 2 \
+              -type f -name 'modules.*' -delete
+          '';
         });
       }
     );
@@ -34,6 +34,9 @@
     };
     features = {
       autoRotation = {
+        enable = true;
+      };
+      osk = {
         enable = true;
       };
     };

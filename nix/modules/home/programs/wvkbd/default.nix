@@ -38,7 +38,7 @@ in
               After = [ "graphical-session.target" ];
             };
             Service = {
-              ExecStart = "${pkgs.wvkbd}/bin/wvkbd-mobintl --hidden";
+              ExecStart = "${pkgs.wvkbd}/bin/wvkbd-mobintl --hidden --non-exclusive --dock right --ratio 0.5";
               Restart = "on-failure";
             };
             Install = {

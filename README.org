@@ -235,6 +235,23 @@ On hosts with an ephemeral home directory, persist =~/.config/reaper-flake=
 (including =.nix-managed=) to retain GUI settings and managed-state tracking
 across reboots. This directory is not in the current persistence whitelist.
 
+*** Track height and Docker resizing
+
+REAPER's common vertical zoom can resize automatically-sized tracks when the
+Arrange view changes size. The =N= shortcut now inserts a track using REAPER's
+native action and then stores its displayed =I_TCPH= as a per-track
+=I_HEIGHTOVERRIDE=. It does *not* enable =B_HEIGHTLOCK=.
+
+For existing projects, use the Action List to run
+=Script: preserve-track-heights.lua= once, then save the project. The script
+preserves current visible heights for tracks without an override; individually
+sized tracks are left unchanged. Tracks reporting zero TCP height are skipped.
+Vertical zoom shortcuts remain bound as before.
+
+Only the =N= shortcut is wrapped. Creating tracks via menus, duplication,
+templates, or drag-and-drop does not automatically run this script. No
+always-running ReaScript is installed.
+
 ** Maintenance
 
 Run checks:

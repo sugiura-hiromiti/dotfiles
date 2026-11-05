@@ -64,6 +64,18 @@ in
           ];
           scripts = [
             {
+              path = "custom/insert-track-preserve-height.lua";
+              source = ./insert-track-preserve-height.lua;
+              section = reaperActions.sections.main;
+              commandId = "RS_insert_track_preserve_height";
+            }
+            {
+              path = "custom/preserve-track-heights.lua";
+              source = ./preserve-track-heights.lua;
+              section = reaperActions.sections.main;
+              commandId = "RS_preserve_track_heights";
+            }
+            {
               path = "custom/toggle-midi-editor-main.lua";
               source = ./toggle-midi-editor.lua;
               section = reaperActions.sections.main;
@@ -195,8 +207,8 @@ in
                 actionName = "toggle repeat";
               };
               N = {
-                command = 40001;
-                actionName = "insert new track";
+                command = "RS_insert_track_preserve_height";
+                actionName = "Insert new track with preserved height";
               };
               D = {
                 command = 41295;

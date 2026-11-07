@@ -90,6 +90,7 @@ let
   // (import ./apps/update/tests { inherit lib pkgs; })
   // (import ./apps/build-installer/tests { inherit lib pkgs; })
   // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    auto-rotation = import ./tests/nixos/auto-rotation.nix { inherit lib pkgs; };
     ci-contract = import ./tests/nixos/ci.nix { inherit lib pkgs; };
     installer-runtime = import ./tests/installer/runtime.nix { inherit lib pkgs; };
     installer-iso = import ./tests/installer/iso.nix {

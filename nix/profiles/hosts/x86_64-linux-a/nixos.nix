@@ -13,19 +13,6 @@
       }
     );
   };
-  services = {
-    udev = {
-      extraRules = ''
-        SUBSYSTEM=="iio", KERNEL=="iio:device*", ATTR{name}=="accel_3d", ENV{IIO_SENSOR_PROXY_TYPE}="iio-poll-accel"
-      '';
-    };
-    iio-niri = {
-      extraArgs = [
-        "--monitor"
-        "eDP-1"
-      ];
-    };
-  };
   dotfiles = {
     programs = {
       hazkey = {
@@ -35,6 +22,8 @@
     features = {
       autoRotation = {
         enable = true;
+        monitor = "eDP-1";
+        pollingSensorName = "accel_3d";
       };
       osk = {
         enable = true;

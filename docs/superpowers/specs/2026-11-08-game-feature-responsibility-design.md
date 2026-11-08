@@ -1,7 +1,7 @@
 # Game Feature Responsibility Refactor — Design Specification v0.1
 
-**Status:** ユーザー承認済み（方針 B：構成要素を明示する Feature API）。実装・テストは未実施。  
-**Repository:** `sugiura-hiromiti/dotfiles`  
+**Status:** 実装済み（方針 B：構成要素を明示する Feature API）。評価テスト・対象構成・lint を確認済み。検証結果と実行環境の制約は[実装計画](../plans/2026-11-08-game-feature-responsibility-refactor.md#implementation-results--2026-11-08)を参照。\
+**Repository:** `sugiura-hiromiti/dotfiles`\
 **Baseline:** GitHub `main` commit `1a7bce2293da159f31c93d8178acf31c427b0e5a`（実装時は最新 HEAD を再確認）。
 
 ## Intent
@@ -43,22 +43,22 @@ dotfiles.features.game = {
 
 ## Ownership and target-specific behavior
 
-| Owner | Responsibility |
-| --- | --- |
-| Host / 構成 Profile | ゲーム環境と構成要素を採用するか決定する |
-| `game` Feature (HM) | `game.enable && game.prismlauncher.enable` のとき `dotfiles.programs.prismlauncher.enable = lib.mkDefault true` を要求 |
-| `game` Feature (NixOS) | 同条件で `dotfiles.programs.prismlauncher.preserveData = lib.mkDefault true` を要求 |
-| PrismLauncher Program (HM) | PrismLauncher の実際の導入 |
-| PrismLauncher Program (NixOS) | PrismLauncher データの永続化の具体的実装 |
-| Preservation Feature | 永続化基盤の提供。有効化判断・機構を `game` に移さない |
+| Owner                         | Responsibility                                                                                                         |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Host / 構成 Profile           | ゲーム環境と構成要素を採用するか決定する                                                                               |
+| `game` Feature (HM)           | `game.enable && game.prismlauncher.enable` のとき `dotfiles.programs.prismlauncher.enable = lib.mkDefault true` を要求 |
+| `game` Feature (NixOS)        | 同条件で `dotfiles.programs.prismlauncher.preserveData = lib.mkDefault true` を要求                                    |
+| PrismLauncher Program (HM)    | PrismLauncher の実際の導入                                                                                             |
+| PrismLauncher Program (NixOS) | PrismLauncher データの永続化の具体的実装                                                                               |
+| Preservation Feature          | 永続化基盤の提供。有効化判断・機構を `game` に移さない                                                                 |
 
 `lib.mkDefault` を用い、より優先順位の高い独立した Program 設定を上書きしない。`game.enable = false` は Feature 自身の定義を追加しないだけで、他のモジュールの Program 設定を強制的に無効化しない。
 
-| `game.enable` | `game.prismlauncher.enable` | Home Manager からの要求 | NixOS からの要求 |
-| --- | --- | --- | --- |
-| false | 任意 | なし | なし |
-| true | false | なし | なし |
-| true | true | Program の有効化 | `preserveData` の有効化 |
+| `game.enable` | `game.prismlauncher.enable` | Home Manager からの要求 | NixOS からの要求        |
+| ------------- | --------------------------- | ----------------------- | ----------------------- |
+| false         | 任意                        | なし                    | なし                    |
+| true          | false                       | なし                    | なし                    |
+| true          | true                        | Program の有効化        | `preserveData` の有効化 |
 
 `game` が NixOS の永続化を要求しても `preservation.enable = false` なら実際の永続化は発生しない。`game` はその基盤を勝手に有効化しない。`preserveData = false` を Program 側で明示すれば、Feature からの `lib.mkDefault true` に優先する。
 

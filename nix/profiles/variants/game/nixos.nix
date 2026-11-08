@@ -1,9 +1,4 @@
-{ lib, ... }: {
-  dotfiles = {
-    programs = {
-      prismlauncher = {
-        preserveData = lib.mkDefault true;
-      };
-    };
-  };
+{ lib, ... }:
+{
+  dotfiles.features.game.enable = lib.mkDefault true;
 }

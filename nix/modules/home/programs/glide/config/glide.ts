@@ -473,7 +473,9 @@ glide.styles.add(
 
 // 操作感
 glide.prefs.set('general.smoothScroll.lines', false,);
-glide.autocmds.create('UrlEnter', /.*/, async () => {
+glide.autocmds.create('UrlEnter', /.*/, async ({ url, }) => {
+	// Keep Firefox's URL-bar focus and Glide's insert mode on new tabs.
+	if (url === 'about:newtab') return;
 	await glide.excmds.execute('mode_change normal',);
 },);
 

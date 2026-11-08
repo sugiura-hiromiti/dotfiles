@@ -56,6 +56,8 @@ in
             isDefault = true;
 
             settings = shared.settings // {
+              # Prevent HTML autofocus in web content without disabling manual focus.
+              "browser.autofocus" = false;
               "extensions.autoDisableScopes" = 0;
               "dotfiles.glide.theme" = if config.catppuccin.flavor == "latte" then "light" else "dark";
             };

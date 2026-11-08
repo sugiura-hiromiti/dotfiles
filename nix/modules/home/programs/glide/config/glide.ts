@@ -473,7 +473,8 @@ glide.styles.add(
 
 // 操作感
 glide.prefs.set('general.smoothScroll.lines', false,);
-glide.autocmds.create('UrlEnter', /.*/, async () => {
+glide.autocmds.create('UrlEnter', /.*/, async ({ url, },) => {
+	if (url === 'about:newtab') { return; }
 	await glide.excmds.execute('mode_change normal',);
 },);
 
@@ -512,7 +513,7 @@ glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 	for (const win of windows) {
 		if (
 			win.id === undefined || win.id === tab.windowId || win
-					.incognito !== tab.incognito
+				.incognito !== tab.incognito
 		) { continue; }
 
 		const id = win.id;

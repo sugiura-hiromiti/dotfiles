@@ -19,6 +19,7 @@ in
   };
 
   settings = {
+    "browser.autofocus" = false;
     "browser.startup.page" = 3;
     "browser.startup.homepage" = "https://www.google.com";
     "browser.uidensity" = 1;

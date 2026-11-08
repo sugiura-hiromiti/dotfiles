@@ -121,6 +121,9 @@ in
                 session = {
                   default = "niri";
                 };
+                # user = {
+                #   default = cfg.greeter.user;
+                # };
                 keyboard = {
                   layout = "us";
                 };

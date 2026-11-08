@@ -14,6 +14,10 @@ jobs:
       with:
         persist-credentials: false
     - uses: cachix/install-nix-action@v31
+      with:
+        extra_nix_config: |-
+          extra-substituters = https://catppuccin.cachix.org
+          extra-trusted-public-keys = catppuccin.cachix.org-1:noG/4HkbhJb+lUAdKrph6LaozJvAeEEZj4N732IysmU=
     - name: Build Darwin checks
       run: nix flake check --no-update-lock-file --print-build-logs
     timeout-minutes: 120
@@ -24,10 +28,26 @@ jobs:
       with:
         persist-credentials: false
     - uses: cachix/install-nix-action@v31
+      with:
+        extra_nix_config: |-
+          extra-substituters = https://catppuccin.cachix.org
+          extra-trusted-public-keys = catppuccin.cachix.org-1:noG/4HkbhJb+lUAdKrph6LaozJvAeEEZj4N732IysmU=
     - name: Evaluate
       run: |-
         nix eval --no-update-lock-file --raw .#checks.aarch64-linux.non-vm.drvPath
         nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.aarch64-linux.installer-e2e.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-parallels--theme-dark--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-parallels--theme-dark--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-parallels--theme-light--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-parallels--theme-light--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-dark--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-dark--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-light--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.aarch64-linux-a--deployment-qemu--theme-light--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.x86_64-linux-a--deployment-native--theme-dark--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.x86_64-linux-a--deployment-native--theme-dark--session-tty.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.x86_64-linux-a--deployment-native--theme-light--session-gui.config.system.build.toplevel.drvPath
+        nix eval --no-update-lock-file --raw .#nixosConfigurations.x86_64-linux-a--deployment-native--theme-light--session-tty.config.system.build.toplevel.drvPath
         nix flake check --no-build --no-update-lock-file .
     - name: Build non-VM checks
       run: nix build --no-update-lock-file --print-build-logs .#checks.aarch64-linux.non-vm

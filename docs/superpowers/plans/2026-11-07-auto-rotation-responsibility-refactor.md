@@ -32,6 +32,7 @@
 ### Task 1: Auto Rotation Feature の責務移管（単一の独立変更）
 
 **Files:**
+
 - Modify: `nix/modules/nixos/features/auto-rotation.nix` — Feature API と関連設定の生成。
 - Modify: `nix/profiles/hosts/x86_64-linux-a/nixos.nix` — 利用側からの宣言だけにする。
 - Create: `nix/tests/nixos/auto-rotation.nix` — 最小 NixOS 評価テスト。
@@ -39,6 +40,7 @@
 - No change expected: `nix/modules/nixos/default.nix` — 既に Feature を import している。
 
 **Interfaces:**
+
 - Consumes: `config.dotfiles.features.autoRotation`（既存の `enable`）と Nixpkgs の `services.iio-niri`、`services.udev.extraRules`。
 - Produces:
   - `dotfiles.features.autoRotation.enable`: `bool`、default `false`。

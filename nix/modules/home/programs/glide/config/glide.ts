@@ -512,7 +512,7 @@ glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 	for (const win of windows) {
 		if (
 			win.id === undefined || win.id === tab.windowId || win
-				.incognito !== tab.incognito
+					.incognito !== tab.incognito
 		) { continue; }
 
 		const id = win.id;

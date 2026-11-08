@@ -1,7 +1,7 @@
 # Auto Rotation Responsibility Refactor — Design Specification
 
-**Status:** 実装用設計案（ユーザーとの議論で合意した責務方針に基づく）。実装・テストは未実施。  
-**Repository:** `sugiura-hiromiti/dotfiles`  
+**Status:** 実装用設計案（ユーザーとの議論で合意した責務方針に基づく）。実装・テストは未実施。\
+**Repository:** `sugiura-hiromiti/dotfiles`\
 **Evidence baseline:** GitHub `main` commit `bba6208291ac2f9ca573cd8829c9e58d0a50aae9`。実装時にはローカル HEAD と差分を再確認すること。
 
 ## Intent

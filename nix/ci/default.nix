@@ -12,17 +12,29 @@ let
   };
   installNix = {
     uses = "cachix/install-nix-action@v31";
+    # Evaluating another architecture's NixOS configuration can need built
+    # Catppuccin themes through IFD, even when no system is being built.
+    "with".extra_nix_config = ''
+      extra-substituters = https://catppuccin.cachix.org
+      extra-trusted-public-keys = catppuccin.cachix.org-1:noG/4HkbhJb+lUAdKrph6LaozJvAeEEZj4N732IysmU=
+    '';
   };
   concurrency = {
     group = "\${{ github.workflow }}-\${{ github.ref }}";
     cancel-in-progress = true;
   };
+  nixosEvaluation = lib.concatMapStringsSep "\n" (
+    entry:
+    "nix eval --no-update-lock-file --raw .#nixosConfigurations.${entry.name}.config.system.build.toplevel.drvPath"
+  ) readyNixosTargetEntries;
   # Evaluate the non-VM aggregate with IFD enabled to realize configuration
   # inputs needed by flake check's read-only evaluator. The offline ISO also
   # keeps full derivation closures; instantiate them before that check.
+  # Flake check traverses every NixOS configuration, including other systems.
   linuxEvaluation = ''
     nix eval --no-update-lock-file --raw .#checks.${linuxPlatform}.non-vm.drvPath
     nix eval --no-update-lock-file --option allow-import-from-derivation false --raw .#checks.${linuxPlatform}.installer-e2e.drvPath
+    ${nixosEvaluation}
     nix flake check --no-build --no-update-lock-file .
   '';
   linuxSteps = [
@@ -45,9 +57,6 @@ let
     target = "home";
     hostName = "aarch64-darwin-a";
   };
-  readyNames = map (entry: entry.name) (
-    lib.filter (entry: entry.config.system == linuxPlatform) readyNixosTargetEntries
-  );
 in
 {
   useJJ = true;
@@ -137,17 +146,14 @@ in
           (
             installNix
             // {
-              "with".install_url = "https://releases.nixos.org/nix/nix-\${{ matrix.nix_version }}/install";
+              "with" = installNix."with" // {
+                install_url = "https://releases.nixos.org/nix/nix-\${{ matrix.nix_version }}/install";
+              };
             }
           )
           {
             name = "Evaluate ready NixOS targets";
-            run =
-              linuxEvaluation
-              + lib.concatMapStringsSep "\n" (
-                name:
-                "nix eval --no-update-lock-file --raw .#nixosConfigurations.${name}.config.system.build.toplevel.drvPath"
-              ) readyNames;
+            run = linuxEvaluation;
           }
         ];
       };

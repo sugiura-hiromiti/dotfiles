@@ -36,6 +36,7 @@
 
 (use-package diff-hl
 	:config
+	(require 'my-diff-hl)
 	(global-diff-hl-mode)
 	(diff-hl-flydiff-mode 1))
 

@@ -42,16 +42,8 @@
 	:config
 	(pretty-hydra-define meta-navigation
 		(:color pink :quit-key "<escape>")
-		("window/navi"
-			(("n" other-window "next")
-				("p" my/other-window-backward "prev"))
-			"window/create,delete"
-			(("v" split-window-right "vertical")
-				("x" split-window-below "horizontal")
-				;; delete
-				("d" delete-window "delete")
-				("u" winner-undo "undo")
-				)
+		("window/create,delete"
+			(("d" delete-window "delete"))
 			"window/swap"
 			(("H" windmove-swap-states-left "swap left")
 				("J" windmove-swap-states-down "swap down")
@@ -63,17 +55,11 @@
 				(";" shrink-window-horizontally "shrink")
 				("'" enlarge-window-horizontally "enlarge"))
 			"tab pos"
-			(("q" tab-previous "prev")
-				("w" tab-next "next")
-				(">" tab-move "right")
+			((">" tab-move "right")
 				("<" my/tab-move-left "left")
 				)
 			"tab mod"
-			(("c" tab-close "close")
-				("t" tab-new "new")
-				("U" tab-undo "undo")
-				("m" my/switch-to-buffer-other-tab "buffer switch")
-				)
+			(("m" my/switch-to-buffer-other-tab "buffer switch"))
 			))
 
 	(pretty-hydra-define command-palette

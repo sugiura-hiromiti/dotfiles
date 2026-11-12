@@ -102,7 +102,7 @@ sessions = {
   };
 };
 
-selectedSession = sessions.cfg.session;
+selectedSession = sessions.${cfg.session};
 ```
 
 ※ 上記 `desktopName` と起動コマンドは**事前確認が必要な例**。ロック済み Nixpkgs、Niri、Noctalia Greeter の実際のセッション登録・探索方法を確認し、正確な値を使用すること。

@@ -1,6 +1,11 @@
 {
+  hasGui ? false,
+  lib,
+  ...
+}:
+{
   programs = {
-    noctalia = {
+    noctalia = lib.mkIf hasGui {
       settings = {
         bar = {
           main = {
@@ -18,12 +23,12 @@
   dotfiles = {
     features = {
       osk = {
-        enable = true;
+        enable = lib.mkDefault hasGui;
       };
     };
     programs = {
-      niri = {
-        absoluteInputOutput = "eDP-1";
+      niri = lib.mkIf hasGui {
+        absoluteInputOutput = lib.mkDefault "eDP-1";
       };
     };
   };

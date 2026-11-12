@@ -28,10 +28,7 @@
 	(interactive)
 	(enlarge-window -1))
 
-(defun my/tab-move-left ()
-	"現在のtabを左に移動する。."
-	(interactive)
-	(tab-move -1))
+
 
 (defun my/switch-to-buffer-other-tab ()
 	"Bufferを選んで別tabで開く。."
@@ -42,24 +39,18 @@
 	:config
 	(pretty-hydra-define meta-navigation
 		(:color pink :quit-key "<escape>")
-		("window/create,delete"
-			(("d" delete-window "delete"))
-			"window/swap"
+		("window/swap"
 			(("H" windmove-swap-states-left "swap left")
 				("J" windmove-swap-states-down "swap down")
 				("K" windmove-swap-states-up "swap up")
 				("L" windmove-swap-states-right "swap right"))
-			"window/resize"
-			(("-" my/shrink-window-vertically "lower")
-				("+" enlarge-window "higher")
-				(";" shrink-window-horizontally "shrink")
-				("'" enlarge-window-horizontally "enlarge"))
-			"tab pos"
-			((">" tab-move "right")
-				("<" my/tab-move-left "left")
-				)
-			"tab mod"
-			(("m" my/switch-to-buffer-other-tab "buffer switch"))
+			;; "window/resize"
+			;; (("-" my/shrink-window-vertically "lower")
+			;; 	("+" enlarge-window "higher")
+			;; 	(";" shrink-window-horizontally "shrink")
+			;; 	("'" enlarge-window-horizontally "enlarge"))
+			;; "tab mod"
+			;; (("m" my/switch-to-buffer-other-tab "buffer switch"))
 			))
 
 	(pretty-hydra-define command-palette

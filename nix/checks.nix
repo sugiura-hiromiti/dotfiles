@@ -102,6 +102,10 @@ let
     dtm-nixos = import ./tests/nixos/dtm.nix { inherit lib pkgs; };
     game-home = import ./tests/home/game.nix { inherit lib pkgs home-manager; };
     game-nixos = import ./tests/nixos/game.nix { inherit lib pkgs preservation; };
+    session-gui-nixos = import ./tests/nixos/session-gui.nix { inherit lib pkgs; };
+    session-gui-home = import ./tests/home/session-gui.nix { inherit lib pkgs home-manager; };
+    session-gui-hosts = import ./tests/system/session-gui.nix { inherit lib pkgs self; };
+    recovery-boot = import ./tests/nixos/recovery-boot.nix { inherit lib pkgs; };
     auto-rotation = import ./tests/nixos/auto-rotation.nix { inherit lib pkgs; };
     ci-contract = import ./tests/nixos/ci.nix { inherit lib pkgs; };
     installer-runtime = import ./tests/installer/runtime.nix { inherit lib pkgs; };

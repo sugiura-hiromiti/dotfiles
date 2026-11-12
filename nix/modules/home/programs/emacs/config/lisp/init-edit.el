@@ -148,7 +148,10 @@
 			'("x" . meow-line)
 			'("X" . split-window-below)
 			'("y" . meow-save)
-			'("z" . tab-close)
+			'("z" . delete-window)
+			'("Z" . tab-close)
+			'(">" tab-move)
+			'("<" my/tab-move-left)
 			))
 	(meow-thing-register
 		'my/treesit-node
@@ -156,6 +159,11 @@
 		(lambda () (my/treesit-treewalk-node-bounds)))
 	(setf (alist-get ?n meow-char-thing-table) 'my/treesit-node)
 	(my/meow-setup) (meow-global-mode 1)
+
+	(defun my/tab-move-left ()
+		"現在のtabを左に移動する。."
+		(interactive)
+		(tab-move -1))
 
 	(defun my/save-some-buffers-when-meow-insert-exit (&rest _)
 		"Save modified file-visiting buffers without confirmation.

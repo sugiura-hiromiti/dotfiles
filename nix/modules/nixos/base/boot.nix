@@ -15,6 +15,8 @@ in
       description = "Whether to configure baseline boot, kernel, and storage behavior.";
     };
 
+    noGuiSpecialisation.enable = lib.mkEnableOption "a recovery boot entry without graphical autostart";
+
     performanceTuning = {
       enable = lib.mkEnableOption "performance-oriented boot and kernel tuning";
 
@@ -76,6 +78,18 @@ in
 
         zramSwap.enable = lib.mkDefault true;
       }
+
+      (lib.mkIf cfg.noGuiSpecialisation.enable {
+        specialisation.no-gui.configuration = {
+          system.nixos.tags = [ "no-gui" ];
+          # Suppress graphical autostart while keeping the same generation's
+          # services, shared Programs and session contracts available.
+          systemd.defaultUnit = lib.mkForce "multi-user.target";
+          # greetd masks autovt@tty1 and suppresses the default tty1 want.
+          # Request the canonical template instance for the recovery prompt.
+          systemd.targets.getty.wants = [ "getty@tty1.service" ];
+        };
+      })
 
       (lib.mkIf cfg.performanceTuning.enable (
         lib.mkMerge [

@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  hasGui ? false,
+  lib,
+  pkgs,
+  ...
+}:
 {
   boot = {
     kernelPackages = pkgs.linuxPackages_latest.extend (
@@ -16,17 +21,17 @@
   dotfiles = {
     programs = {
       hazkey = {
-        enable = true;
+        enable = lib.mkDefault hasGui;
       };
     };
     features = {
       autoRotation = {
-        enable = true;
+        enable = lib.mkDefault hasGui;
         monitor = "eDP-1";
         pollingSensorName = "accel_3d";
       };
       osk = {
-        enable = true;
+        enable = lib.mkDefault hasGui;
       };
     };
     nixos = {

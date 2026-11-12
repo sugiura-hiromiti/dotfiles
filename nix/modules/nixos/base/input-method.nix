@@ -10,8 +10,8 @@ in
 {
   options.dotfiles.nixos.inputMethod.enable = lib.mkOption {
     type = lib.types.bool;
-    default = true;
-    description = "Whether to configure the baseline fcitx5 input method.";
+    default = false;
+    description = "Whether to configure the Fcitx5 and SKK input method. Selected by the GUI runtime profile.";
   };
 
   config = lib.mkIf cfg.enable {

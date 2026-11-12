@@ -10,7 +10,7 @@
     programs = {
       reaper = {
         theme = {
-          packages = [ reaperFlake.packages.${pkgs.system}.reaclassical-theme ];
+          packages = [ reaperFlake.packages.${pkgs.stdenv.hostPlatform.system}.reaclassical-theme ];
           active = "ReaClassical WaveColors Light.ReaperThemeZip";
         };
       };

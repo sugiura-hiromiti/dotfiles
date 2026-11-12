@@ -98,6 +98,7 @@ in
         preservation
         home-manager
         nixpkgs
+        reaper-flake
         ;
       inherit (targets) mkReadyTargetConfigEntries mkTargetConfigEntries targetConfigNamesForSystem;
     })

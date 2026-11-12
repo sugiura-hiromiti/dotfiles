@@ -472,7 +472,9 @@ glide.styles.add(
 );
 
 // 操作感
-glide.prefs.set('general.smoothScroll.lines', false,);
+glide.prefs.set("general.smoothScroll.lines.durationMinMS",50);
+glide.prefs.set("general.smoothScroll.lines.durationMaxMS",50);
+// glide.prefs.set('general.smoothScroll.lines', false,);
 glide.autocmds.create('UrlEnter', /.*/, async ({ url, },) => {
 	if (url === 'about:newtab') { return; }
 	await glide.excmds.execute('mode_change normal',);

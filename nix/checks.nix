@@ -1,5 +1,6 @@
 {
   home-manager,
+  reaper-flake,
   lib,
   preservation,
   pkgs,
@@ -90,6 +91,15 @@ let
   // (import ./apps/update/tests { inherit lib pkgs; })
   // (import ./apps/build-installer/tests { inherit lib pkgs; })
   // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    dtm-home = import ./tests/home/dtm.nix {
+      inherit
+        lib
+        pkgs
+        home-manager
+        reaper-flake
+        ;
+    };
+    dtm-nixos = import ./tests/nixos/dtm.nix { inherit lib pkgs; };
     game-home = import ./tests/home/game.nix { inherit lib pkgs home-manager; };
     game-nixos = import ./tests/nixos/game.nix { inherit lib pkgs preservation; };
     auto-rotation = import ./tests/nixos/auto-rotation.nix { inherit lib pkgs; };

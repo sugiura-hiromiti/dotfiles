@@ -1,5 +1,6 @@
 {
   home-manager,
+  reaper-flake,
   lib,
   self,
   disko,
@@ -29,6 +30,7 @@
       checks = import ../checks.nix {
         inherit
           home-manager
+          reaper-flake
           nixosTargetEntries
           preservation
           lib

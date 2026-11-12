@@ -17,7 +17,11 @@ in
           jack.enable = lib.mkOption {
             type = lib.types.bool;
             default = true;
-            description = "Whether to enable PipeWire JACK compatibility.";
+            description = ''
+              Whether to provide PipeWire audio and pw-jack for DTM clients.
+              Embedded Home Manager inherits this selection for per-application
+              JACK compatibility by default.
+            '';
           };
 
           alsaTuning = {
@@ -77,7 +81,6 @@ in
           packages = lib.mkOption {
             type = lib.types.listOf lib.types.package;
             default = with pkgs; [
-              pipewire.jack
               jack2
               jack-example-tools
             ];
@@ -91,9 +94,15 @@ in
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
-        services.pipewire.jack.enable = cfg.jack.enable;
-        environment.systemPackages = cfg.packages;
+        environment.systemPackages = cfg.packages ++ lib.optional cfg.jack.enable pkgs.pipewire.jack;
       }
+
+      (lib.mkIf cfg.jack.enable {
+        services.pipewire = {
+          enable = lib.mkDefault true;
+          audio.enable = lib.mkDefault true;
+        };
+      })
 
       (lib.mkIf cfg.alsaTuning.enable {
         services.pipewire.wireplumber.extraConfig."50-alsa-config"."monitor.alsa.rules" = [

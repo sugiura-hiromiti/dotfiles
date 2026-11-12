@@ -15,7 +15,7 @@
           };
         };
         theme = {
-          packages = [ reaperFlake.packages.${pkgs.system}.smooth6-theme ];
+          packages = [ reaperFlake.packages.${pkgs.stdenv.hostPlatform.system}.smooth6-theme ];
           active = "Smooth_6.ReaperThemeZip";
         };
       };

@@ -10,13 +10,6 @@
 4. **公開 API の意味と実効構成を一致させる。** Feature がある能力の提供を約束するなら、選ばれた実装がその能力を満たす必要がある。矛盾を検出する方法は各 Feature で決める。自動フォールバックは要求しない。
 5. **Feature の無効化は、共有 Program の排他的な無効化ではない。** `feature.enable = false` は原則としてその Feature からの構成を停止する。他の利用者が同じ Program を使うことを妨げない。個別の子オプションの `false` が何を禁止・停止するかは、その API の説明で明示する。
 
-## 例と既存コードへの含意
-
-- **terminal:** `dotfiles.features.terminal.provider` は Host が選べる公開 API。Darwin で Ghostty、Linux で Kitty、別の構成で WezTerm を選択できる設計が望ましい。現状 Ghostty は Provider として登録されていないため、これら全てが既に動くという意味ではない。
-- **autoRotation:** Host は `monitor` と `pollingSensorName` を指定し、Feature が iio-niri と udev の設定を組み立てる。代替実装が必要になるまでは Provider 抽象化は不要。
-- **game:** `game.prismlauncher.enable = true` が PrismLauncher の導入を意味するなら、Program 側の別定義によって導入が無効になる状態は契約違反。一方 `false` は、他の Feature が PrismLauncher を利用することまで禁止しない。
-- **aiTools:** nix-agent の導入と特権自動化の選択は Feature API として提供する案を採用する方向。特権自動化を無効にする API は、**その API が管理すると明示した権限**について最終状態と一致させる必要がある。無関係の sudoers まで禁止できると主張しない。詳細な API・既定値・検証方法は `aiTools` の個別設計で決める。
-
 ## 適用時の確認事項
 
 - 利用者は公開 API だけで、意図した構成差分を表現できるか。

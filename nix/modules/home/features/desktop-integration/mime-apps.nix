@@ -42,7 +42,13 @@ in
                   "x-scheme-handler/http" = "glide.desktop";
                   "x-scheme-handler/https" = "glide.desktop";
                 };
-              description = "Default applications registered with xdg.mimeApps.";
+              description = ''
+                MIME default selection policy; referenced handlers are supplied
+                by their own program/session configuration, not installed or
+                validated here. Automatic directory/URI defaults select Yazi;
+                Glide takes precedence over Qutebrowser when both are enabled.
+                An explicit value replaces the whole automatic default map.
+              '';
             };
           };
         };

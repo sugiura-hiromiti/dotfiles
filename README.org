@@ -237,11 +237,13 @@ across reboots. This directory is not in the current persistence whitelist.
 
 ** Maintenance
 
-Run checks:
+Build and run the checks:
 
 #+begin_src sh
-nix flake check
+nix flake check --no-update-lock-file path:.
 #+end_src
+
+The =path:.= source includes new files in the working directory.
 
 Format:
 

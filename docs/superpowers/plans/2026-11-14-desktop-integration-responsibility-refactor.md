@@ -2,9 +2,9 @@
 
 > **For implementation agents:** 実装前に現行 HEAD / 利用箇所 / ロック済み Nixpkgs・Home Manager の Portal 挙動を確認する。先に契約テストを書き、根本原因ごとに変更・検証する。チェック項目は作業後にのみ完了扱いにする。
 
-**Status:** 実装計画（未実装・未検証）  
-**Repository:** `sugiura-hiromiti/dotfiles`  
-**Evidence baseline:** `main` commit `1142bfe6f026b0d14186ff1cf2bc90caee75e80c`（2026-11-14）。実装時に最新 HEAD と差分を再確認する。  
+**Status:** Task 1–6 の実装完了。専用 checks 5 件・既存 session-gui checks 3 件・代表 Host build に加え、2026-11-16 の標準 `nix flake check` が x86_64-linux で整形・VM 検査を含めて成功。実機 GUI 操作は未検証、変更は未コミット。最新結果は検証記録を参照。\
+**Repository:** `sugiura-hiromiti/dotfiles`\
+**Evidence baseline:** 計画作成時は `main` commit `1142bfe6f026b0d14186ff1cf2bc90caee75e80c`（2026-11-14）。Task 1 で `main` `73ee6ffd` を親に持つ作業ツリーを再確認した。以降の Task でも最新 HEAD と差分を再確認する。\
 **Design contract:** [Feature API と内部 Composition](../specs/2026-11-10-feature-capability-provider-contract-design.md)
 
 ## Goal
@@ -87,76 +87,107 @@ dotfiles.features.desktopIntegration = {
 
 **Files:** すべての `desktopIntegration` 利用箇所、関連 Feature / Program / Profile、ロックされた Nixpkgs / Home Manager。
 
-- [ ] 最新 HEAD、`jj status` / `git status --short`、関連の未コミット変更を確認し保護する。
-- [ ] `rg -n 'desktopIntegration|fileChooserBackend|termfilechooser|xdg\.portal|orgProtocol|mimeApps' nix` で Host / Profile / Feature の参照を網羅する。
-- [ ] NixOS・Home Manager が生成する Portal 設定のパス、優先順位、`configName` に対応する desktop 名、`.portal` 記述、`extraPortals` を調べる。
-- [ ] 既定 GUI / TTY 各 Target の `xdg.portal`、termfilechooser 設定、Keyring、MIME、Org Protocol の実効値を記録する。
-- [ ] termfilechooser wrapper の CLI・依存 Package・Terminal コマンドの待機動作・Yazi 利用方法を調べる。
-- [ ] `gnome-keyring` の要求が Secret Portal の必須要件か、GUI 全体の Policy か、他機能の共有要求かを調べる。
-- [ ] 管理する Backend と、既存の外部提供 Backend の境界を決定する。
+- [x] 最新 HEAD、`jj status` / `git status --short`、関連の未コミット変更を確認し保護する。
+- [x] `rg -n 'desktopIntegration|fileChooserBackend|termfilechooser|xdg\.portal|orgProtocol|mimeApps' nix` で Host / Profile / Feature の参照を網羅する。
+- [x] NixOS・Home Manager が生成する Portal 設定のパス、優先順位、`configName` に対応する desktop 名、`.portal` 記述、`extraPortals` を調べる。
+- [x] 既定 GUI / TTY 各 Target の `xdg.portal`、termfilechooser 設定、Keyring、MIME、Org Protocol の実効値を記録する。
+- [x] termfilechooser wrapper の CLI・依存 Package・Terminal コマンドの待機動作・Yazi 利用方法を調べる。
+- [x] `gnome-keyring` の要求が Secret Portal の必須要件か、GUI 全体の Policy か、他機能の共有要求かを調べる。
+- [x] 管理する Backend と、既存の外部提供 Backend の境界を決定する。
+
+**Evidence:** [Task 1 の実効値・固定済み source・次の実装契約](../evidence/2026-11-14-desktop-integration-baseline.md)。FileChooser は `null` / `termfilechooser` / `gtk`、既定値 `termfilechooser`。wrapper の端末コマンドが現在は daemon の選択に反映されないことを確認したため、Task 3 では環境 / argv の引き渡しも検証する。
 
 **Acceptance:** どの Target が何を提供するか、何が今回の保証範囲かを明文化できる。調査結果なしに API を固定しない。
 
 ## Task 2: FileChooser Single-Source Composition
 
 **Files:**
+
 - `nix/modules/nixos/features/desktop-integration.nix`
 - `nix/modules/home/features/desktop-integration/portal.nix`
 - `nix/modules/home/features/desktop-integration/termfilechooser.nix`
 
-- [ ] 最小 NixOS / Home Manager 評価テストを先に追加し、現在の二重状態で生じる契約違反を確認する。
-- [ ] Public API の Backend 選択を単一の意味上の値にまとめ、旧 `portal.fileChooserBackend` / `termfilechooser.enable` の参照を移行する。
-- [ ] 管理対象 Backend の選択から、必要な `extraPortals`、FileChooser Portal 設定、wrapper 設定を導出する。
-- [ ] Backend が `null` や他の実装なら、不要な termfilechooser / Terminal / File Manager の実装詳細を評価しない。
-- [ ] Portal の選択と最終的な設定・実装提供が合っていなければ、説明的な契約エラーにする。
-- [ ] 上流との Portal 設定優先順位を調べてから `mkForce` の要否を判断する。必要なら使用理由と保証範囲を記録する。
+- [x] 最小 NixOS / Home Manager 評価テストを先に追加し、現在の二重状態で生じる契約違反を確認する。
+- [x] Public API の Backend 選択を単一の意味上の値にまとめ、旧 `portal.fileChooserBackend` / `termfilechooser.enable` の参照を移行する。
+- [x] 管理対象 Backend の選択から、必要な `extraPortals`、FileChooser Portal 設定、wrapper 設定を導出する。
+- [x] Backend が `null` や他の実装なら、不要な termfilechooser / Terminal / File Manager の実装詳細を評価しない。
+- [x] Portal の選択と最終的な設定・実装提供が合っていなければ、説明的な契約エラーにする。
+- [x] 上流との Portal 設定優先順位を調べてから `mkForce` の要否を判断する。必要なら使用理由と保証範囲を記録する。
 
 **Acceptance:** Backend の選択・導入・設定・無効化が一つの契約から導出され、複数の独立した「選択フラグ」を持たない。
+
+**実装記録（2026-11-15）:** `portal.fileChooser.backend = "termfilechooser" | "gtk" | null` から管理対象 package・Portal 選択・Home の chooser 設定を導出する。旧二つの option は移行先を示す削除エラーにした。Host / Profile の旧 API 明示利用はなく、調査 probe の参照のみ移行した。`null` は他者の選択を残す。NixOS の `mkForce` は Niri の通常優先度 GTK 設定への対応として保持し、最終的な engine・package・選択の不整合を assertion で検出する。
+
+独立評価テスト: [Home Manager](../../../nix/tests/home/desktop-integration.nix)、[NixOS](../../../nix/tests/nixos/desktop-integration.nix)。先に `portal.enable = false` でも wrapper が残る失敗と、新 API が存在しない失敗を再現した。非選択時の依存を `throw` にして遅延評価も確認する。テストの flake checks 登録は Task 6 で行う。
+
+**検証:** 新規の両契約テストと既存 `session-gui-nixos` の build、変更した 8 ファイルの format、リポジトリ全体の statix / deadnix が成功。standalone Home 4・NixOS 6・内包 Home 6 構成は、新 API の観測項目を除き Task 1 の実効値・生成 text・wrapper 参照と一致した。
+
+**Task 2 時点の追加チェック記録:** `session-gui-hosts` を含む既存チェックの build は、Catppuccin Bottom の評価時ビルドから必要になる `config.guess-948ae97` の GNU Savannah URL が HTTP 404 になり失敗した。全体の `nix flake check --no-build` は `non-vm` 評価中で実行セッションの結果を取得できなくなり、完了未確認。全体の `treefmt --fail-on-change` は、既存の利用者編集がある `glide.ts` のインデントで失敗した。formatter による 1 文字だけの変更を戻し、利用者の編集は保持した。
+
+Host チェックを除いた再試行でも、`session-gui-home` は Alacritty の未キャッシュ依存を構築する段階で `stage0-posix-1.9.1-source` が store / substituter に存在せず失敗した。これらの既存依存 Package や lock の変更は行っていない。
+
+以上は当時の経過記録。これらのチェックは後続の実行で成功し、2026-11-16 の標準 `nix flake check` でも全体の成功を確認した。現在の未完了事項として扱わない。
+
+端末コマンドの daemon / wrapper 境界の修正は Task 3、Keyring の重複要求は Task 4 に残る。この段階では実機の FileChooser 動作を保証する検証は行っていない。
 
 ## Task 3: Terminal / File Manager Dependency and Package Overrides
 
 **Files:** Home `termfilechooser.nix` と契約テスト。Terminal / Yazi の他モジュールは原則変更しない。
 
-- [ ] termfilechooser 選択時にだけ、Terminal Provider が利用可能であることを確認する。
-- [ ] Terminal Feature が無効でも無関係の Backend が評価でき、`terminal.selected` 属性欠落のような意図しない評価エラーを生まないことをテストする。
-- [ ] Terminal Provider を Host から変更した場合、実効 Provider の `mkCommand { wait = true; }` と Package が wrapper に反映される。
-- [ ] `fileManager.package` を上書きした場合、wrapper の実効 PATH / 起動処理に反映される。
-- [ ] File Manager Program 自体の `enable` が wrapper の成立に必要かは、単純に仮定せず上流 wrapper と Package の内容から確認する。
-- [ ] Terminal を自動有効化するかは、必須依存・既定有効化の意味を区別して判断する。**既定案:** Terminal の選択は Terminal Feature に任せ、欠落時は説明的な assertion とする。
+- [x] termfilechooser 選択時にだけ、Terminal Provider が利用可能であることを確認する。
+- [x] Terminal Feature が無効でも無関係の Backend が評価でき、`terminal.selected` 属性欠落のような意図しない評価エラーを生まないことをテストする。
+- [x] Terminal Provider を Host から変更した場合、実効 Provider の `mkCommand { wait = true; }` と Package が wrapper に反映される。
+- [x] `fileManager.package` を上書きした場合、wrapper の実効 PATH / 起動処理に反映される。
+- [x] File Manager Program 自体の `enable` が wrapper の成立に必要かは、単純に仮定せず上流 wrapper と Package の内容から確認する。
+- [x] Terminal を自動有効化するかは、必須依存・既定有効化の意味を区別して判断する。**確定:** Terminal の選択は Terminal Feature に任せ、欠落時は説明的な assertion とする。
 
 **Acceptance:** 必要な実装だけを要求し、Host の Provider / Package 上書きを尊重する。
+
+**実装記録（2026-11-15）:** Terminal 無効時の assertion を追加し、無効時は `terminal.selected` を参照する wrapper を生成しない。daemon の後続 Terminal argv をそのまま渡していた処理を、先頭六つの FileChooser 入力と実効 Provider の待機コマンドを渡す処理へ修正した。Yazi は互換 CLI を持つ package を使い、Program の有効化は要求しない。
+
+[wrapper 実行テスト](../../../nix/tests/home/desktop-integration-wrapper.nix) は固定済み上流 `yazi-wrapper.sh` を使用し、GUI 起動先だけを記録用プロセスへ交換する。四つの選択モード、引用符・空白を含む入力、待機指定、Chooser / Terminal / Yazi package 上書きと結果ファイルを検証した。旧コードの daemon argv 実行（終了コード 93）と Terminal 依存診断の欠落を先に再現し、修正後の Home / wrapper build が成功した。
+
+最終レビューで Alacritty の子コマンド区切り不足も再現した。`mkCommand` に任意の `withCommand`（既定 false）を追加し、chooser のみ true にする。Alacritty が `-e` を付加し、WezTerm は拡張引数を受け入れる。実際の Kitty / Alacritty / WezTerm Provider 定義を使う回帰テストで chooser と通常起動を確認した。Terminal 本体の変更を原則避ける方針に対し、Provider 交換を成立させる必要最小限の例外とした。
 
 ## Task 4: Shared Portal, Secret / Keyring Ownership
 
 **Files:** NixOS `desktop-integration.nix`、Home `portal.nix`、必要な契約テスト。
 
-- [ ] Portal の有効化が `lib.mkDefault true` で他の利用者と安全に Composition されることを確認する。
-- [ ] `xdg.portal.config` の最終値が API 選択と矛盾した場合の診断を設計する。
-- [ ] NixOS と Home Manager の Portal 設定を両方入れたときの具体的な生成物を検証する。
-- [ ] Secret Backend の選択と `services.gnome.gnome-keyring.enable` の関係を確認し、必要なら適切な所有者へ要求を移す。
-- [ ] Feature / `portal.enable` の無効化が共有 Portal・Keyring を強制無効化しないことを検証する。
-- [ ] Keyring を別 Feature へ分離するのは、独立した利用契約が本当に必要な場合に限る。
+- [x] Portal の有効化が `lib.mkDefault true` で他の利用者と安全に Composition されることを確認する。
+- [x] `xdg.portal.config` の最終値が API 選択と矛盾した場合の診断を設計する。
+- [x] NixOS と Home Manager の Portal 設定を両方入れたときの具体的な生成物を検証する。
+- [x] Secret Backend の選択と `services.gnome.gnome-keyring.enable` の関係を確認し、必要なら適切な所有者へ要求を移す。
+- [x] Feature / `portal.enable` の無効化が共有 Portal・Keyring を強制無効化しないことを検証する。
+- [x] Keyring を別 Feature へ分離するのは、独立した利用契約が本当に必要な場合に限る。
 
 **Acceptance:** Portal / Keyring の有効化・無効化・共有の意味が説明可能で、実効構成に一致する。
+
+**実装記録（2026-11-15）:** Task 1 の決定どおり NixOS の無条件 Keyring 要求を除いた。既存 GUI は Niri の要求で Keyring を維持する。Home の Default / Access / Notification / Secret は外部提供サービスへの選択 Policy と明記し、公開 API と正規化後の最終 Portal 設定が矛盾する場合の assertion を追加した。
+
+Keyring 所有権と最終 Policy の矛盾を先に失敗させ、Home / NixOS / wrapper の独立 build が成功した。`backend = null` の standalone NixOS では、Portal を有効のまま使う場合に外部 Backend が必要であり、上流の assertion がこれを検出する。従来は無条件 Keyring 追加がその前提を隠していた。
 
 ## Task 5: MIME / Org Protocol (separate change unit)
 
 **Files:**
+
 - `nix/modules/home/features/desktop-integration/mime-apps.nix`
 - `nix/modules/home/features/desktop-integration/org-protocol.nix`
 
-- [ ] Qutebrowser / Glide の後勝ち順、`yazi.desktop` 固定、`emacsclient.desktop` 既定化の意味を Profile / Host の利用方針に照らして確認する。
-- [ ] `mimeApps.defaultApplications` への Host の明示指定が優先されることを検証する。
-- [ ] 自動既定値が無効なハンドラーを指す場合の保証範囲を定義する。実装 Package・desktop entry の存在を検証するか、単なる既定選択と明記するか決める。
-- [ ] `orgProtocol.enable` の有効・無効、Emacs の実効有効状態、`emacsPackage` 上書き、`org-protocol.desktop` と MIME 関連付けを検証する。
-- [ ] 独立 Emacs / Browser / Yazi の設定を他 Feature の無効化で消さない。
-- [ ] Browser Registry や汎用 MIME Provider Framework を導入しない。
+- [x] Qutebrowser / Glide の後勝ち順、`yazi.desktop` 固定、`emacsclient.desktop` 既定化の意味を Profile / Host の利用方針に照らして確認する。
+- [x] `mimeApps.defaultApplications` への Host の明示指定が優先されることを検証する。
+- [x] 自動既定値が無効なハンドラーを指す場合の保証範囲を定義する。実装 Package・desktop entry の存在を検証するか、単なる既定選択と明記するか決める。
+- [x] `orgProtocol.enable` の有効・無効、Emacs の実効有効状態、`emacsPackage` 上書き、`org-protocol.desktop` と MIME 関連付けを検証する。
+- [x] 独立 Emacs / Browser / Yazi の設定を他 Feature の無効化で消さない。
+- [x] Browser Registry や汎用 MIME Provider Framework を導入しない。
 
 **Acceptance:** ハンドラーの選択と登録が明示的な Policy / 契約で説明できる。A の解消に直接必要な変更でなければ独立タスクに分離する。
+
+**実装記録（2026-11-15）:** MIME は既存の選択 Policy を維持し、参照するハンドラーの提供を他の Program / session に任せると明記した。Glide 優先、Yazi 固定既定、Host による自動 map 全体の置換を変更していない。[独立テスト](../../../nix/tests/home/desktop-integration-mime.nix) が Emacs / Browser 条件、共有設定の保持、未使用 package の非評価を検証し、実際に Home Manager が生成した desktop entry と MIME ファイルを読み、カスタム emacsclient への URL argv まで検証する。独立評価・build と、ブラウザ優先順位 / Org 既定 / Emacs assertion の三つの変異検査が成功した。
 
 ## Task 6: Profile / Host Migration and Tests
 
 **Likely files:**
+
 - `nix/profiles/variants/desktop-integration/home.nix`
 - `nix/profiles/variants/desktop-integration/nixos.nix`
 - `nix/tests/home/desktop-integration.nix` (new)
@@ -164,33 +195,39 @@ dotfiles.features.desktopIntegration = {
 - `nix/tests/system/desktop-integration.nix` (as needed)
 - `nix/checks.nix`
 
-- [ ] 最新の旧 API 利用箇所をすべて移行し、未対応オプションを黙って無視しない。
-- [ ] NixOS / Home Manager を**独立に**評価する最小テストを用意する。
-- [ ] X12 native と aarch64 Linux Parallels / QEMU の GUI・TTY / Theme から必要な Target を確認する。
-- [ ] Embedded Home Manager と standalone Home Manager の構成差分を確認する。
-- [ ] 正常ケースと意図した失敗を評価し、Nix の遅延評価で assertions が飛ばされないようにする。
-- [ ] 生成される `portals.conf`、termfilechooser の設定と wrapper の参照をできる範囲で検証する。
-- [ ] `nix/checks.nix` に専用 checks を登録し、成功したものと実行できなかったものを区別する。
-- [ ] 変更した Nix の format、既存チェック、代表 Host の評価・ビルドを行う。無関係の外部要因による失敗を切り分ける。
+- [x] 最新の旧 API 利用箇所をすべて移行し、未対応オプションを黙って無視しない。
+- [x] NixOS / Home Manager を**独立に**評価する最小テストを用意する。
+- [x] X12 native と aarch64 Linux Parallels / QEMU の GUI・TTY / Theme から必要な Target を確認する。
+- [x] Embedded Home Manager と standalone Home Manager の構成差分を確認する。
+- [x] 正常ケースと意図した失敗を評価し、Nix の遅延評価で assertions が飛ばされないようにする。
+- [x] 生成される `portals.conf`、termfilechooser の設定と wrapper の参照をできる範囲で検証する。
+- [x] `nix/checks.nix` に専用 checks を登録し、成功したものと実行できなかったものを区別する。
+- [x] 変更した Nix の format、既存チェック、代表 Host の評価・ビルドを行う。無関係の外部要因による失敗を切り分ける。
+
+**実装記録（2026-11-15）:** Home / NixOS の最小評価、wrapper 実行、MIME / Org Protocol、Host 行列の五つの専用 checks を登録し、flake 経由のまとめた build が成功した。Host 行列は standalone Home 8・NixOS 12・内包 Home 12 の両 Theme / session を確認する。X12 GUI の system toplevel と内包 no-gui 構成の実 build も成功した（未反映）。最新の旧 API 検索は削除診断テストだけに一致し、Host / Profile の追加移行は不要だった。
+
+**最終検証（2026-11-16）:** `nix flake check --no-update-lock-file --print-build-logs path:.` が x86_64-linux で exit 0。公開 NixOS 12 構成の評価、全体の整形、登録済み checks の build、三つの VM 検査を通過した。再開時の独立した差分確認でも、追加の実装修正を要する指摘はなかった。実機の Portal / D-Bus / GUI 待機 / Keyring ログイン解除と、異なるシステムの checks の build は未検証。
+
+詳細と再現コマンド: [最終の実装・検証記録](../evidence/2026-11-15-desktop-integration-refactor-validation.md)。
 
 ### Required Contract Matrix
 
-| ケース | Expected |
-| --- | --- |
-| `desktopIntegration.enable = false` | Feature 自身の設定寄与なし |
-| 外部 Portal / Keyring が別途有効 | Feature 無効でも保持 |
-| `portal.enable = false` | Feature 起因の Portal / wrapper 設定を要求しない |
-| `fileChooser.backend = "termfilechooser"` | 管理対象実装・登録・設定が整合 |
-| `fileChooser.backend = null` | FileChooser Backend の選択を要求しない |
-| 別のサポート済み Backend | 不要な Terminal / termfilechooser を要求しない |
-| Terminal が必要なのに未提供 | 意図した契約エラー。属性欠落エラーではない |
-| Terminal Provider 上書き | 実効 Package / コマンドへ追従 |
-| File Manager Package 上書き | wrapper に反映 |
-| Portal configName 上書き | 対象デスクトップの設定へ反映 |
-| 最終 Portal Backend が意図と不一致 | 契約エラー、または明確に記述した競合診断 |
-| MIME / Org Protocol 有効・無効 | 必要な desktop entry / MIME 設定のみ生成 |
-| Emacs なしの Org Protocol 要求 | 明確な契約エラー |
-| GUI / TTY Host | 各 Runtime の利用方針に一致 |
+| ケース                                    | Expected                                         |
+| ----------------------------------------- | ------------------------------------------------ |
+| `desktopIntegration.enable = false`       | Feature 自身の設定寄与なし                       |
+| 外部 Portal / Keyring が別途有効          | Feature 無効でも保持                             |
+| `portal.enable = false`                   | Feature 起因の Portal / wrapper 設定を要求しない |
+| `fileChooser.backend = "termfilechooser"` | 管理対象実装・登録・設定が整合                   |
+| `fileChooser.backend = null`              | FileChooser Backend の選択を要求しない           |
+| 別のサポート済み Backend                  | 不要な Terminal / termfilechooser を要求しない   |
+| Terminal が必要なのに未提供               | 意図した契約エラー。属性欠落エラーではない       |
+| Terminal Provider 上書き                  | 実効 Package / コマンドへ追従                    |
+| File Manager Package 上書き               | wrapper に反映                                   |
+| Portal configName 上書き                  | 対象デスクトップの設定へ反映                     |
+| 最終 Portal Backend が意図と不一致        | 契約エラー、または明確に記述した競合診断         |
+| MIME / Org Protocol 有効・無効            | 必要な desktop entry / MIME 設定のみ生成         |
+| Emacs なしの Org Protocol 要求            | 明確な契約エラー                                 |
+| GUI / TTY Host                            | 各 Runtime の利用方針に一致                      |
 
 ## Execution Order
 
@@ -216,16 +253,16 @@ dotfiles.features.desktopIntegration = {
 
 ## Definition of Done
 
-- [ ] `desktopIntegration` の責務境界と保証範囲が明文化されている。
-- [ ] FileChooser の実装選択が単一の情報源になり、管理対象 Backend が実際に提供される。
-- [ ] Terminal / File Manager の依存と Package 上書きが実効構成に反映される。
-- [ ] 不要な Backend が不要な実装依存を評価しない。
-- [ ] Feature および Portal 子オプションの無効化が他者の共有 Program を禁止しない。
-- [ ] Host が公開 API を通じて希望する選択と上書きを表現できる。
-- [ ] Portal、Keyring、MIME、Org Protocol の責務と制約が説明され、必要なチェックがある。
-- [ ] NixOS と Home Manager の独立性を考慮した Profile / Host の期待値が検証された。
-- [ ] 成功した Nix checks、未実行・失敗チェック、実機未検証事項を明示している。
-- [ ] 不要な汎用抽象化を追加していない。
+- [x] `desktopIntegration` の責務境界と保証範囲が明文化されている。
+- [x] FileChooser の実装選択が単一の情報源になり、管理対象 Backend が実際に提供される。
+- [x] Terminal / File Manager の依存と Package 上書きが実効構成に反映される。
+- [x] 不要な Backend が不要な実装依存を評価しない。
+- [x] Feature および Portal 子オプションの無効化が他者の共有 Program を禁止しない。
+- [x] Host が公開 API を通じて希望する選択と上書きを表現できる。
+- [x] Portal、Keyring、MIME、Org Protocol の責務と制約が説明され、必要なチェックがある。
+- [x] NixOS と Home Manager の独立性を考慮した Profile / Host の期待値が検証された。
+- [x] 成功した Nix checks、未実行・失敗チェック、実機未検証事項を明示している。
+- [x] 不要な汎用抽象化を追加していない。
 
 ## Implementation Report Format
 

@@ -28,6 +28,7 @@ in
             mkCommand =
               {
                 appId ? null,
+                withCommand ? false,
                 ...
               }:
               lib.escapeShellArgs (
@@ -36,6 +37,7 @@ in
                   "--class"
                   appId
                 ]
+                ++ lib.optional withCommand "-e"
               );
           };
 

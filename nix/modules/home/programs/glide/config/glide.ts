@@ -474,7 +474,6 @@ glide.styles.add(
 // 操作感
 glide.prefs.set('general.smoothScroll.lines.durationMinMS', 50,);
 glide.prefs.set('general.smoothScroll.lines.durationMaxMS', 50,);
-// glide.prefs.set('general.smoothScroll.lines', false,);
 glide.autocmds.create('UrlEnter', /.*/, async ({ url, },) => {
 	if (url === 'about:newtab') { return; }
 	await glide.excmds.execute('mode_change normal',);
@@ -491,8 +490,8 @@ glide.keymaps.set('normal', 'q', 'tab_prev', { description: 'tab prev', },);
 glide.keymaps.set('normal', 'w', 'tab_next', { description: 'tab next', },);
 
 // 表示操作
-glide.keymaps.set('normal', '.t', 'tab_new', { description: 'tab new', },);
-glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
+glide.keymaps.set('normal', 't', 'tab_new', { description: 'tab new', },);
+glide.keymaps.set('normal', '/w', async ({ tab_id, },) => {
 	const tab = await browser.tabs.get(tab_id,);
 	const windows = await browser.windows.getAll({
 		populate: true,
@@ -553,17 +552,17 @@ glide.keymaps.set('normal', '.w', async ({ tab_id, },) => {
 		options,
 	},);
 }, { description: 'Move tab to another window', },);
-glide.keymaps.set('normal', '.d', 'tab_duplicate', { description: 'tab duplicate', },);
-glide.keymaps.set('normal', '.c', 'tab_close', { description: 'tab close', },);
-glide.keymaps.set('normal', '.r', 'reload', { description: 'tab reload', },);
-glide.keymaps.set('normal', '.f', () => {
+glide.keymaps.set('normal', 'd', 'tab_duplicate', { description: 'tab duplicate', },);
+glide.keymaps.set('normal', 'z', 'tab_close', { description: 'tab close', },);
+glide.keymaps.set('normal', 'r', 'reload', { description: 'tab reload', },);
+glide.keymaps.set('normal', '/f', () => {
 	glide.hints.show({ location: 'browser-ui', },);
 }, { description: 'hint browser ui', },);
 
 // コマンド系
-glide.keymaps.set('normal', '/o', async () => {
-	await glide.keys.send('<C-l>', { skip_mappings: true, },);
-}, { description: 'open url in current tab', },);
+// glide.keymaps.set('normal', '/o', async () => {
+// 	await glide.keys.send('<C-l>', { skip_mappings: true, },);
+// }, { description: 'open url in current tab', },);
 glide.keymaps.set('normal', '/b', async () => {
 	const tree = await browser.bookmarks.getTree();
 	const bookmarks: { title: string; url: string; }[] = [];

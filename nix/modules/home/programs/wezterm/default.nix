@@ -29,6 +29,7 @@ in
               {
                 appId ? null,
                 wait ? false,
+                ...
               }:
               lib.escapeShellArgs (
                 [

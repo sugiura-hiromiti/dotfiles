@@ -15,6 +15,12 @@ in
           appId = lib.mkOption { type = lib.types.str; };
           mkCommand = lib.mkOption {
             type = lib.types.functionTo lib.types.str;
+            description = ''
+              Build a shell-escaped terminal command. Accepts appId (optional
+              window identity), wait (keep the launch in the foreground), and
+              withCommand (prepare for child command argv appended by the caller).
+              withCommand defaults to false for ordinary interactive launches.
+            '';
           };
         };
       };

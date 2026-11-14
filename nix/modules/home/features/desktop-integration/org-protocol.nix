@@ -16,7 +16,7 @@ in
               type = lib.types.bool;
               default = config.programs.emacs.enable;
               defaultText = lib.literalExpression "config.programs.emacs.enable";
-              description = "Whether to register org-protocol URL handling.";
+              description = "Whether to register org-protocol URL handling using an independently enabled Emacs. MIME defaults are controlled by mimeApps.";
             };
             emacsPackage = lib.mkOption {
               type = lib.types.package;
@@ -32,7 +32,6 @@ in
   config = lib.mkIf (cfg.enable && cfg.orgProtocol.enable) {
     assertions = [
       {
-        # TODO: このへんは自動で有効無効にして欲しい
         assertion = config.programs.emacs.enable;
         message = "dotfiles.features.desktopIntegration.orgProtocol requires programs.emacs.enable.";
       }

@@ -105,6 +105,19 @@ let
     session-gui-nixos = import ./tests/nixos/session-gui.nix { inherit lib pkgs; };
     session-gui-home = import ./tests/home/session-gui.nix { inherit lib pkgs home-manager; };
     session-gui-hosts = import ./tests/system/session-gui.nix { inherit lib pkgs self; };
+    desktop-integration-home = import ./tests/home/desktop-integration.nix {
+      inherit lib pkgs home-manager;
+    };
+    desktop-integration-nixos = import ./tests/nixos/desktop-integration.nix { inherit lib pkgs; };
+    desktop-integration-wrapper = import ./tests/home/desktop-integration-wrapper.nix {
+      inherit lib pkgs home-manager;
+    };
+    desktop-integration-mime = import ./tests/home/desktop-integration-mime.nix {
+      inherit lib pkgs home-manager;
+    };
+    desktop-integration-hosts = import ./tests/system/desktop-integration.nix {
+      inherit lib pkgs self;
+    };
     recovery-boot = import ./tests/nixos/recovery-boot.nix { inherit lib pkgs; };
     auto-rotation = import ./tests/nixos/auto-rotation.nix { inherit lib pkgs; };
     ci-contract = import ./tests/nixos/ci.nix { inherit lib pkgs; };

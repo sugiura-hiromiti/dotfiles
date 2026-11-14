@@ -27,6 +27,7 @@ $env.config.hooks.pre_execution = (
 	| default []
 	| append {|| print -n "\u{1b}]133;C\u{7}"}
 )
+$env.config.max_last_result_size = 10MB
 
 # $env.config.hooks.post_execution = (
 # 	$env.config.hooks.post_execution?

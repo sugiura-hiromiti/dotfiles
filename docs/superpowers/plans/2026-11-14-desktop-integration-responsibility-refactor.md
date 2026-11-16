@@ -2,7 +2,7 @@
 
 > **For implementation agents:** 実装前に現行 HEAD / 利用箇所 / ロック済み Nixpkgs・Home Manager の Portal 挙動を確認する。先に契約テストを書き、根本原因ごとに変更・検証する。チェック項目は作業後にのみ完了扱いにする。
 
-**Status:** Task 1–6 の実装完了。専用 checks 5 件・既存 session-gui checks 3 件・代表 Host build に加え、2026-11-16 の標準 `nix flake check` が x86_64-linux で整形・VM 検査を含めて成功。実機 GUI 操作は未検証、変更は未コミット。最新結果は検証記録を参照。\
+**Status:** Task 1–6 の実装完了。専用 checks 5 件・既存 session-gui checks 3 件・代表 Host build に加え、標準 `nix flake check` が x86_64-linux で整形・VM 検査を含めて成功。2026-11-17 の Terminal Provider レビュー修正後も標準チェックが成功。実機 GUI 操作は未検証。最新結果は検証記録を参照。\
 **Repository:** `sugiura-hiromiti/dotfiles`\
 **Evidence baseline:** 計画作成時は `main` commit `1142bfe6f026b0d14186ff1cf2bc90caee75e80c`（2026-11-14）。Task 1 で `main` `73ee6ffd` を親に持つ作業ツリーを再確認した。以降の Task でも最新 HEAD と差分を再確認する。\
 **Design contract:** [Feature API と内部 Composition](../specs/2026-11-10-feature-capability-provider-contract-design.md)
@@ -137,6 +137,7 @@ Host チェックを除いた再試行でも、`session-gui-home` は Alacritty 
 - [x] termfilechooser 選択時にだけ、Terminal Provider が利用可能であることを確認する。
 - [x] Terminal Feature が無効でも無関係の Backend が評価でき、`terminal.selected` 属性欠落のような意図しない評価エラーを生まないことをテストする。
 - [x] Terminal Provider を Host から変更した場合、実効 Provider の `mkCommand { wait = true; }` と Package が wrapper に反映される。
+- [x] 組み込み Provider の `package` だけを上書きしても、通常起動と chooser 起動のコマンドが最終 package に追従する。
 - [x] `fileManager.package` を上書きした場合、wrapper の実効 PATH / 起動処理に反映される。
 - [x] File Manager Program 自体の `enable` が wrapper の成立に必要かは、単純に仮定せず上流 wrapper と Package の内容から確認する。
 - [x] Terminal を自動有効化するかは、必須依存・既定有効化の意味を区別して判断する。**確定:** Terminal の選択は Terminal Feature に任せ、欠落時は説明的な assertion とする。
@@ -148,6 +149,8 @@ Host チェックを除いた再試行でも、`session-gui-home` は Alacritty 
 [wrapper 実行テスト](../../../nix/tests/home/desktop-integration-wrapper.nix) は固定済み上流 `yazi-wrapper.sh` を使用し、GUI 起動先だけを記録用プロセスへ交換する。四つの選択モード、引用符・空白を含む入力、待機指定、Chooser / Terminal / Yazi package 上書きと結果ファイルを検証した。旧コードの daemon argv 実行（終了コード 93）と Terminal 依存診断の欠落を先に再現し、修正後の Home / wrapper build が成功した。
 
 最終レビューで Alacritty の子コマンド区切り不足も再現した。`mkCommand` に任意の `withCommand`（既定 false）を追加し、chooser のみ true にする。Alacritty が `-e` を付加し、WezTerm は拡張引数を受け入れる。実際の Kitty / Alacritty / WezTerm Provider 定義を使う回帰テストで chooser と通常起動を確認した。Terminal 本体の変更を原則避ける方針に対し、Provider 交換を成立させる必要最小限の例外とした。
+
+**レビュー追加対応（2026-11-17）:** 三つの組み込み Provider の実行ファイルが `pkgs` に固定されていたため、Provider の最終 `package` から導出するよう修正した。既存テストの `pkgs` 差し替えを package option だけの上書きに変え、旧実装の不一致を RED、修正後を GREEN で確認した。`wait` / `withCommand` の意味を説明に明記し、通常・chooser の実際の呼び出し形を検証する。修正後の標準 `nix flake check` は x86_64-linux で成功した。定義優先度と実機 GUI の未検証範囲は維持している。
 
 ## Task 4: Shared Portal, Secret / Keyring Ownership
 

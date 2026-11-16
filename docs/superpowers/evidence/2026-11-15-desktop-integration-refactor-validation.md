@@ -68,3 +68,15 @@ Home / NixOS の最小テストは負例でも全 assertion を強制評価す�
 利用者の選択に従って専用の評価 app と専用テスト・設計文書を削除し、今後は標準の `nix flake check --no-update-lock-file path:.` で検証する。`--no-build` は付けず、必要な依存と checks の build を許可する。方針は [AGENTS.md](../../../AGENTS.md) と README に記録した。Linux CI は導入前の評価＋non-VM build を維持し、Nix バージョン互換性 CI は評価だけを行う。
 
 2026-11-16 に `XDG_CACHE_HOME=/tmp/desktop-integration-cache direnv exec . nix flake check --no-update-lock-file --print-build-logs path:.` を実行し、exit 0 と `all checks passed!` を確認した。実行システムは x86_64-linux。公開 NixOS 12 構成の評価は Catppuccin palette の取得を含めて成功し、整形検査と登録済み checks の build・VM 検査も通過した。以前の treefmt 失敗は上記の過去時点の記録であり、今回の全体 treefmt は変更 0 件だった。異なるシステムの per-system checks は標準動作で除外されており、Darwin / aarch64 checks の build 成功は主張しない。ログは `/tmp/dotfiles-remove-check-flake-check.log`。
+
+## レビュー後の追加修正: Terminal Provider の package 追従（2026-11-17）
+
+Kitty / Alacritty / WezTerm の起動コマンドは `pkgs` の既定 package を直接参照し、公開された `terminalProviders.<name>.package` の最終値に追従していなかった。既存テストは `pkgs` 自体を差し替えていたため、この不一致を検出できなかった。
+
+組み込み Provider の実際のコマンド生成を使い、Provider の `package` だけを `lib.mkForce` で上書きする回帰テストへ変更した。旧実装で `terminal provider kitty does not launch its final package` の失敗を確認し、三つの Provider が `config.dotfiles.terminalProviders.<name>.package` から実行ファイルを導出する修正後、登録済み `desktop-integration-wrapper` check は exit 0 になった。既存の定義優先度は維持しているため、異なる package の上書きには `lib.mkForce` などの優先度指定を使う。
+
+`mkCommand` の説明には最終 package の使用、`appId`、`wait`、`withCommand` の既定値と意味を記載した。`wait = true` は子コマンドより先に起動元を終了させない要求で、`false` は detach を強制しない。`withCommand = true` は呼び出し元が後置する子 argv を受け付ける要求で、通常起動には子コマンド専用フラグを付けない。型は戻り値の文字列を検査するだけで、これらの意味まで静的に保証するものではない。
+
+回帰テストは三つの Provider の通常起動（空白を含む appId、既定の引数）と chooser 起動（`wait = true` / `withCommand = true`、子 argv・選択結果）を検証する。外部 GUI プロセスだけを代替しており、実際の GUI の終了待機を保証する試験とは区別する。CLI 契約は [Kitty](https://sw.kovidgoyal.net/kitty/invocation/)、[Alacritty](https://alacritty.org/cmd-alacritty.html)、[WezTerm](https://wezterm.org/cli/start.html) の公式資料と照合した。
+
+修正後の `XDG_CACHE_HOME=/tmp/desktop-integration-cache direnv exec . nix flake check --no-update-lock-file --print-build-logs path:.` も x86_64-linux で exit 0、`all checks passed!` となった。全体の整形は変更 0 件。独立した修正差分レビューにも指摘はなかった。異なるシステムの per-system checks は標準動作で除外されている。並行する利用者の Bottom 編集は変更していない。ログは `/tmp/dotfiles-terminal-provider-flake-check.log`。

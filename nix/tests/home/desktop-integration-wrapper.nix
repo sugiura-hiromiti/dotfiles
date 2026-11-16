@@ -97,13 +97,11 @@ let
       exec "$@"
     '';
   builtinPackages = lib.genAttrs [ "kitty" "alacritty" "wezterm" ] builtinTerminal;
-  builtinEvaluate = import ./desktop-integration-fixture.nix {
-    inherit lib home-manager;
-    pkgs = pkgs // builtinPackages;
-  };
+  # Override only the public provider package. Replacing pkgs itself would hide
+  # command builders that accidentally keep using the original package.
   builtinConfigs = lib.mapAttrs (
     name: _:
-    builtinEvaluate
+    evaluate
       {
         enable = true;
         termfilechooser = {
@@ -117,6 +115,7 @@ let
           ../../modules/home/programs/wezterm
         ];
         dotfiles.features.terminal.provider = name;
+        dotfiles.terminalProviders.${name}.package = lib.mkForce builtinPackages.${name};
       }
   ) builtinPackages;
 in
@@ -124,6 +123,18 @@ assert lib.all (entry: entry.assertion) configured.assertions;
 assert lib.all (config: lib.all (entry: entry.assertion) config.assertions) (
   builtins.attrValues builtinConfigs
 );
+assert lib.all
+  (
+    name:
+    lib.assertMsg (lib.hasPrefix "${builtinPackages.${name}}/bin/${name}" (
+      builtinConfigs.${name}.dotfiles.features.terminal.selected.mkCommand { }
+    )) "terminal provider ${name} does not launch its final package"
+  )
+  [
+    "kitty"
+    "alacritty"
+    "wezterm"
+  ];
 assert !configured.programs.yazi.enable;
 pkgs.runCommandLocal "desktop-integration-wrapper-test" { nativeBuildInputs = [ pkgs.gnused ]; } ''
   wrapper=$(sed -n 's/^cmd=//p' ${configFile})

@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.dotfiles.programs.kitty;
-  kitty = lib.getExe pkgs.kitty;
+  kitty = lib.getExe config.dotfiles.terminalProviders.kitty.package;
 in
 {
   options = {

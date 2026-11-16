@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.dotfiles.programs.wezterm;
-  wezterm = lib.getExe pkgs.wezterm;
+  wezterm = lib.getExe config.dotfiles.terminalProviders.wezterm.package;
 in
 {
   options = {

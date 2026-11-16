@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.dotfiles.programs.alacritty;
-  alacritty = lib.getExe pkgs.alacritty;
+  alacritty = lib.getExe config.dotfiles.terminalProviders.alacritty.package;
 in
 {
   options = {

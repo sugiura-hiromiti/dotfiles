@@ -14,6 +14,34 @@ in
       bottom = {
         enable = true;
         settings = {
+          memory_graph = {
+            legend_position = "bottom-left";
+            cache_memory = true;
+            #short_gpu_names=true;
+          };
+          network_graph = {
+            legend_position = "bottom-left";
+            use_binary_prefix = true;
+          };
+          processes = {
+            columns = [
+              "pid"
+              "name"
+              "user"
+              "cpu%"
+              "mem"
+              "mem%"
+              "gpu%"
+              "gmem%"
+              "state"
+            ];
+            default_sort = "mem";
+            default_tree = true;
+            tree_collapse = true;
+          };
+          disk = {
+            use_binary_prefix = true;
+          };
           row = [
             {
               ratio = 1;
@@ -43,7 +71,7 @@ in
                     }
                     {
                       ratio = 1;
-                      type = "bat";
+                      type = "batt";
                     }
                   ];
                 }
@@ -67,6 +95,10 @@ in
             }
           ];
           flags = {
+            rate = 500;
+            default_time_value = 30000;
+            dot_marker = true;
+            temperature_type = "k";
             battery = true;
           };
         };

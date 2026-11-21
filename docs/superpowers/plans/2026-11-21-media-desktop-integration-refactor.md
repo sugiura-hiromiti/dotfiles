@@ -2,46 +2,45 @@
 
 **前提:** [設計仕様](../specs/2026-11-21-media-desktop-integration-design.md)
 
-## Phase 1 — mpv Program
+## Phase 1 — mpv の独立化
 
 **対象:** `nix/modules/home/programs/mpv/default.nix`（新規）、`nix/modules/home/features/media.nix`。
 
-- mpv 固有設定を Program に移す。`media.mpv.settings` は移行先を示して廃止する。既定設定の `autofit-large` を `autofit-larger` に修正。
-- Web Playback が使う実体は `programs.mpv.finalPackage` とする。`package = null`、`scripts` によるラッパー、パッケージ上書きで評価・配布を検証する。
-- `mpv.conf` を mpv に読ませ、**終了コードだけでなく標準エラーの `Error parsing option`** も検査する。Media OFF での単独 mpv 利用も確認。
+- `media.mpv.settings` を Program に移し、`autofit-large` を `autofit-larger` に修正する。旧オプションは移行先を示すエラーにする。
+- `programs.mpv.finalPackage` を実効実行ファイルとして扱い、`scripts` や package 上書きも反映する。
+- 生成 `mpv.conf` の読み込み結果について、終了コードだけでなく `Error parsing option` を検査する。単独利用と `package = null` も確認する。
 
-## Phase 2 — Linux Browser 移行
+## Phase 2 — Browser 選択・提供
 
-**対象:** `nix/modules/home/features/desktop-integration/`、`nix/modules/home/programs/{glide,firefox,qutebrowser}/`、`nix/modules/home/programs/niri/{default.nix,config/config.kdl}`、Linux GUI Profile、`media.nix`。
+**対象:** `nix/modules/home/features/desktop-integration/`、`nix/modules/home/programs/{glide,firefox,qutebrowser}/`、`nix/modules/home/programs/niri/`、GUI Profile、`media.nix`。
 
-- Linux GUI Profile に `browser.selected = lib.mkDefault "glide"` を設定し、Media から Browser Provider へ **Linux の提供経路を同時移行**。Darwin の Glide 旧経路は維持。
-- Niri の固定 `spawn-at-startup "glide"` を除去。desktopIntegration が有効かつ Browser 選択ありの場合のみ、Niri の独立した任意起動コマンドに寄与させる。Niri 単独／desktopIntegration OFF・選択値あり／ON・選択値あり／`null` を検証する。
-- `desktopIntegration.mimeApps.defaultApplications` の部分的な Host 上書きは未指定の自動 MIME を保持する。ディレクトリのみ上書きと Browser の `text/html` 矛盾上書きを別々に検証する。
-- Provider 切替・未登録・最終パッケージ変更・既存4 MIME を検証する。
-- `media.programs` の **Linux での明示的な旧設定**は移行先を示すエラーにする（Darwin では Phase 4 まで受理して実行する）。
+- Browser Provider と `desktopIntegration.browser.selected` を導入。Linux GUI では `lib.mkDefault "glide"` とし、Media の旧 Browser 提供と**同時切替**する。
+- Niri の固定 Glide 起動を選択 Provider のコマンドに置き換える。desktopIntegration OFF、選択 `null`、Niri 単独の各構成で起動行を検証する。
+- Linux では新 Provider から Browser 4関連付けを生成する。既定アプリ API の部分上書きと競合検出を確認する。
+- Darwin の Glide・ff2mpv 旧経路は維持する。Linux で無効になった `media.programs` の明示設定は移行エラーにする。
 
-## Phase 3 — Linux Media Composition
+## Phase 3 — 機能 API と Linux adapters
 
-**対象:** `media.nix`、`nix/modules/home/programs/firefox-common.nix`、Browser module、`desktop-integration/portal.nix`、関連テスト。
+**対象:** `nix/modules/home/features/media.nix`、`desktop-integration/{mime-apps,portal,termfilechooser}.nix`、Browser 共通設定、関連テスト。
 
-- Linux の `media.firefoxIntegration` を Web Playback adapter に置き換え、旧設定の明示指定は移行エラー。Darwin の旧オプション・Glide/ff2mpv 経路は維持する。
-- Browser 選択ありなら `webPlayback.enable` を既定 ON、`null` なら既定 OFF。選択変更・OFF 後に Media 由来の extension、native host、Qutebrowser key binding が残らないことを検証する。
-- `programs.mpv.finalPackage` を差し替えた録画用実行ファイルに URL が渡ることを検証する。`programs.mpv.enable = true` だけ、または `package = null` で実体がない場合は不成立とする。Media MIME は別に `mpv.desktop` の存在・関連付けを検証する。
-- `video/*` 等の現行設定は保持し、`video/mp4` の具体型関連付けも実装。より具体的な競合ハンドラーを持つ隔離 XDG 環境で既定アプリを問い合わせる。
-- **TTY の Media MIME は意図的に OFF** に変更し、現行 TTY テストを更新。Linux GUI で Media が desktopIntegration を要求する契約を検証する。
-- Terminal なしなら GTK FileChooser が成功するよう、`nix/tests/home/desktop-integration.nix` の `missingTerminal` を成功例に変更。失敗例は backend `termfilechooser` を明示する。Terminal 無効の Media-only Home を追加。
+- `media.mimeApps` と `desktopIntegration.mimeApps` を `fileAssociations` の機能 API へ移す。公開値のアプリ識別と XDG Desktop Entry を内部で変換する。任意 MIME 型の Host 上書きは機能 API または明示した実装固有設定へ移行できるようにする。
+- `desktopIntegration.fileChooser` の機能 API を追加し、Linux では `auto` を Terminal ありなら termfilechooser、なしなら GTK に対応させる。既存 `portal.*` の詳細設定は Linux 固有の高度な設定として整理する。
+- Linux の Web Playback adapter を Browser 別に構成する。録画用 `finalPackage` に URL が届くこと、OFF／Browser 切替後に Media 由来の連携設定が残らないことを確認する。
+- Media 関連付けは `video/mp4` 等の具体型を追加し、競合するシステム規則を持つ隔離 XDG 環境で既定アプリを照会する。`mpv.desktop` の存在も検証する。
+- TTY では GUI 固有の関連付けを既定 OFF にし、従来のホストテストを更新する。Terminal 不在の FileChooser `auto` は成功、明示 `terminal` はエラーとする。
+- `media.firefoxIntegration` の Linux 旧設定を移行し、Darwin では既存の経路を維持する。
 
-## Phase 4 — Darwin 一括切替
+## Phase 4 — Darwin adapters と旧経路撤去
 
-**対象:** `desktop-integration.nix`、Portal/MIME 等の OS 固有 module、Darwin GUI Profile、`media.nix`、Glide/ff2mpv 経路、Darwin Home テスト。
+**対象:** `desktop-integration.nix`、関連付け／FileChooser の内部 adapter、GUI Profile、`media.nix`、Browser Program、Darwin Home テスト。
 
-- Darwin GUI Profile に `browser.selected = lib.mkDefault "glide"` を設定し、Web Playback 既定 ON にする。desktopIntegration 自体も有効化し、従来の `mkDefault false` と競合させない。
-- XDG Portal・XDG MIME・termfilechooser などは Darwin で既定 OFF。明示 ON の未対応機能はエラーとする。
-- 旧経路を**同時に撤去する前提条件**として、既存 Darwin Home 2件の評価・ビルドで `Glide.app`、Glide 向け native messaging manifest、`programs.mpv.finalPackage` への URL 引き渡しを確認する。移行後も同条件を満たすこと。実機起動は別途検証。
-- `media.programs`・`media.firefoxIntegration` の旧オプションを全環境で廃止し、明示的な旧設定には移行先を示すエラーを出す。
+- Darwin GUI にも Browser = Glide、Web Playback = ON の機能的な既定動作を適用する。Browser 提供は新 Provider、URL 転送は最終 mpv、ファイル選択は利用可能な macOS 標準機構を利用する。
+- XDG Portal・XDG MIME・termfilechooser を Darwin の共通機能として起動しない。機能 API は Darwin adapter で実装し、未提供の機能を明示 ON した場合はエラーにする。macOS の関連付けを保証するなら、Launch Services 等の実装と実効照会テストを追加してから有効化する。
+- 既存 Darwin Home 2件で `Glide.app`、native messaging manifest、最終 mpv への URL 到達を確認したうえで、`media.programs`・`media.firefoxIntegration` の旧経路を同時撤去する。
+- 旧 `mimeApps`／FileChooser backend の明示設定は、機能別 API への変換または移行エラーで扱い、無効な旧設定を黙って無視しない。
 
-## テストと完了条件
+## 完了条件
 
-`nix/tests/home/desktop-integration.nix`、`nix/tests/home/desktop-integration-mime.nix`、`nix/tests/system/desktop-integration.nix` を更新し、Media / Browser / Darwin のテストを `nix/checks.nix` に登録する。旧 API の明示指定が黙って無視されないことも検査する。
+`nix/tests/home/desktop-integration.nix`、`nix/tests/home/desktop-integration-mime.nix`、`nix/tests/system/desktop-integration.nix`、Niri／Darwin／Media テストを更新して `nix/checks.nix` に登録する。
 
-各 Phase で Linux GUI・TTY・Darwin GUI の**既存構成の評価・実効出力**を確認する。全体の `flake check` と整形環境由来の失敗は区別して記録する。
+各 Phase で Linux GUI・TTY・Darwin GUI の既存構成と実効出力を検証する。**テストは機能別に整理し、OS 別ケースは内部実装の差異を検証するために用いる。** `flake check` と整形環境由来の失敗は区別して記録する。

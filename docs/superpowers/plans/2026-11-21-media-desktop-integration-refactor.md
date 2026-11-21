@@ -16,18 +16,19 @@
 
 - Browser Provider と `desktopIntegration.browser.selected` を導入。Linux GUI では `lib.mkDefault "glide"` とし、Media の旧 Browser 提供と**同時切替**する。同じ変更で `media.programs` 由来の Krita を `media.graphics.krita.enable` へ移し、Linux GUI に Krita が残り、TTY では Media から要求されないことを検証する。
 - Niri の固定 Glide 起動を選択 Provider のコマンドに置き換える。desktopIntegration OFF、選択 `null`、Niri 単独の各構成で起動行を検証する。
-- Linux では新 Provider から Browser 4関連付けを生成する。既定アプリ API の部分上書きと競合検出を確認する。
+- Linux では新 Provider から Browser 4関連付けを生成する。ただし Phase 2 中は **旧 `mimeApps.defaultApplications` の全置換 semantics を変更しない**。既存のディレクトリ1件上書きが生成物も1件に留まることを確認し、新 API の部分上書きは別の契約として検証する。
 - Darwin の Glide・ff2mpv 旧経路は維持する。Linux で無効になった `media.programs` の明示設定は移行エラーにする。
 
 ## Phase 3 — 機能 API と Linux adapters
 
 **対象:** `nix/modules/home/features/media.nix`、`desktop-integration/{mime-apps,portal,termfilechooser}.nix`、Browser 共通設定、関連テスト。
 
-- `media.mimeApps` と `desktopIntegration.mimeApps` を `fileAssociations` の機能 API へ移す。公開値のアプリ識別と XDG Desktop Entry を内部で変換する。任意 MIME 型の Host 上書きは機能 API または明示した実装固有設定へ移行できるようにする。
+- `media.mimeApps` と `desktopIntegration.mimeApps` を `fileAssociations` の機能 API へ移す。旧 MIME の明示的な全置換値は機械的に部分合成へ変換せず、**`fileAssociations.autoDefaults.enable = false` と明示規則**への移行先を示してエラーにする。ディレクトリ1件の旧設定と新設定の生成結果が一致すること、および新 API の通常の部分上書きが動くことを別々に検証する。任意 MIME 型の Host 上書きも移行できるようにする。
 - `desktopIntegration.fileChooser.{enable,mode}` を追加。Linux の `auto` は Terminal ありなら termfilechooser、なしなら GTK とする。`enable = false` は FileChooser の寄与だけを停止し、他の Portal 設定と外部 chooser／package を残す。旧 `backend = null` の外部 chooser テストを新 API でも成立させる。`portal.*` の詳細設定は実装固有として整理する。
-- Linux の Web Playback adapter を Browser 別に構成する。録画用 `finalPackage` に URL が届くこと、OFF／Browser 切替後に Media 由来の連携設定が残らないことを確認する。
+- Linux の Web Playback adapter を Browser 別に構成する。既定値は選択 Browser・対応 adapter・実効 mpv の成立に従う。Browser あり＋mpv 不在 → 既定 OFF、同条件で明示 ON → エラー、独立 mpv 提供 → 既定 ON を検証する。録画用 `finalPackage` への URL 到達と、OFF／Browser 切替後の Media 由来設定が消えることを確認する。**Firefox の新規プロファイルで ff2mpv が自動的に有効化され、ブラウザー操作から URL を送れること**を受入条件とし、native host 直接呼び出しだけで済ませない。
 - Home Manager が `video/*` を具体 MIME 型に展開することを利用し、mpv 固定の `video/mp4` 規則は重複追加しない。論理ハンドラーを変更したとき `video/mp4` も追従することを、競合するシステム規則を持つ隔離 XDG 環境で照会する。`mpv.desktop` の存在も別途検証する。
-- TTY では GUI 固有の関連付けを既定 OFF にし、従来のホストテストを更新する。Terminal 不在の FileChooser `auto` は成功、明示 `terminal` はエラーとする。**GUI Profile を取り込まない Media-only Home**（Terminal OFF）で desktopIntegration の自動有効化と GTK 選択を確認する。
+- TTY では GUI 固有の関連付けを既定 OFF にし、従来のホストテストを更新する。Terminal 不在の FileChooser `auto` は成功、明示 `terminal` はエラーとする。**GUI Profile を取り込まない Media-only GUI Home**（Terminal OFF）で Media 由来の desktopIntegration 自動有効化、Glide の既定選択・実効提供、Web Playback、GTK を確認する。Browser を明示 `null` にした場合は Glide／Web Playback が Media から寄与しないことも検証する。
+- GUI Profile を使わない Media-only Home の GTK 用 Portal 設定は、セッションが不明なら共通 `portals.conf` を生成する。Niri 指定時は `niri-portals.conf` を維持し、`XDG_CURRENT_DESKTOP=sway` でも共通設定が探索されるよう、生成ファイル名と FileChooser の値を検証する。
 - `media.firefoxIntegration` の Linux 旧設定を移行し、Darwin では既存の経路を維持する。
 
 ## Phase 4 — Darwin adapters と旧経路撤去

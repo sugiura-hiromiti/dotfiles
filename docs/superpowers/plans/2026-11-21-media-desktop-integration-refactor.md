@@ -14,8 +14,9 @@
 
 **対象:** `nix/modules/home/features/desktop-integration/`、`nix/modules/home/programs/{glide,firefox,qutebrowser,krita}/`、`nix/modules/home/programs/niri/`、GUI Profile、`media.nix`。
 
-- **旧経路の撤去前に**、Terminal 不在で FileChooser が GTK を選ぶ暫定的な `auto` 相当の既定値と、セッション不明時の FileChooser 専用共通 Portal 設定を実装する（正式な `fileChooser` API への移行は Phase 3）。GUI Profile を使わない Media-only Home（Terminal OFF）で desktopIntegration が自動 ON、Glide と GTK が実効的に提供されることを確認する。**このテストを満たす同じ変更で** Browser Provider と `desktopIntegration.browser.selected` を導入し、Linux GUI 既定を `lib.mkDefault "glide"` に移す。Media 旧 Browser 提供の撤去を先行しない。同じ変更で Krita を `media.graphics.krita.enable` に移し、Linux GUI で提供、TTY では要求なしを確認する。
+- **旧経路の撤去前に**、Terminal 不在で FileChooser が GTK を選ぶ暫定的な `auto` 相当の既定値と、セッション不明時の FileChooser 専用共通 Portal 設定を実装する（Terminal が有効、または明示的に terminal を選択した場合は `termfilechooser` を設定する。正式な `fileChooser` API への移行は Phase 3）。GUI Profile を使わない Media-only Home（Terminal OFF）で desktopIntegration が自動 ON、Glide と GTK が実効的に提供されることを確認する。**このテストを満たす同じ変更で** Browser Provider と `desktopIntegration.browser.selected` を導入し、Linux GUI 既定を `lib.mkDefault "glide"` に移す。Media 旧 Browser 提供の撤去を先行しない。同じ変更で Krita を `media.graphics.krita.enable` に移し、Linux GUI で提供、TTY では要求なしを確認する。
 - Niri の固定 Glide 起動を選択 Provider のコマンドに置き換える。desktopIntegration OFF、選択 `null`、Niri 単独の各構成で起動行を検証する。
+- Glide の `mkDefault` は GUI Profile または Media の GUI 要求があるときだけ適用する。**GUI Profile なし・Media OFF の desktopIntegration 単独**で、Browser がない場合は `selected = null` かつ Browser 関連付けなしを検証する。現行の **Qutebrowser のみ有効な Home** は `browser.selected = "qutebrowser"` へ明示的に移行し、HTML・XHTML・HTTP・HTTPS の4件が Qutebrowser を指すことを検証する。旧 Qutebrowser フラグのみを選択 API と同一視せず、移行時に利用者の明示設定を更新する。
 - Linux では新 Provider から Browser 4関連付けを生成する。ただし Phase 2 中は **旧 `mimeApps.defaultApplications` の全置換 semantics を変更しない**。**desktopIntegration 単独**で `inode/directory` だけを指定した場合は、同 Feature の関連付け寄与が1件であることを検証する。**Media 併用**ではそのディレクトリ設定と Media の `video/mp4` 等の関連付けがともに最終 `mimeapps.list` に残ることを確認する（展開後の総件数は固定しない）。新 API の部分上書きは別途検証する。
 - Darwin の Glide・ff2mpv 旧経路は維持する。Linux で無効になった `media.programs` の明示設定は移行エラーにする。
 
@@ -28,7 +29,7 @@
 - Linux の Web Playback adapter を Browser 別に構成する。既定値は選択 Browser・対応 adapter・実効 mpv の成立に従う。Browser あり＋mpv 不在 → 既定 OFF、同条件で明示 ON → エラー、独立 mpv 提供 → 既定 ON を検証する。録画用 `finalPackage` への URL 到達と、OFF／Browser 切替後の Media 由来設定が消えることを確認する。**Firefox の新規プロファイルで ff2mpv が自動的に有効化され、ブラウザー操作から URL を送れること**を受入条件とし、native host 直接呼び出しだけで済ませない。**Qutebrowser を選択した場合は `,m` から現在の URL が `programs.mpv.finalPackage` に届くこと**もテストする。
 - Home Manager が `video/*` を具体 MIME 型に展開することを利用し、mpv 固定の `video/mp4` 規則は重複追加しない。論理ハンドラーを変更したとき `video/mp4` も追従することを、競合するシステム規則を持つ隔離 XDG 環境で照会する。`mpv.desktop` の存在も別途検証する。
 - TTY では GUI 固有の関連付けを既定 OFF にし、従来のホストテストを更新する。Terminal 不在の FileChooser `auto` は成功、明示 `terminal` はエラーとする。Phase 2 で追加した **GUI Profile なし・Terminal OFF の Media-only GUI Home** の Glide／GTK／desktopIntegration テストを維持し、Phase 3 では Web Playback の実効提供と Browser 明示 `null` 時の無寄与まで確認する。
-- Phase 2 の共通 Portal 設定を受入テストで再検証する。セッション不明時は共通 `portals.conf` に **`org.freedesktop.impl.portal.FileChooser=gtk` のみ**を寄与し、`default`・`Inhibit` 等は変更しない。Niri 固有の既存ポリシーは `niri-portals.conf` に保持する。隔離 D-Bus セッションで `XDG_CURRENT_DESKTOP=sway`、Sway 側 `Inhibit=none` に対し **FileChooser=gtk と Inhibit=none が同時に成立**することを検証する。
+- Phase 2 の共通 Portal 設定を再検証する。セッション不明時の自動生成 `portals.conf` は **`org.freedesktop.impl.portal.FileChooser` の1キーだけ**を出力し、値は選択 backend に従う。Terminal OFF + `auto` は `gtk`、Terminal ON + `auto` および明示 `terminal` は `termfilechooser` を検証する。`default`・`Inhibit` 等は出力せず、Niri 固有の既存ポリシーは `niri-portals.conf` に保持する。隔離 D-Bus セッションで `XDG_CURRENT_DESKTOP=sway`、Sway 側 `Inhibit=none` に対し **FileChooser=gtk と Inhibit=none が同時に成立**することを確認する。さらに **明示 `portal.configName = "common"` + `secretBackend` 等のポリシー指定**は、既存の効果が維持されること（または同等の移行先が案内されること）をテストする。
 - `media.firefoxIntegration` の Linux 旧設定を移行し、Darwin では既存の経路を維持する。
 
 ## Phase 4 — Darwin adapters と旧経路撤去
@@ -37,6 +38,7 @@
 
 - Darwin GUI にも Browser = Glide、Web Playback = ON の機能的な既定動作を適用する。Browser 提供は新 Provider、URL 転送は最終 mpv、ファイル選択は利用可能な macOS 標準機構を利用する。
 - XDG Portal・XDG MIME・termfilechooser を Darwin の共通機能として起動しない。`orgProtocol.enable` は Darwin の対応実装ができるまで既定 OFF、明示 ON は理由付きエラーとし、XDG Desktop Entry を生成しない。対応する機能は Darwin adapter で実装し、macOS の関連付け保証には実効照会テストを要求する。
+- **既存ホストとは独立した Darwin Qutebrowser 選択テスト**を追加する。`browser.selected = "qutebrowser"` かつ Web Playback ON とし、生成された `,m` が PATH 上の `mpv` ではなく **`programs.mpv.finalPackage` の実行ファイル**へ URL を渡すことを検査する。選択した Browser の Darwin Provider が未対応なら契約エラーとし、対応実装なしに成功とみなさない。Linux の Phase 3 と Darwin の Phase 4 の双方で `,m` 契約を検証する。
 - **Darwin の2ホスト×2テーマ＝4 Home 構成**で `Glide.app`、使用プロファイルの ff2mpv 拡張、manifest の `allowed_extensions` と拡張 ID の一致、Glide 連携から `programs.mpv.finalPackage` への URL 到達を検証してから、`media.programs`・`media.firefoxIntegration` の旧経路を同時撤去する。通常 PR CI の代表 Home 1件だけでは承認しない。
 - 旧 `mimeApps`／FileChooser backend の明示設定は、機能別 API への変換または移行エラーで扱い、無効な旧設定を黙って無視しない。
 

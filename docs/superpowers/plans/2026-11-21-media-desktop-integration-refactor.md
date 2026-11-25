@@ -51,7 +51,7 @@
 - Linux の Web Playback adapter を Browser 別に構成する。既定値は選択 Browser・対応 adapter・実効 mpv の成立に従う。Media 単独で Browser 未選択なら既定 OFF、明示 ON なら不足依存を示すエラーとし、他 Feature / Browser を暗黙に有効化しない。Browser あり＋mpv 不在 → 既定 OFF、同条件で明示 ON → エラー、独立 mpv 提供 → 既定 ON を検証する。録画用 `finalPackage` への URL 到達と、OFF／Browser 切替後の Media 由来設定が消えることを確認する。**Firefox の新規プロファイルで ff2mpv が自動的に有効化され、ブラウザー操作から URL を送れること**を受入条件とし、native host 直接呼び出しだけで済ませない。**Qutebrowser を選択した場合は `,m` から現在の URL が `programs.mpv.finalPackage` に届くこと**もテストする。
 - 固定版 Home Manager の `xdg.mimeApps.defaultApplications` を生成する adapter のテストでは、入力規則、upstream の `video/*` 展開と具体 MIME の適用、新 API の候補順を確認する。競合するシステム MIME 規則がある場合の実効値は OS / XDG 実装への適用確認として検証し、dotfiles 独自の解決規則は設けない。実効 Program と `mpv.desktop` の存在は別々に検証し、利用者向け既定規則は `fileAssociations` が所有し、生成ファイルは Home Manager が管理して外部の非競合規則と追加候補も保持する。
 - TTY Profile は GUI 固有の Feature を要求しない。GUI Profile なしの Media-only Home（Terminal OFF を含む）では他 Feature・Browser・Portal・FileChooser を暗黙に有効化しない。GUI Profile または Host が組み合わせを明示した場合の Web Playback / fileAssociations と、Browser 明示 `null` 時の無寄与を検証する。 GUI Profile の `desktopIntegration.enable = false` 上書きで `browser.selected = "glide"` が残り、独立 Glide Program が有効でも、実効 Browser 選択なし、Web Playback 自動 OFF、HTML/XHTML/HTTP/HTTPS の Browser 選択由来自動寄与なし、独立 Glide と fileAssociations の明示 Browser handler は維持することを検証する。
-- Phase 2 の Portal テストを再利用する。管理対象の指定先への設定生成、`auto` の無寄与、明示 `terminal` / `system` の必要な Provider と適切な環境での動作を確認する。共通・セッション固有ファイル間の自動合成や外部設定との実効優先順位を保証する独自テストは追加しない。
+- Phase 2 の Portal テストを再利用する。管理対象の指定先への設定生成、`auto` の無寄与、明示 `terminal` の必要な Provider と適切な環境での動作を確認する。共通・セッション固有ファイル間の自動合成や外部設定との実効優先順位を保証する独自テストは追加しない。
 - `media.firefoxIntegration` の Linux 旧設定を移行し、Darwin では既存の経路を維持する。
 
 ## Phase 4 — Darwin adapters と旧経路撤去

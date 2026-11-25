@@ -26,10 +26,10 @@
 (set-fringe-mode '(8 . 0))
 
 (set-face-attribute 'default nil
-	:family "Maple Mono NF CN"
+	:family "PlemolJP Console NF"
 	:height (pcase system-type
 				  ('darwin 160)
-				  ('gnu/linux 100)
+				  ('gnu/linux 120)
 				  (_ 250))
 	:weight 'extra-light)
 (set-face-attribute 'bold nil

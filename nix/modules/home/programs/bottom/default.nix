@@ -36,8 +36,6 @@ in
               "state"
             ];
             default_sort = "mem";
-            default_tree = true;
-            tree_collapse = true;
           };
           disk = {
             use_binary_prefix = true;
@@ -47,8 +45,16 @@ in
               ratio = 1;
               child = [
                 {
+                  ratio = 3;
                   type = "proc";
                   default = true;
+                }
+                {
+                  ratio = 1;
+                  child = [
+                    { type = "net"; }
+                    { type = "batt"; }
+                  ];
                 }
               ];
             }
@@ -58,21 +64,14 @@ in
                 {
                   child = [
                     {
-                      ratio = 2;
+                      ratio = 3;
                       type = "cpu";
                     }
                     {
-                      ratio = 1;
+                      ratio = 2;
                       type = "mem";
                     }
-                    {
-                      ratio = 1;
-                      type = "net";
-                    }
-                    {
-                      ratio = 1;
-                      type = "batt";
-                    }
+
                   ];
                 }
                 {

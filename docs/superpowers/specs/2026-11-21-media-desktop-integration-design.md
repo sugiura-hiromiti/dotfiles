@@ -4,110 +4,121 @@
 
 **基準:** [Feature API と内部 Composition](./2026-11-10-feature-capability-provider-contract-design.md)
 
-## 設計原則
+## 設計原則と公開 API
 
-責務の明確さ・依存関係・目的ベースの API・上流の意味論への委譲を優先する。旧実装との完全な動作互換は不変条件としない。管理対象の設定を新 API へ移行し、意図的な変更と移行先を記録する。旧 API の併存や旧副作用の再現だけを目的とする互換レイヤー・分岐・テストは設けない。ただし、新 API の明示要求を満たすこと、各 Phase の構成が成立すること、独立した設定や Program の提供を破壊しないことは引き続き保証する。
+目的ベースの Feature API を公開し、OS 差異は内部 Composition / Provider に閉じ込める。Profile / Host が Feature の組み合わせと既定選択を所有する。他 Feature 全体を暗黙に起動しない。明示要求に必要な個別 Program は `lib.mkDefault true` で要求し、Host の通常優先度の OFF を尊重する。実効提供不能なら理由付き assertion とし、定義衝突や型エラーで隠さない。OFF は自身の寄与のみを停止し、共有 Program や外部の独立寄与を排他的に停止しない。
 
-## 責務と公開 API
+| API | 責務 |
+| --- | --- |
+| `media.mpv.enable` / `media.graphics.krita.enable` | 個別 Program の要求 |
+| `media.cli.{enable,packages}` | CLI ツール群 |
+| `media.webPlayback.enable` | Browser から mpv への URL 転送 |
+| `dotfiles.programs.mpv.*` | 独立した mpv 提供と固有設定 |
+| `desktopIntegration.browser.selected` | Browser 選択（既定 null） |
+| `desktopIntegration.fileChooser.mode` | Home の GUI FileChooser 選択（既定 auto） |
+| `desktopIntegration.orgProtocol.enable` | Emacs への URL 処理 |
+| `fileAssociations.{enable,handlers,linux.mime,autoDefaults.enable}` | 利用者の既定アプリポリシー |
+| `sessionGui.session` | 管理対象 GUI Session Provider の選択 |
 
-Feature は **目的・振る舞い**を公開し、Linux / Darwin の実装差異は内部 Composition が吸収する。OS は公開 API の分類軸ではなく、Provider が契約を満たせるかの判定条件とする。
+GUI Profile は Media・desktopIntegration・fileAssociations を個別に有効化し、Glide、mpv、Linux の Krita、Linux の FileChooser = terminal を既定採用する。選択・有効化の既定要求は Host が上書きできる。Darwin の chooser は auto。TTY Profile は CLI と mpv を採用し、GUI 基盤を要求しない。Profile なしの Media 単独構成も成立させる。
 
-| Component / API                                    | 契約                                              |
-| -------------------------------------------------- | ----------------------------------------------- |
-| `media`                                            | 再生・制作・CLI・Web Playback の提供。ファイル関連付けは書き込まない      |
-| `media.mpv.enable` / `media.graphics.krita.enable` | Media から各 Program を要求                           |
-| `media.cli.{enable,packages}`                      | CLI ツール群を構成                                     |
-| `media.webPlayback.enable`                         | 選択 Browser から mpv へ再生 URL を渡す                   |
-| `fileAssociations.{enable,handlers,linux.mime}`    | 唯一の関連付け設定入口。論理 Provider 選択と OS 固有の詳細規則を受け付ける    |
-| `desktopIntegration.browser.selected`              | Browser Provider を選択（`null` 可）                  |
-| `fileAssociations.autoDefaults.*`                  | Media / Browser 等の実効状態に基づく自動既定の一括有効化を管理         |
-| `desktopIntegration.fileChooser.mode`     | Home 専用。GUI アプリの FileChooser を委譲・明示選択する（TTY のファイル操作とは別） |
-| `desktopIntegration.orgProtocol.enable`            | Emacs による org-protocol URL 処理を要求                |
-| `sessionGui.session`                               | dotfiles が提供する GUI Session Provider の選択         |
-| 内部の実効 Session Provider                             | セッション固有情報・提供状態。sessionGui OFF ではなし              |
-| `dotfiles.programs.mpv.*`                          | mpv の独立した提供と固有設定                                |
+**非目標:** 旧 API の併存・旧副作用の再現、外部セッション対応・識別 API・実行時セッション推測、共通 Provider Framework / Registry、Player Provider、Home / NixOS の自動同期、独自の競合解決・activation 事前検査。上流の Nix module system・Home Manager・OS の意味論を再実装しない。
 
-`fileAssociations` は **Media・desktopIntegration と別の Feature** とし、利用者が選択する既定アプリのポリシーの所有者を一本化する。Home Manager の生成処理や Program 固有の対応形式・専用スキームの提供は独占しない。`media.fileAssociations.*` と `desktopIntegration.fileAssociations.*` は新規公開しない。主 API は `fileAssociations.handlers`（`video` / `audio` / `image` / `browser` / `directory` / `textEditor` 等の論理ハンドラー）とし、OS 差異の吸収、Provider 要求、複数の型・スキームの一括設定に価値がある目的ベースの抽象化を提供する。全 MIME 型を別名として網羅しない。同じ Feature 内の `fileAssociations.linux.mime`（任意 MIME 型・Desktop ID・候補の順序付きリスト）は抽象 API で扱わない規則の追加と部分上書きの Escape Hatch とする。具体的な型・名称は実装前に確定する。Linux では値を Home Manager の `xdg.mimeApps.defaultApplications` に変換して書き込み、ワイルドカード展開・個別 MIME 優先・候補順の処理を再実装しない。管理対象 Host の既存の利用者向け `xdg.mimeApps.defaultApplications` 直接指定は fileAssociations に移し、二重の公開入口として常用しない。移行のための独自競合解決器や旧合成結果の再現処理は設けない。ただし Program 固有の寄与および `xdg.mimeApps.defaultApplicationPackages` は下記の所有境界に従って共存できる。
+## Browser と Web Playback
 
-**依存:** Profile / Host が利用環境に応じた Feature の組み合わせと既定選択を所有する。GUI Profile は Media・desktopIntegration・fileAssociations を個別に有効化し、Browser 選択等を `lib.mkDefault` で設定する。Media / desktopIntegration から他 Feature 全体を暗黙に有効化したり、Media の有効化だけで Browser を要求したりしない。Feature は自らの明示された機能に必要な個別 Program Provider を要求できる。Web Playback は選択 Browser・対応 adapter・実効 mpv を参照し、明示 ON で不足する依存は理由付きエラーとする。fileAssociations は Media / desktopIntegration の有効化を必須とせず、Program の最終提供状態と利用可能な Browser 選択を読み取り専用の既定値入力とする。明示 `handlers` は mpv・Krita・Glide・Yazi 等の個別 Program Provider を `lib.mkDefault true` で要求し、Feature 全体を起動しない。**明示選択による Program 要求 → Program の最終提供状態 → 自動既定の導出** の順で評価し、自動既定から Program 要求への逆参照や要求元の追跡を作らない。Provider は Consumer の要求を満たす有効化経路を提供し、Host の明示 OFF を強制上書きせず、要求を満たせなければ理由付き契約エラーとする。
+- 選択 Provider の最終値から実体・起動コマンドを導出する。Media 単独では Browser を要求しない。desktopIntegration OFF または selected = null なら実効 Browser 選択なし。独立 Browser Program と fileAssociations の明示選択は維持する。Niri の自動起動は実効選択がある場合だけ寄与する。
+- Web Playback の既定 ON は GUI・実効 Browser・対応 adapter・実効 mpv が揃う場合のみ。明示 ON で依存不足なら理由付きエラー。Media の mpv 要求が OFF でも独立 mpv を利用できる。URL はスクリプトを含む `programs.mpv.finalPackage` の実行ファイルへ渡す。
+- Firefox 系の新規プロファイルで ff2mpv が実際に有効になり、Browser 操作から URL を転送できること。Qutebrowser の `,m` は Linux / Darwin とも同じ最終 mpv を利用する。OFF / Browser 切替後は Media 由来の拡張・native host・キー割り当てを残さない。
+- Program 提供・Web Playback・既定アプリの対応可否は独立して判定する。固定版 Darwin Qutebrowser は .app の文書型・URL スキーム登録情報が不足するため、既定 Browser 関連付けのみ未対応（後述）。
 
-### 独立 Feature としての関連付けの境界
+## Session Provider と Portal
 
-`fileAssociations.enable = false` は **自身の関連付けポリシー・要求・出力だけを停止**し、Media・Browser・Portal・個別 Program の独立した提供や外部の MIME / 専用スキーム寄与を停止しない。逆に Media または desktopIntegration が OFF でも、Host は fileAssociations 単独で論理ハンドラーや任意の MIME 規則を選択できる。Media は mpv/Krita 等の機能、desktopIntegration は Browser 選択・FileChooser・Org Protocol を担当し、どちらも `xdg.mimeApps` / Darwin の既定アプリ設定へ直接書き込まない（関連付けの所有者は Phase 3 で一括して切り替える）。自動関連付けは fileAssociations Composition が Program の最終提供状態と Browser 選択等から一度だけ生成する。
+`sessionGui` は管理対象 GUI セッションの構成を所有する。Niri 固有 Program は維持し、既存の NixOS `sessions.niri` と Home の Niri 要求を内部 Provider にまとめる。今回は Niri のみ対応する。
 
-**合成の境界:** fileAssociations 内部では、自動既定を明示 `handlers` が上書きし、論理ハンドラーから変換した Linux 規則を `linux.mime` が同一入力キー単位で置換・補完する（属性集合の右優先合成 `//` に相当）。同一キーの候補リストを暗黙に連結せず、Feature 内で一つの規則に決めてから Home Manager に渡す。例えば `handlers.browser = "glide"` と `linux.mime."text/html" = [ "reader.desktop" "fallback.desktop" ]` の併用では HTML の候補は reader → fallback、XHTML・HTTP・HTTPS は Glide とする。設定寄与後の定義合成は Nix module system、ワイルドカード展開・候補合成・ファイル生成は Home Manager、実効ハンドラー解決は OS / XDG 実装に委譲する。展開後の MIME に独自優先順位を設けない。任意 Desktop ID から未知の Program を推測して有効化しない。
+| 内部 Provider | 提供情報 |
+| --- | --- |
+| Home | ユーザー設定・実効提供状態・Portal のセッション固有出力先 |
+| NixOS | システム側提供状態・セッション名・起動コマンド・Portal 出力先 |
 
-**所有境界:** fileAssociations は利用者向け既定ポリシーの決定者であり、Home Manager の `mimeapps.list` 生成そのものを置き換えない。Program は `.desktop` の `MimeType` や自身の専用 URL スキーム（例: Radicle）を登録し、その Program 固有のスキームの既定寄与も許容する。外部 Program の規則との合成は Nix module system と Home Manager の既存の意味論に従い、無関係なキーを削除しない。管理対象 Host の利用者ポリシーは新 API に移行するが、他 Program の対応形式・専用スキームを一律に競合扱いしない。固定版 Home Manager の `xdg.mimeApps.defaultApplicationPackages` は許容し、展開済み `defaultApplications` の順序付き候補を先に、パッケージ由来候補を末尾に追加する upstream の意味論を維持する。指定のない MIME 型がパッケージにより追加されることも許容する。例えば `text/html=chosen.desktop;from-package.desktop` と `application/pdf=from-package.desktop` が生成されることを検証する。`autoDefaults.enable = false` も外部の独立寄与を止める指定ではない。fileAssociations OFF は共有の `xdg.mimeApps.enable` を強制 OFF にせず、自らは出力機能を要求しない。外部の設定値が残ることとファイル生成は別の契約であり、外部 Consumer または Host が出力を要求した場合に Home Manager が生成する。
+Greeter / Portal は選択 Provider の情報を参照し、Consumer に Niri 固有条件を分散させない。sessionGui OFF なら実効 Provider なし。独立した Niri Program や既定の session 値から選択を推測しない。NixOS Niri の enable 要求にも共通の既定優先度・assertion 契約を適用する。
 
-**自動既定の入力:** GUI で fileAssociations と自動既定が有効、他の明示規則や競合候補がなく、Linux で mpv Program が実効有効かつ `finalPackage != null` の場合は 動画・音声・画像のうち mpv Provider が提供する対応 MIME 型を自動既定にする。標準 Desktop Entry の宣言と下記の追加登録に基づく有限の対応形式を扱い、未確認の全ワイルドカード型を保証しない。`media.mpv.enable = false` でも、`handlers.video = "mpv"` からの要求で最終 Program が ON になれば、動画は明示 mpv、音声・画像は自動 mpv となる。別途 mpv Program を ON にした場合は3カテゴリとも自動 mpv、最終 OFF または `package = null` なら3カテゴリとも mpv 自動既定なし。`handlers.video` の指定は Program 提供を通じて他の自動既定に波及し得る。要求元の区別でこれを抑止せず、明示ハンドラーや詳細規則で上書きし、自動既定を一括停止して必要なハンドラーだけ明示することもできる。Emacs の `org-protocol` は desktopIntegration と orgProtocol の実効有効化および URL 処理契約が成立するときだけ自動選択し、`text/plain` は Emacs サービスと client の双方が有効で Desktop Entry が提供され、Server への接続・起動経路の契約が成立するときだけ自動選択する。 Darwin の mpv は動画・音声のみ自動既定の対象とし、画像は対象外とする。Linux の明示 `handlers.textEditor = "emacs"` は `text/plain` を `emacsclient.desktop` に関連付け、自動既定 OFF でも適用する。必要な Emacs Program・サービス・client と Server 接続・起動経路の提供を要求し、Host の明示 OFF 等で契約を満たせなければ理由付きエラーとする。
+### FileChooser
 
-**mpv の提供契約:** 実効実行ファイルと OS ごとの関連付けに必要な登録情報は別の役割を持つ。Provider は対応 OS・論理ハンドラーについて必要な提供物の契約を定義する。Linux の mpv は `bin/mpv` と `mpv.desktop`、Darwin の mpv は実効実行ファイルと動画・音声を扱う `.app` / Bundle ID を提供する契約とする。Program が実効有効かつ `finalPackage != null` なら、標準パッケージ・スクリプト付きラッパー・明示カスタムパッケージ・overlay による差し替えを区別せず、この契約を信頼する。Desktop Entry / アプリ登録情報自体の提供はパッケージ提供者（標準パッケージでは Nixpkgs）の責務であり、差し替え時は変更者が必要な提供物・起動動作を維持するか、利用する機能の設定を調整する責任を持つ。未ビルド出力への pathExists / IFD、パッケージ由来の追跡・比較、専用メタデータ、追加の公開宣言 API、関連付け Consumer によるパッケージ補完は導入しない。標準の管理対象構成については最終提供物の実ファイルをビルド時の回帰テストで検証し、Nixpkgs 更新時にも確認する。任意の差し替えについて Desktop Entry 不在を自動判定・救済する契約は設けない。固定版 Home Manager / Nixpkgs に任意のパッケージの Desktop Entry と対応形式を評価時に保証する共通 API がない以上、提供契約を信頼する。`mpv.desktop` を欠く CLI 専用差し替えはこの Program の提供契約外とし、正式な対応・専用停止 API・自動救済を要求しない。fileAssociations OFF / autoDefaults OFF だけでは Program の追加画像登録を停止しないため、CLI 専用差し替えがそれだけで成立するとは約束しない。契約外の差し替えを行う変更者が上流設定の上書き等で整合性を管理する。`package = null` または最終 Program OFF は未提供とし、自動既定なし、必要な明示要求は理由付きエラー。
+**所有境界:** NixOS / Session Provider が Portal 本体・標準 backend・セッション固有 backend を提供し、Home がユーザー固有 backend・選択・ラッパーを提供する。高水準選択 API は Home のみ。上流 NixOS `xdg.portal.*` は維持する。
 
-**Linux mpv の対応形式登録:** 画像ビューアーとしての利用は積極的な要件であり、upstream の `mpv.desktop` に画像 MIME 宣言がないことを理由に画像関連付けを廃止しない。mpv Program / Provider が確認済みの画像形式（少なくとも PNG / JPEG）を `xdg.mimeApps.associations.added` で `mpv.desktop` に追加登録し、fileAssociations は対応型の既定選択のみを所有する。動画・音声は標準 Desktop Entry の宣言に沿った型を対象とし、画像は追加登録と同じ型集合から選択する。型一覧は固定版の宣言・表示確認に基づいて Phase 3 で確定し、任意パッケージの評価時解析は行わない。明示 handlers と自動既定は同じ対応型集合を利用する。追加登録は既定選択とは別の Program 寄与であり、fileAssociations OFF / autoDefaults OFF でもそれ自体は停止しない（共有の MIME 出力機能を強制 OFF にせず、Program の対応形式登録に必要な出力を要求できる）。既存の独立寄与を保持する。Darwin の画像関連付けは Linux と同じ仕組みで解決できないため従来の未対応契約を維持し、今回の合意を Darwin 対応の確定とはみなさない。
+| `fileChooser.mode` | 契約 |
+| --- | --- |
+| auto（既定） | OS / セッション標準へ委譲。chooser 固有の backend・パッケージ・ラッパー・選択キーを寄与せず、実体の存在も保証しない |
+| terminal | Linux の termfilechooser を提供・選択。Darwin では理由付き未対応エラー |
 
-**Linux GUI の端末起動:** Terminal Feature は選択された Terminal Provider の Desktop ID と upstream の Home Manager `xdg.terminal-exec` を利用し、GUI の `Terminal=true` Desktop Entry から端末を起動できる経路を提供する。GUI 構成で利用し、TTY 単独で GUI 基盤を要求しない。Yazi 専用ラッパーや Kitty 固定の分岐は設けない。directory handler の自動既定は Yazi と実効 GUI 端末起動経路が成立する場合のみとし、明示 `handlers.directory = "yazi"` は Yazi Program を要求し、Yazi または必要な端末起動経路が提供されない場合は理由付きエラー（他 Feature 全体を暗黙に有効化しない）。既定・登録の照会に加え、GIO 経由で実際のディレクトリが選択端末上の Yazi に渡ることを検証する。 管理対象の提供条件は enable だけで判定せず、`programs.yazi.package` と `xdg.terminal-exec.package` の実効値がそれぞれ非 null であることも確認する。いずれかが null で管理対象の実体提供がなければ directory の自動既定を出さず、明示要求は理由付きエラーとする。Yazi の finalPackage の参照は package 非 null の条件下に限定する。任意の外部インストール済み実体の探索・推測は行わず、非 null のカスタムパッケージの提供契約は従来どおり信頼する。
+Linux GUI Profile は `fileChooser.mode = lib.mkDefault "terminal"` とし、現行の端末 chooser を維持する。Host の auto 上書きは有効。Darwin auto は OS・アプリ標準動作への委譲でありネイティブダイアログを強制しない。Terminal Feature や TTY Media の有効化だけでは chooser を要求しない。
 
-**互換性:** 旧 Media / desktopIntegration の MIME マップ全置換や複数 Feature の暗黙の候補リスト連結は再現しない。新 API の明示候補順・部分上書き・自動既定の契約を検証する。旧 Host の意図的な規則は新 API で記述できるようにし、未提供 Yazi の自動関連付け廃止等の動作変更を移行案内に記録する。
+terminal の依存契約:
 
-## Session Provider と Portal の適用先
+- 実効 Home Session Provider、ホスト側 Portal Service、選択 Terminal Provider の待機・子コマンド起動経路、Yazi 互換ファイルマネージャーが必要。統合 Home では NixOS 実効 `osConfig.xdg.portal.enable` 等を確認する。独立 Home ではホスト側の本体・起動基盤・標準 backend 提供を前提として文書化する。auto / desktopIntegration OFF ではこれらを要求せず、GTK 固定の依存も設けない。
+- 既存 `termfilechooser.fileManager.package` は `programs.yazi.package` を既定とし、互換パッケージの明示指定を尊重する。契約は `bin/yazi` と `--chooser-file` / `--cwd-file` 対応であり、programs.yazi.enable は必須ではない。実効値を nullable として扱い、null なら理由付き assertion、ラッパー生成は非 null の場合だけ行う。
+- Home は backend パッケージ・.portal・D-Bus サービス定義・systemd user unit・探索経路・選択キー・Yazi ラッパーを提供する。管理対象 NixOS Home では `xdg.portal.enable = false` を維持し、その extraPortals に依存しない。Portal 本体を重複提供せず、どちらの評価環境でも本体 ON + 空 extraPortals を無条件に作らない。
+- 新構成の実効状態は OS 再起動後に保証する。即時反映・独自再読込・自動再起動・個別サービスの手動反映手順は対象外。Home backend の D-Bus / systemd 起動と正しい ExecStart、GUI アプリへのファイル返却を保証するが、OpenFile 直前の停止や特定クライアントによる最初の起動は要求しない。
 
-**sessionGui は dotfiles が提供する GUI セッションの選択・構成を所有する。** compositor の交換可能性を維持するため、`sessionGui.session` は維持し、Home / NixOS の Niri 固有の提供処理を内部 Session Provider に分離する。既存の Niri Program は固有設定の実装として維持する。Provider の情報は Greeter・Portal 等が参照し、Consumer に Niri 固有の分岐を分散させない。今回は Niri のみ実装し、Hyprland / Sway 等は必要になったとき追加する。dotfiles が管理しない外部セッションは対象外とし、独立したセッション文脈 API や共通 Provider Framework を導入しない。
+### Portal ポリシー
 
-- **選択と実効状態:** `sessionGui.enable = true` のとき `sessionGui.session` に対応する Provider を選び、必要な Program・セッション構成を要求して最終状態を検証する。OFF のときは実効 Provider なしとし、既定の `session = "niri"` や独立した Niri Program から選択を推測しない。独立 `desktopSession.id`、外部セッション宣言、実行時 `XDG_CURRENT_DESKTOP` の自動検出は設けない。 NixOS Niri の有効化要求は `lib.mkDefault true` とし、Host の通常優先度 `programs.niri.enable = false` を尊重して理由付き assertion に到達させる。
-- **Session Provider:** Home では compositor 固有のユーザー設定提供と Portal のセッション固有出力先に必要な情報、NixOS ではシステム側の提供・セッション名・起動コマンド・Portal 出力先に必要な情報を提供する。NixOS の既存 `sessions.niri` と Home の Niri Program 要求を出発点とし、各評価環境に必要な小さな内部契約に留める。Greeter / Portal adapter は実効 Provider を参照する。FileChooser Provider は backend の実体と必要な依存を提供し、Portal Composition は同一ファイルへの寄与を合成するだけとする。
-- **`fileChooser.mode = "auto"`:** セッション／OS の既定動作に委譲する。**FileChooser の backend 選択・追加 backend パッケージ・専用ラッパー・強制設定を desktopIntegration から寄与しない。** Terminal の有無により自動的に `termfilechooser` / `gtk` を選んで書き込む旧案は撤回する。Session Provider / OS の既存設定を尊重し、未構成環境で chooser の実在・動作までは保証しない。実効 Session Provider がなくても `auto` 自体は契約エラーにしない。Home は明示要求のない `default`・`Access`・`Notification`・`Secret` 等のポリシーを生成しない。特に `Secret=none` だけの要求から暗黙の `default=gnome;gtk` を生成しない。**`terminal.enable` は端末 Provider の有効化であり、GUI 用 `fileChooser.mode = "terminal"` を暗黙に要求しない。**
-- **明示選択:** Home の `mode = "terminal"` は Linux の termfilechooser を提供・選択する。実効 Home Session Provider と利用可能なホスト側 Portal Service を必要とし、sessionGui OFF または Provider の提供不能は理由付き契約エラーとする。他 Feature を暗黙に有効化しない。NixOS の upstream Niri の既定 GTK 等は NixOS / Session Provider の責務とし、Home は terminal 選択時だけユーザーポリシーを出力する。設定探索・実効解決は Portal に委譲する。Darwin の `auto` は OS・アプリの標準動作へ委譲し、追加設定なしで成立する。Linux Session Provider を要求せず、ネイティブダイアログを強制しない。Darwin の `terminal` は理由付き未対応エラー。
-- **ポリシーの合成:** dotfiles は指定された出力先に設定を提供し、同一の管理対象ファイルへの寄与は一つの生成経路に合成する。共通 `portals.conf` とセッション固有ファイルは独立した入力・出力先とし、ファイル間の探索順、優先順位、backend 解決は xdg-desktop-portal の意味論に委譲する。共通設定が固有設定に隠れても自動転記・補完しない。管理外ファイルの探索・読み取り・統合や、隠蔽を検出する独自 activation 検査は設けない。管理対象ファイルの衝突は通常の Nix / Home Manager の仕組みで扱い、管理外ファイルを独自に置換しない。
-- **適用先:** Linux 固有の `portal.configName` や `secretBackend` 等は明示的な詳細設定の出力先・ポリシーとして扱う。高水準 FileChooser の適用先は Session Provider から導出し、詳細設定をセッション識別や外部セッション対応の入口にはしない。未指定の詳細設定を Niri 固定の値で補わない。Host / Profile が必要なポリシーを明示する。`mode = "auto"` は FileChooser の寄与だけを停止し、他の Portal ポリシー・外部 chooser は維持する。
+FileChooser の選択キーだけを terminal 時に出力し、明示された default / Access / Notification / Secret 等は mode と独立して保持する。未指定ポリシーは生成しない（Secret=none だけなら暗黙 default を追加しない）。`portal.configName` 等は詳細設定の出力先であり、セッション識別 API ではない。高水準 chooser の適用先は Session Provider から導出する。
 
-### Portal の所有者と GUI / TTY 境界
+管理対象ファイルは一つの生成経路へ合成し、上流 Home Portal が OFF でも `xdg.configFile` 等で実ファイルを配置する。共通 portals.conf とセッション固有ファイルは別の入力・出力とし、探索・優先順位・backend 解決は Portal に委譲する。別ファイルへの自動転記・管理外ファイルの統合や置換は行わない。保証は適切に構成した管理対象環境に限定し、任意の外部設定での実効値は保証しない。
 
-**Portal Service / Backend Provider / Session Provider / Portal Policy Composition は別責務**とする。管理対象 Linux NixOS ホストでは NixOS / Session Provider が Portal 本体・システム標準 backend・セッション固有 backend を所有する。Home はユーザー固有 FileChooser backend の提供と選択、その他の明示ユーザーポリシー、端末ラッパーを所有する。Home の高水準 `desktopIntegration.fileChooser.mode` を唯一の利用者向け FileChooser 選択 API とし、NixOS 側の dotfiles 独自選択 API は撤去する。上流 NixOS `xdg.portal.*` はシステム基盤の構成に利用できる。全 compositor 共通の Provider Framework は新設しない。
+## fileAssociations
 
-- **Home / NixOS の基盤:** Home の FileChooser `auto` は backend・選択・ラッパーを要求しない。NixOS は FileChooser のユーザー選択と独立に Session Provider / Host のシステム基盤を構成する。いずれも `xdg.portal.enable = true` + `extraPortals = []` を自ら無条件に生成せず、他の所有者による実効設定を尊重する。Home の明示 terminal は NixOS の Portal 本体を暗黙に変更せず、Home 自身がユーザー backend を登録する。 管理対象の NixOS / Home 統合構成では、Home の Linux 明示 terminal が実効有効な場合、Home Manager から NixOS の実効構成（osConfig 等）を参照して `xdg.portal.enable` を検証し、Portal 本体が無効なら理由付き assertion を出す。Niri の有効化だけで本体提供を推定せず、Home 側から本体を暗黙に有効化しない。独立 Home ではホストによる Portal 本体・必要な起動基盤・標準 backend の提供を前提として文書化し、参照不能な NixOS 構成を仮定した assertion や実行時探索は行わない。auto または desktopIntegration 全体 OFF ではこの依存を要求しない。GTK backend の有無を高水準 FileChooser の前提条件にはしない。
-- **ユーザーポリシーの生成はサービス有効化と独立:** NixOS が Portal 本体を管理し、Home Manager の `xdg.portal.enable` を無効にしても、Home の明示ポリシー（例: Niri の `Secret=none`）は **`xdg.configFile` 等の独立した出力経路**で実際の `~/.config/xdg-desktop-portal/niri-portals.conf` に生成・配置する。Home Manager の `xdg.portal.config` に値があるだけでは達成とみなさない。管理対象 NixOS Home では上流 Home Manager の `xdg.portal.enable = false` を維持して Portal 本体を重複提供せず、**1ファイル1所有者**でポリシーを合成する。設定を生成しただけで NixOS の Portal 本体や backend を起動したことにはしない。
-- **実効値を保証する範囲:** `auto` は FileChooser 選択に寄与せず、Host が明示した `Access` / `Secret` 等は指定されたファイルへ出力する。dotfiles は同一管理対象ファイルの無関係なキーを破壊しないが、別ディレクトリ・別ファイルのポリシーを実効値として保持するための独自合成は行わない。管理対象の適切な設定を使用した動作検証と、任意の外部設定に対する実効値の保証を区別する。
+### 所有と合成
 
-**TTY の Media / Terminal 有効化だけでは GUI の XDG Portal・FileChooser・termfilechooser を要求しない。** `termfilechooser` は TTY 上で動く FileChooser ではなく、GUI アプリのファイル選択を端末エミュレーター＋TUI ファイルマネージャーで実現する Portal backend。GUI で `mode = "terminal"` を明示した場合に限り、Terminal Provider・ファイルマネージャー・ラッパーと実効 Portal 選択を構成する。
+利用者向け既定ポリシーは独立 fileAssociations のみが所有し、Media / desktopIntegration は直接書かない。主 API の handlers は video / audio / image / browser / directory / textEditor 等の論理選択。Linux の `linux.mime` は任意 MIME 型と順序付き Desktop ID 候補を追加・部分上書きする escape hatch とし、型・名称の詳細は実装前に確定する。未知の Desktop ID から Program を推測しない。
 
-**FileChooser の Home 所有契約（レビュー調査により採用）:** NixOS / Session Provider は Portal 本体とシステム既定 GTK 等を所有し、Home の明示 terminal は `.portal`、D-Bus サービス定義、systemd ユーザーユニット、必要な backend パッケージ・探索経路、選択ポリシー、Yazi ラッパーを提供する。固定版 Home Manager の `xdg.portal.enable = false` では `extraPortals` がインストールされないため、Home のユーザー backend 提供はそのモジュールの起動に依存しない。NixOS / Home の暗黙同期は行わず、NixOS の高水準 FileChooser API は設けない。各評価環境の Session Provider は Profile / Host が構成する。
+明示 handlers → 個別 Program 要求 → Program の実効状態 → 自動既定の順で評価する。自動既定から Program 要求へ逆参照せず、要求元を区別しない。明示 handler は autoDefaults OFF でも適用する。自動既定は GUI で有効な場合に導出し、カテゴリ別停止 API は設けない。
 
-レビューではシステム GTK・Home terminal の隔離 D-Bus / Xvfb 環境で GTK アプリが Kitty 上の Yazi で選択した空白入りファイルを受け取り正常終了した。D-Bus サービス定義のみを外した負のケースは backend 選択済みでも OpenFile 応答 2 / URI 空となった。systemd はユニット探索先までの確認で、実 NixOS / Niri ユーザーセッションでのサービス起動は未検証。**Phase 2 の受入条件**として実セッションの D-Bus / systemd user activation、正しい backend 選択、GUI アプリへのファイル返却まで検証する。実証できない場合は Phase 2 を完了扱いにしない。Home auto の無寄与、セッション標準 chooser への委譲、明示ポリシーの適用も検証する。 起動した unit の FragmentPath・ExecStart と実プロセスを確認し、Home の選択パッケージから起動したことも受入条件とする。URI 返却だけで Home 所有を証明したとはみなさない。
+Feature 内の合成は 自動既定 → handlers → linux.mime の同一入力キー単位の右優先置換（候補リストの連結なし）。Linux adapter は一つの `xdg.mimeApps.defaultApplications` 寄与へ変換する。Nix が定義合成、Home Manager がワイルドカード展開・具体 MIME 優先・候補順・mimeapps.list 生成、OS / XDG が実効解決を担当する。
 
-**設定反映の時期:** 構成の切替は管理対象の設定・登録を更新するが、稼働中の Portal / D-Bus / systemd ユーザーサービスへの即時反映は保証しない。新構成で OS を再起動し、ユーザーセッションを開始した後に実効状態となることを受入契約とする。固定版 dbus-broker 37 では起動後に初めて作られたユーザー D-Bus サービス定義ディレクトリを再読込まで認識しない場合がレビューで確認された。OS 再起動後の新規バス・ユーザーマネージャー・Portal で検証し、停止状態の backend が GUI アプリの OpenFile により D-Bus / systemd 経由で起動してファイルを返すことを確認する。Home activation による独自の再読込・自動再起動機構や個別サービスの手動反映手順は導入・記載しない。
+Program 固有 MimeType・専用スキーム（Radicle 等）の既定寄与と `xdg.mimeApps.defaultApplicationPackages` は共存可能。後者は明示候補の末尾にパッケージ由来候補を追加し、未指定型も補完する upstream の契約に従う。fileAssociations OFF / autoDefaults OFF は外部寄与を停止しない。fileAssociations OFF では自身の出力要求だけを停止し、共有 `xdg.mimeApps.enable` を強制 OFF にしない。外部設定値の存在と実ファイル生成は別である。
 
-### FileChooser API の切替
+### 提供契約と自動既定
 
-Phase 2 で旧 `desktopIntegration.portal.enable` を Home / NixOS の双方から廃止する。Portal の一括スイッチは設けず、FileChooser の寄与は `fileChooser.mode`、その他のポリシーは明示設定、Portal 本体はその所有者が管理する。上流の `xdg.portal.enable` は廃止せず、Home のポリシー出力とは独立とする。旧 OFF の管理対象設定は実際に停止したかった寄与に応じて移行し、削除したスイッチの互換動作は再現しない。新 API に直接切り替え、旧 `portal.fileChooser.backend` と新 API の並行優先順位は設けない。NixOS 側の旧 `portal.fileChooser.backend` および FileChooser 専用設定・Profile 寄与は撤去し、ユーザー選択は Home に移す。公開 mode は `auto`（既定）と `terminal` のみとし、旧設計の `system` variant と `fileChooser.enable` は導入しない。旧 `termfilechooser` → `terminal`、旧 `gtk` / `null` → `auto` を基本とし、GTK の明示指定が必要な既存設定は低水準 Portal ポリシーで表現する。旧既定 GTK への強制は再現しない。旧 API の互換動作は受入条件にしない。 組み込み Home Manager を持つ管理対象 NixOS は既存の `u` 等による一度のシステム切替で NixOS と Home を更新する。独立 Home の場合のみ、先にシステム側の旧 termfilechooser 提供・登録を撤去し、その後 Home を更新する。いずれも更新完了後に OS を再起動する。旧世代と新世代が混在する移行途中の動作は保証せず、互換レイヤーや独自の unit 優先順位制御は追加しない。両側の更新完了後に実効 unit と起動プロセスが Home のパッケージを参照し、GUI アプリへ選択ファイルが返ることを検証する。
+| handler | Linux の提供条件・対応範囲 |
+| --- | --- |
+| video / audio / image | 実効 mpv と対応 MIME 型（下記） |
+| browser | 実効 Browser 選択から HTML / XHTML / HTTP / HTTPS |
+| directory | 実効 Yazi と GUI 端末起動経路から inode/directory / text/uri-list |
+| textEditor | Emacs Program・サービス・client・Server 起動経路と emacsclient.desktop から text/plain |
+| org-protocol | desktopIntegration / orgProtocol の実効有効化と URL 処理契約（次節） |
 
-## 機能別の不変条件
+**mpv:** Linux は bin/mpv と mpv.desktop、Darwin は実行ファイルと動画・音声対応 .app / Bundle ID を提供する。最終 Program OFF / package null は未提供（自動既定なし、明示要求エラー）。GUI の自動既定は最終提供状態に従い、例えば明示 video 要求で mpv が提供されれば対応する audio / image にも波及する。自動既定 OFF または明示選択で制御する。
 
-1. **Browser:** Glide の既定選択は **GUI Profile / Host が採用する場合**（Linux GUI、Phase 4 後の Darwin GUI）に限る。**Feature 自体の `selected` の既定は `null`** とし、Media の有効化だけでは Browser を導入せず、Browser 関連付けも要求しない。Host / Profile で必要な Browser を選択し、旧 Program フラグの組み合わせから旧 Browser 選択順を再現しない。Host の明示的な `null` や別 Provider は優先する。選択 Provider の最終値から実体と起動コマンドを導出する。desktopIntegration OFF では `browser.selected` の設定値が残っていても実効 Browser 選択なしとし、独立した Browser Program の提供は維持する。Web Playback の自動有効化と Browser 選択由来の4種の自動関連付けを停止し、fileAssociations の明示 Browser 選択は独立して利用できる。Niri の自動起動は desktopIntegration 有効かつ選択ありのときのみ寄与し、Niri 単独構成は壊さない。
-2. **Web Playback:** GUI で **選択 Browser・対応 adapter・実効 mpv が揃えば**既定 ON、いずれかがなければ既定 OFF。明示 ON なのに欠ける場合は契約エラー。`media.mpv.enable = false` でも独立した mpv Program が提供されれば既定 ON にできる。実行ファイルは `config.programs.mpv.finalPackage` から導出し、スクリプトを含む最終ラッパーを使う。Firefox の新規プロファイルでは ff2mpv 拡張が実際に有効化され、ブラウザーから送信できることまで保証する。Qutebrowser は **Linux と Darwin の両方**で選択時に既存の `,m` 操作から現在の URL を最終 mpv に渡せることを保証する（その OS での Browser 実装が提供可能なことを前提とし、未対応なら黙って構成しない）。選択変更・無効化後は Media 由来の拡張・native host・キー割り当てを残さない。
-3. **File associations:** 独立 `fileAssociations` Feature を利用者向け既定ポリシーの唯一の公開設定所有者とし、Media / desktopIntegration は Program・Browser の状態を提供するだけで、関連付けファイルを書かない。`handlers` で明示した既知 Provider は個別 Program を `lib.mkDefault true` で要求し、Host の明示 OFF で最終提供できなければ契約エラー。自動既定は要求元を問わず最終 Program / Browser の実効提供状態から **fileAssociations Composition が一度だけ**生成する。動画への明示 mpv 要求で Program が提供されれば、対応 OS の音声・画像（Darwin では音声のみ）の自動既定にも波及する。mpv が不在なら mpv 自動既定はなし、未知の Desktop ID から Program を推測しない。`autoDefaults.enable = false` は自動規則を一括停止する。カテゴリ単位の停止オプションは設けず、必要なカテゴリだけを明示 `handlers` / 詳細規則で構成できる。`fileAssociations.enable = false` は自身の寄与だけ停止して Media / desktopIntegration / Program の独立した提供や関連付け寄与は停止しない。既定 Browser を変更した場合は HTML・XHTML・HTTP・HTTPS の自動関連付けも追従するが、同じ Feature での明示ハンドラー指定は優先される。
-4. **実効関連付け:** Linux adapter は独立 Feature 内の論理選択と `linux.mime` の明示規則を単一の `xdg.mimeApps.defaultApplications` への寄与に合成し、外部 Program の非競合規則と `defaultApplicationPackages` の末尾追加を尊重し、固定版 Home Manager の `video/*`・`audio/*`・`image/*` 展開、具体 MIME 優先、順序付き候補を再利用する。同一入力キーの定義合成は Nix、異なる入力キーの展開・解決は Home Manager に委譲する。例えば `video/* = lib.mkForce "chosen.desktop"` と `video/mp4 = lib.mkDefault "external.desktop"` の組合せでも、固定版 Home Manager の展開では WebM が `chosen.desktop`、MP4 が `external.desktop` となる。dotfiles はこの結果を変更しない。この委譲テストのために mpv 固定の別規則を追加しない。実際の mpv の対応 MIME 型の選択は上記の有限の対応型集合に従う。新 API の設定寄与、明示候補順と部分上書きを検証する。旧生成物との完全一致は要求しない。Darwin adapter は同じ Feature の論理ポリシーを UTI / Bundle ID および URL スキームへ変換し、Launch Services に一度だけ適用する。
-5. **FileChooser:** Home の `fileChooser.mode = auto | terminal` のみを公開し、既定は auto。**auto はセッション／OS 既定に委譲し、backend・パッケージ・ラッパー・選択設定を寄与しない**。Portal 本体や GTK backend を暗黙に要求せず、他の Portal 設定と外部 chooser を維持する。Linux の明示 terminal は必要な Provider と適用先への設定を提供し、ホスト側 Portal Service の依存条件を満たす管理対象環境で OS 再起動後の動作を検証する。Darwin は auto のみ対応し、terminal は理由付き未対応エラー。ファイル間の探索・解決は Portal に委譲する。
-6. **Org Protocol:** URL 処理は目的ベースの `orgProtocol.enable` で選択し、OS 固有の登録方法は内部に隠す。Darwin では対応 adapter ができるまで既定 OFF、明示 ON は理由付き契約エラー。Linux の `xdg.desktopEntries.org-protocol` を Darwin に出力しない。 Linux では Emacs の既存 Server / socket activation と Org Protocol のロードを利用する。標準構成で Server 未起動でも待受ソケットから起動できることを保証し、Server への接続・起動経路が提供されない場合は既定 OFF、明示 ON は理由付きエラー。Desktop Entry の存在だけで URL 処理可能とみなさない。独自の Server 起動機構は新設しない。 Linux の Org Protocol と textEditor は Emacs Program の同じ内部 Server 提供条件を参照する。管理対象の新規セッションではサービス有効に加え socket activation またはユーザーセッション起動の経路が必要。両方 OFF でサービス・client のみ ON は提供済みとしない。初回に実ファイルを開く textEditor の検証も行う。
-7. **依存・無効化:** GUI / TTY の Feature の組み合わせは Profile / Host が決める。Media や desktopIntegration の有効化だけで別 Feature を要求しない。個別 Program の必要な要求と実効状態の参照は維持する。Feature／子機能の OFF は自身の寄与だけを停止し、共有 Program を排他的に停止しない。Host の上書き後の実効構成が明示された公開契約に反する場合は理由付きエラー。
+標準・スクリプト付きラッパー・明示カスタム・overlay を区別せず非 null の提供契約を信頼する。パッケージ提供者が登録情報・起動動作を維持し、管理対象標準構成はビルド時と Nixpkgs 更新時に検証する。評価時 pathExists / IFD・由来追跡・専用メタデータや宣言 API・Consumer による登録補完は導入しない。mpv.desktop を欠く CLI 専用差し替えは契約外であり、fileAssociations OFF だけで整合する保証はない。変更者が整合性を管理する。
 
-### Darwin のアプリ登録と既定アプリの所有者
+Linux では mpv Program が `xdg.mimeApps.associations.added` で確認済み画像型（最低 PNG / JPEG）を追加登録し、必要な共有出力を要求できる。fileAssociations は既定選択のみを所有する。動画・音声は標準 Desktop Entry、画像は追加登録の有限の対応型集合を明示・自動双方で利用する。未確認の wildcard 全体は対象外。追加登録は fileAssociations / autoDefaults OFF でも独立して維持する。
 
-**Darwin の既定アプリは独立 `fileAssociations` Feature の内部 Darwin adapter が一元的に書き込む。** Program（例: Emacs）は `.app` / Bundle ID の提供と Launch Services への**アプリ登録**を担当し、既定アプリの選択は行わない。現行 `nix/modules/home/programs/emacs/darwin-app.nix` の activation にある `duti -s`（`public.plain-text` / `public.source-code` / `public.shell-script`）は Phase 4 の adapter 導入と同時に移し、重複書き込み・実行順依存をなくす。adapter は論理ハンドラーと UTI / Bundle ID を解決して、全既定値を一つの activation 書き込み経路で適用する。Darwin では `fileAssociations.handlers.textEditor` を明示選択の入口とし、`public.plain-text` / `public.source-code` / `public.shell-script` の3種を一括設定する。今回の実 Provider は `emacs` とし、例えば `fileAssociations.enable = true; fileAssociations.handlers.textEditor = "emacs";` で選択する。Neovim は将来の交換候補とし、Neovide 等の `.app` または端末経由でファイルを受け取る実装は今回の対象外とする。未対応の Neovim を本番 API の対応済み選択肢として公開しない。テスト用の別 Provider を通常の公開 `handlers.textEditor` の経路から選択できる Fixture を用意し、Emacs のアプリ登録を維持したまま別の登録済みアプリを選択して再 activation 後の3種の Launch Services 実効値がその Bundle ID と一致することを確認する。テスト用 Provider は本番の選択肢に追加せず、実機での受入確認には実際にファイルを受け取れる登録済みテストアプリを使う。Linux 側の Emacs の自動既定・明示 textEditor は「自動既定の入力」の Server 接続・起動経路を含む提供条件に従う。アプリ登録と既定設定を分離する際は Home Manager activation DAG に依存関係を明示する。管理対象 Darwin Home は `copyApps` → `registerEmacsApp` → fileAssociations の既定設定の順とし、選択された他 Provider にも必要な配置・登録処理の完了を要求する。`writeBoundary` の後に置くだけで順序を保証したとはみなさない。新規 macOS ユーザーが初回 activation から `handlers.textEditor = "emacs"` を選択して設定を要求し、OS の同意が必要なら利用者の承認後に3種の UTI の実効ハンドラーを照会し、再 activation のテストとは区別する。対応済み Browser の既定についても HTML / XHTML の文書型と HTTP / HTTPS の URL スキームを**それぞれ実効照会**し、OS が同意を要求する場合は利用者の承認を正常系の前提とする。Browser・Emacs・mpv 等すべての既定設定に共通して、初回 activation での変更要求と承認後の実効値確認を区別し、未承認・拒否を適用成功とはみなさない。独自の同意状態管理や再試行機構は設けない。Emacs Program 単独では既定アプリを設定せず、fileAssociations の有効化も要求しない。fileAssociations 未指定・無効の新規ユーザーに旧3種の既定設定を再現しない。必要なら Host / Profile の関連付けポリシーで指定する。既存ユーザーの OS に残る設定を無条件に消去しない。
+**Yazi:** Terminal Feature が選択 Terminal Provider の Desktop ID を upstream `xdg.terminal-exec` に渡して GUI の Terminal=true 起動経路を提供する（TTY では要求しない）。directory には実効 Yazi・端末起動経路の両方が必要。enable に加え `programs.yazi.package` / `xdg.terminal-exec.package` の非 null を確認し、Yazi finalPackage は非 null のときのみ参照する。管理対象の実体がなければ自動既定なし・明示要求は理由付きエラー。任意外部実体の探索、Kitty 固定分岐、directory 専用ラッパーは設けない。非 null の互換パッケージは信頼する。
 
-**OS ごとの mpv の関連付け:** Linux の対応動画・音声・画像 MIME 型に対し、Darwin の標準 `mpv.app` は `public.movie` / `public.video` と `public.audio` を登録するが `public.image` は登録しない。Darwin の動画・音声は対応対象とし、自動既定・明示 `handlers.video` / `handlers.audio` で適用する。画像は自動既定に含めず、Darwin の `handlers.image = "mpv"` は理由付き未対応エラーとする。Program 提供・Web Playback は画像関連付けの非対応に影響されない。Consumer で Info.plist を補完せず、初回設定を要求し、同意が必要なら承認後に各対応 UTI の実効値を検証する。
+### Emacs / Org Protocol
 
-**Provider の対応範囲:** Program の提供・起動、Web Playback、既定アプリとしての関連付けは独立した契約であり、同一 Program の対応可否は契約ごと・OS ごとに判定する。固定版 Nixpkgs の Darwin Qutebrowser は `desktopToDarwinBundle` によって `.app` を生成するが、対応文書型・URL スキームの登録情報が不足しており、Launch Services 経由の受け取りは未検証である。今回の対象では Darwin Qutebrowser の既定 Browser 関連付けを未対応とし、Program の提供・起動および Web Playback の対応を妨げない。関連付けの自動既定から未対応 Provider を除外し、`handlers.browser = "qutebrowser"` の明示要求は Darwin では理由付きエラーとする。別の対応済み Provider の明示選択は可能とする。将来対応する場合は Nixpkgs 側の修正を優先し、必要な暫定修正は Program の package override に閉じ込める。fileAssociations にパッケージ修正・登録メタデータ補完の責務を持たせない。対応完了には新規 macOS 環境で文書型・URL スキームの登録と実際の URL 受け取りの検証が必要だが、今回の完了条件には含めない。
+Linux の Org Protocol と textEditor は Emacs Program の同じ内部 Server 提供条件を参照する。管理対象の新規セッションではサービス有効に加え socket activation またはユーザーセッション起動が必要。両方 OFF ならサービス・client ON でも未提供とする。既存の Server / Org Protocol ロードを利用し、新しい Server 管理機構は導入しない。
 
-## 既定動作と実装可能性
+Org Protocol は URL 処理可能な場合だけ既定 ON とし、明示 ON で依存不足はエラー。Desktop Entry の存在だけでは成功としない。textEditor の明示選択も上表の条件を要求し、満たさなければエラー。Darwin の Org Protocol は既定 OFF・明示 ON は理由付き未対応エラー、XDG Desktop Entry は生成しない。
 
-GUI Profile は Media・desktopIntegration・fileAssociations を組み合わせ、Browser = Glide、mpv = ON、必要な依存が揃う場合の Web Playback、Linux の Krita を既定として構成する。TTY Profile は CLI と mpv を採用し、GUI 用 Feature を暗黙に要求しない。Profile を使わない Media 単独構成では mpv 等の自機能だけを提供する。fileAssociations を独立して有効にした場合は Program の最終提供状態から自動既定を導出する。Host の明示上書きを尊重する。
+### Darwin の関連付け
 
-**機能の既定 ON は、選択 Browser と実効 mpv など必要な実装が揃う場合に限る。** 未実装の機能を別 OS で黙って無視せず、明示 ON は契約エラーにする。Darwin の関連付けなど未提供の機能は、実装が完成するまで保証しない。実装差異を Host の公開設定へ漏らして埋め合わせることもしない。
+Program は .app / Bundle ID と Launch Services のアプリ登録を所有し、独立 fileAssociations の Darwin adapter が UTI・URL スキームの既定設定を一度の activation 経路で適用する。XDG MIME を流用しない。
+
+| handler | 対応 |
+| --- | --- |
+| textEditor = emacs | 明示選択で public.plain-text / public.source-code / public.shell-script |
+| video / audio = mpv | 自動・明示で public.movie / public.video、public.audio |
+| image = mpv | 未対応（自動除外・明示エラー） |
+| browser | 対応 Provider の HTML / XHTML / HTTP / HTTPS。Qutebrowser は自動除外・明示エラー |
+
+Emacs の registerEmacsApp は登録のみに限定し、旧 duti -s を adapter へ移す。Emacs 単独では既定設定を要求しない。新規ユーザーで fileAssociations OFF / 未指定なら旧既定を再現せず、既存 OS 設定も無条件消去しない。DAG は copyApps → registerEmacsApp → 既定設定とし、他選択 Provider の登録完了も必要。
+
+Browser・Emacs・mpv の初回 activation における変更要求と、OS 同意が必要な場合の承認後の実効照会を区別する。利用者の承認を正常系とし、未承認・拒否は成功ではない。独自の状態管理・再試行は設けない。
+
+Neovim は将来候補（Neovide 等の実装・本番選択肢は範囲外）。Darwin mpv の画像 Info.plist 補完や Qutebrowser の登録情報補完は行わない。将来の修正は Nixpkgs、必要なら Program の package override を優先する。未対応の関連付けが Program 提供や Web Playback を妨げてはならない。
 
 ## 移行と完了条件
 
-Phase 2・3 は Linux の提供経路を Home Manager と NixOS の両側で整合させて切り替える。Darwin の未移行機能は Phase 4 で切り替え、各 Phase 終了時の管理対象構成を成立させる。Phase 4 の Darwin GUI は **2ホスト×2テーマ＝4 Home 構成**のビルドと新契約（アプリの提供、Web Playback の実効パッケージ・拡張と URL 到達）を検証する。macOS 実機の確認は別途必要。旧実装との同等性ではなく新契約を受入条件とする。
-
-旧 `media.mimeApps`・`desktopIntegration.mimeApps` は Phase 3 で独立 `fileAssociations` へ一括移行する。旧 `portal.fileChooser.backend` は Phase 2 で新 FileChooser API へ切り替え、旧 `desktopIntegration.portal.enable` も撤去する。明示設定の移行先と意図的な動作変更を記録し、旧オプションは必要に応じて移行先を示すエラーとする。旧マップ全置換・旧候補順・旧副作用を再現する機構は作らない。
-
-**非目標:** dotfiles が管理しない外部セッションへの対応、外部セッション識別 API、共通 Provider Framework、Player Provider、複数 Feature による利用者向け既定ポリシーの直接書き込み、Home Manager と NixOS の自動同期。
+旧設定を新 API に直接移し、意図的な変更を記録する。旧 MIME マップ全置換・旧候補順の完全再現は要求しない。各 Phase の管理対象構成を成立させる。具体的な移行順・検証は [実装計画](../plans/2026-11-21-media-desktop-integration-refactor.md) を正とする。
